@@ -25,6 +25,8 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-messageSchema.index({ sender: 1, recipient: 1 });
+// Compound index for fast conversation thread queries
+messageSchema.index({ sender: 1, recipient: 1, createdAt: -1 });
+messageSchema.index({ recipient: 1, read: 1 }); // For unread count
 
 module.exports = mongoose.model('Message', messageSchema);
