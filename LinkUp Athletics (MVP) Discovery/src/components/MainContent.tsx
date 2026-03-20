@@ -17,7 +17,8 @@ import { SessionDetailsView } from './SessionDetailsView';
 import { RosterListView } from './RosterListView';
 import { EditSessionView } from './EditSessionView';
 import { useState } from 'react';
-import { getSocket } from '../lib/socket';
+import { useAuth } from '../lib/auth';
+import { sessions as sessionsApi, ratings as ratingsApi } from '../lib/api';
 
 interface MainContentProps {
   activeTab: string;
@@ -26,13 +27,11 @@ interface MainContentProps {
 }
 
 export function MainContent({ activeTab, onTabChange, onAuthChange }: MainContentProps) {
+  const { token, user, isAuthenticated, login, logout } = useAuth();
+
   const [userRole, setUserRole] = useState<'athlete' | 'coach'>('athlete');
   const [currentView, setCurrentView] = useState<string>('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authView, setAuthView] = useState<'login' | 'signup'>('login');
-  // Auth session — populated on login/register
-  const [authToken, setAuthToken] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const [selectedAthleteForChat, setSelectedAthleteForChat] = useState<{
     id: string;
@@ -41,13 +40,9 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
     sport: string;
     position: string;
     level: string;
-    sessionContext?: {
-      sessionTitle: string;
-      date: string;
-      time: string;
-      location: string;
-    };
+    sessionContext?: { sessionTitle: string; date: string; time: string; location: string };
   } | undefined>(undefined);
+
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserType, setSelectedUserType] = useState<'athlete' | 'coach'>('athlete');
   const [dashboardScrollTarget, setDashboardScrollTarget] = useState<string | null>(null);
@@ -56,98 +51,59 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
   const [userProfileData, setUserProfileData] = useState<any>(null);
   const [editSessionData, setEditSessionData] = useState<any>(null);
 
-  // User profile data sourced from auth session
   const userProfile = {
-    sports: currentUser?.sport ? [currentUser.sport] : ['Baseball'],
-    skillLevel: currentUser?.skillLevel || 'NCAA D1',
-    position: currentUser?.position || 'Pitcher'
+    sports: user?.sport ? [user.sport] : ['Baseball'],
+    skillLevel: user?.skillLevel || 'NCAA D1',
+    position: user?.position || 'Pitcher',
   };
 
   const handleNavigate = (view: string, data?: any) => {
     setCurrentView(view);
-    if (view === 'rating' && data) {
-      setRatingSessionData(data);
-    }
-    if (view === 'sessionDetails' && data) {
-      setSessionDetailsData(data);
-    }
+    if (view === 'rating' && data) setRatingSessionData(data);
+    if (view === 'sessionDetails' && data) setSessionDetailsData(data);
     if (view === 'userProfile' && data) {
       setUserProfileData(data);
-      setSelectedUserId(data.id || 1);
-      setSelectedUserType(data.type || 'athlete');
+      setSelectedUserId(data.id || data._id || null);
+      setSelectedUserType(data.type || data.role || 'athlete');
     }
-    if (view === 'editSession' && data) {
-      setEditSessionData(data);
-    }
+    if (view === 'editSession' && data) setEditSessionData(data);
   };
 
-  const handleBack = () => {
-    setCurrentView('');
-  };
+  const handleBack = () => setCurrentView('');
 
-  const handleLogin = (token?: string, user?: any) => {
-    if (token) {
-      setAuthToken(token);
-      setCurrentUser(user);
-      // Connect socket with JWT
-      getSocket(token);
-    }
-    setIsAuthenticated(true);
+  const handleLogin = (token?: string, userData?: any) => {
+    if (token && userData) login(token, userData);
     onAuthChange(true);
   };
 
-  const handleSignUpComplete = (token?: string, user?: any) => {
-    if (token) {
-      setAuthToken(token);
-      setCurrentUser(user);
-      getSocket(token);
-    }
-    setIsAuthenticated(true);
+  const handleSignUpComplete = (token?: string, userData?: any) => {
+    if (token && userData) login(token, userData);
     setAuthView('login');
     onAuthChange(true);
-  };
-
-  const handleGoToSignUp = () => {
-    setAuthView('signup');
-  };
-
-  const handleBackToLogin = () => {
-    setAuthView('login');
   };
 
   const handleLogout = () => {
-    setAuthToken(null);
-    setCurrentUser(null);
-    import('../lib/socket').then(({ disconnectSocket }) => disconnectSocket());
-    setIsAuthenticated(false);
-    setAuthView('login');
+    logout();
     onAuthChange(false);
   };
 
-  const handleOpenChat = (athlete: { 
-    id: number; 
-    name: string; 
-    avatar: string; 
-    sport: string; 
-    position: string; 
+  const handleOpenChat = (athlete: {
+    id: string | number;
+    name: string;
+    avatar: string;
+    sport: string;
+    position: string;
     level: string;
-    sessionContext?: {
-      sessionTitle: string;
-      date: string;
-      time: string;
-      location: string;
-    };
+    sessionContext?: { sessionTitle: string; date: string; time: string; location: string };
   }) => {
-    setSelectedAthleteForChat(athlete);
+    setSelectedAthleteForChat({ ...athlete, id: String(athlete.id) });
     onTabChange('chat');
   };
 
-  const handleClearSelectedAthlete = () => {
-    setSelectedAthleteForChat(undefined);
-  };
+  const handleClearSelectedAthlete = () => setSelectedAthleteForChat(undefined);
 
-  const handleViewUserProfile = (userId: number, userType: 'athlete' | 'coach' = 'athlete') => {
-    setSelectedUserId(userId);
+  const handleViewUserProfile = (userId: string | number, userType: 'athlete' | 'coach' = 'athlete') => {
+    setSelectedUserId(String(userId));
     setSelectedUserType(userType);
     setCurrentView('userProfile');
   };
@@ -157,24 +113,22 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
     setCurrentView('');
   };
 
-  // Show auth screens if not authenticated
+  // ── Auth gate ────────────────────────────────────────────────────────────────
   if (!isAuthenticated) {
     if (authView === 'signup') {
-      return <SignUpView onComplete={handleSignUpComplete} onBackToLogin={handleBackToLogin} />;
+      return <SignUpView onComplete={handleSignUpComplete} onBackToLogin={() => setAuthView('login')} />;
     }
-    return <LoginView onLogin={handleLogin} onSignUp={handleGoToSignUp} />;
+    return <LoginView onLogin={handleLogin} onSignUp={() => setAuthView('signup')} />;
   }
 
-  // Handle special views
-  if (currentView === 'coachSetup') {
-    return <CoachProfileSetup onBack={handleBack} />;
-  }
+  // ── Sub-views ────────────────────────────────────────────────────────────────
+  if (currentView === 'coachSetup') return <CoachProfileSetup onBack={handleBack} />;
 
   if (currentView === 'athleteSearch') {
     return (
       <div className="h-full bg-slate-50">
-        <AthleteSearchView 
-          onBack={handleBack} 
+        <AthleteSearchView
+          onBack={handleBack}
           onOpenChat={handleOpenChat}
           onViewProfile={handleViewUserProfile}
         />
@@ -183,16 +137,10 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
   }
 
   if (currentView === 'clinicFlyer') {
-    return (
-      <div className="h-full bg-slate-50">
-        <ClinicFlyerView onBack={handleBack} />
-      </div>
-    );
+    return <div className="h-full bg-slate-50"><ClinicFlyerView onBack={handleBack} /></div>;
   }
 
-  if (currentView === 'preferences') {
-    return <PreferencesView onBack={handleBack} />;
-  }
+  if (currentView === 'preferences') return <PreferencesView onBack={handleBack} />;
 
   if (currentView === 'roster') {
     return <RosterListView onBack={handleBack} onNavigate={handleNavigate} onOpenChat={handleOpenChat} />;
@@ -208,22 +156,46 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
 
   if (currentView === 'rating' && ratingSessionData) {
     return (
-      <RatingView 
+      <RatingView
         sessionPartner={{
           name: ratingSessionData.name,
           avatar: ratingSessionData.avatar,
           sport: ratingSessionData.sport,
           position: ratingSessionData.position,
-          type: ratingSessionData.type
+          type: ratingSessionData.type,
+          // Pass through IDs for API call
+          _id: ratingSessionData._id || ratingSessionData.partnerId,
         }}
         sessionDetails={{
           date: ratingSessionData.date,
           location: ratingSessionData.location,
-          duration: ratingSessionData.duration
+          duration: ratingSessionData.duration,
+          sessionId: ratingSessionData.sessionId,
         }}
         onBack={handleBack}
-        onSubmit={(ratingData) => {
-          console.log('Rating submitted:', ratingData);
+        onSubmit={async (ratingData) => {
+          if (!token || !ratingSessionData._id) {
+            handleBack();
+            return;
+          }
+          try {
+            await ratingsApi.submit(token, {
+              rateeId: ratingSessionData._id,
+              overallRating: ratingData.overallRating,
+              sessionId: ratingSessionData.sessionId,
+              categories: {
+                skillLevel: ratingData.skillLevel || undefined,
+                punctuality: ratingData.punctuality || undefined,
+                communication: ratingData.communication || undefined,
+                attitude: ratingData.attitude || undefined,
+              },
+              wouldTrainAgain: ratingData.wouldTrainAgain,
+              feedback: ratingData.feedback,
+              sport: ratingSessionData.sport,
+            });
+          } catch (err) {
+            console.error('Rating submission failed:', err);
+          }
           handleBack();
         }}
       />
@@ -232,7 +204,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
 
   if (currentView === 'sessionDetails' && sessionDetailsData) {
     return (
-      <SessionDetailsView 
+      <SessionDetailsView
         session={sessionDetailsData}
         onBack={handleBack}
         onNavigate={handleNavigate}
@@ -242,54 +214,43 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
   }
 
   if (currentView === 'userProfile' && selectedUserId !== null) {
-    const isRosterRequest = userProfileData?.isRosterRequest || false;
-    
     return (
-      <UserProfileView 
-        userId={selectedUserId} 
+      <UserProfileView
+        userId={selectedUserId}
         userType={selectedUserType}
-        isRosterRequest={isRosterRequest}
+        isRosterRequest={userProfileData?.isRosterRequest || false}
         onBack={handleBackFromUserProfile}
         onSendMessage={() => {
-          // Navigate to chat with this user
           handleOpenChat({
             id: selectedUserId,
-            name: userProfileData?.name || (selectedUserType === 'athlete' ? 'Sarah Johnson' : 'Coach Mike Thompson'),
-            avatar: userProfileData?.avatar || (selectedUserType === 'athlete' ? 'SJ' : 'MT'),
-            sport: userProfileData?.sport || 'Baseball',
-            position: userProfileData?.position || (selectedUserType === 'athlete' ? 'Pitcher (RHP)' : 'Coach'),
-            level: userProfileData?.level || 'NCAA D1'
+            name: userProfileData?.name || '',
+            avatar: userProfileData?.avatar || '',
+            sport: userProfileData?.sport || '',
+            position: userProfileData?.position || '',
+            level: userProfileData?.skillLevel || userProfileData?.level || '',
           });
           handleBackFromUserProfile();
         }}
-        onSendPracticeRequest={() => {
-          // Handle practice request
-          console.log('Practice request sent');
-        }}
-        onAcceptRoster={() => {
-          // Handle accepting roster request
-          console.log('Roster request accepted for', userProfileData?.name);
-          // Show success message or update UI
-          handleBackFromUserProfile();
-        }}
-        onDeclineRoster={() => {
-          // Handle declining roster request
-          console.log('Roster request declined for', userProfileData?.name);
-          // Show message or update UI
-          handleBackFromUserProfile();
-        }}
+        onSendPracticeRequest={() => {}}
+        onAcceptRoster={handleBackFromUserProfile}
+        onDeclineRoster={handleBackFromUserProfile}
       />
     );
   }
 
   if (currentView === 'editSession' && editSessionData) {
     return (
-      <EditSessionView 
+      <EditSessionView
         session={editSessionData}
         onBack={handleBack}
-        onSave={(updatedSession) => {
-          console.log('Session updated:', updatedSession);
-          // In production, this would update the backend
+        onSave={async (updatedSession) => {
+          if (token && editSessionData._id) {
+            try {
+              await sessionsApi.update(token, editSessionData._id, updatedSession);
+            } catch (err) {
+              console.error('Session update failed:', err);
+            }
+          }
           setSessionDetailsData(updatedSession);
           handleBack();
         }}
@@ -297,38 +258,47 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
     );
   }
 
+  // ── Main tabs ────────────────────────────────────────────────────────────────
   return (
     <div className="flex-1 overflow-hidden bg-slate-50 relative">
-      {activeTab === 'dashboard' && <DashboardView onTabChange={onTabChange} onNavigate={handleNavigate} scrollTarget={dashboardScrollTarget} />}
+      {activeTab === 'dashboard' && (
+        <DashboardView
+          onTabChange={onTabChange}
+          onNavigate={handleNavigate}
+          scrollTarget={dashboardScrollTarget}
+        />
+      )}
       {activeTab === 'map' && <MapView />}
-      {activeTab === 'post' && <PostView 
-        userSports={userProfile.sports}
-        onNavigateToDashboard={(target) => {
-          setDashboardScrollTarget(target);
-          onTabChange('dashboard');
-        }}
-        onOpenChat={handleOpenChat}
-      />} 
+      {activeTab === 'post' && (
+        <PostView
+          userSports={userProfile.sports}
+          onNavigateToDashboard={(target) => {
+            setDashboardScrollTarget(target);
+            onTabChange('dashboard');
+          }}
+          onOpenChat={handleOpenChat}
+        />
+      )}
       {activeTab === 'chat' && (
         <ChatView
-          currentUserId={currentUser?._id || ''}
-          token={authToken || ''}
+          currentUserId={user?._id || ''}
+          token={token || ''}
           selectedAthlete={selectedAthleteForChat}
           onClearSelectedAthlete={handleClearSelectedAthlete}
           onTabChange={onTabChange}
         />
       )}
       {activeTab === 'profile' && (
-        <ProfileView 
-          userRole={userRole} 
+        <ProfileView
+          userRole={userRole}
           onRoleChange={setUserRole}
           onNavigate={handleNavigate}
           onLogout={handleLogout}
         />
       )}
       {activeTab === 'userProfile' && (
-        <UserProfileView 
-          userId={selectedUserId} 
+        <UserProfileView
+          userId={selectedUserId}
           userType={selectedUserType}
           onBack={handleBack}
         />

@@ -2,6 +2,8 @@ import { Settings, Star, Award, Shield, Bell, LogOut, ChevronRight, Link, Instag
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
+import { useAuth } from '../lib/auth';
+import { users as usersApi } from '../lib/api';
 
 interface ProfileViewProps {
   userRole: 'athlete' | 'coach';
@@ -11,24 +13,27 @@ interface ProfileViewProps {
 }
 
 export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: ProfileViewProps) {
+  const { token, user } = useAuth();
+
   // Edit modal states
   const [showAthleteProfileEdit, setShowAthleteProfileEdit] = useState(false);
   const [showAboutMeEdit, setShowAboutMeEdit] = useState(false);
   const [showPhilosophyEdit, setShowPhilosophyEdit] = useState(false);
   const [showQRCodeModal, setShowQRCodeModal] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  
-  // Athlete profile data
-  const [athleteSport, setAthleteSport] = useState('Baseball');
-  const [athletePosition, setAthletePosition] = useState('Catcher');
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  // Athlete profile data — initialised from auth context
+  const [athleteSport, setAthleteSport] = useState(user?.sport || 'Baseball');
+  const [athletePosition, setAthletePosition] = useState(user?.position || 'Catcher');
   const [athleteSecondarySport, setAthleteSecondarySport] = useState('Basketball');
   const [athleteSecondaryPosition, setAthleteSecondaryPosition] = useState('Point Guard');
-  const [athleteLevel, setAthleteLevel] = useState('NCAA D1');
-  const [athleteSchool, setAthleteSchool] = useState('UCLA');
-  const [aboutMe, setAboutMe] = useState('Disciplined catcher with 5+ years experience. Focused on improving pitch framing and leadership behind the plate. Looking to train with other college athletes.');
-  
+  const [athleteLevel, setAthleteLevel] = useState(user?.skillLevel || 'NCAA D1');
+  const [athleteSchool, setAthleteSchool] = useState('');
+  const [aboutMe, setAboutMe] = useState(user?.bio || '');
+
   // Coach philosophy data
-  const [philosophy, setPhilosophy] = useState('Former D1 catcher with 8 years of coaching experience. I specialize in developing fundamentals and mental toughness. My approach focuses on building confident, game-ready athletes through personalized training programs.');
+  const [philosophy, setPhilosophy] = useState(user?.coachingPhilosophy || '');
   
   // Temporary edit states
   const [tempSport, setTempSport] = useState('');
@@ -67,7 +72,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     setShowAthleteProfileEdit(true);
   };
   
-  const handleSaveAthleteProfile = () => {
+  const handleSaveAthleteProfile = async () => {
     setAthleteSport(tempSport);
     setAthletePosition(tempPosition);
     setAthleteSecondarySport(tempSecondarySport);
@@ -75,6 +80,20 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     setAthleteLevel(tempLevel);
     setAthleteSchool(tempSchool);
     setShowAthleteProfileEdit(false);
+    if (token) {
+      setSavingProfile(true);
+      try {
+        await usersApi.updateProfile(token, {
+          sport: tempSport,
+          position: tempPosition,
+          skillLevel: tempLevel,
+        });
+      } catch (err) {
+        console.error('Profile update failed:', err);
+      } finally {
+        setSavingProfile(false);
+      }
+    }
   };
   
   const handleOpenAboutMeEdit = () => {
@@ -82,9 +101,16 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     setShowAboutMeEdit(true);
   };
   
-  const handleSaveAboutMe = () => {
+  const handleSaveAboutMe = async () => {
     setAboutMe(tempAboutMe);
     setShowAboutMeEdit(false);
+    if (token) {
+      try {
+        await usersApi.updateProfile(token, { bio: tempAboutMe });
+      } catch (err) {
+        console.error('Bio update failed:', err);
+      }
+    }
   };
   
   const handleOpenPhilosophyEdit = () => {
@@ -92,9 +118,16 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     setShowPhilosophyEdit(true);
   };
   
-  const handleSavePhilosophy = () => {
+  const handleSavePhilosophy = async () => {
     setPhilosophy(tempPhilosophy);
     setShowPhilosophyEdit(false);
+    if (token) {
+      try {
+        await usersApi.updateProfile(token, { coachingPhilosophy: tempPhilosophy });
+      } catch (err) {
+        console.error('Philosophy update failed:', err);
+      }
+    }
   };
   
   const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,7 +168,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
               {profileImage ? (
                 <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
               ) : (
-                <span>MP</span>
+                <span>{user?.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() || 'MP'}</span>
               )}
             </div>
             {/* Upload Button */}
@@ -155,7 +188,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           </div>
           
           {/* User Name */}
-          <h3 className="text-white mb-2">Mike P</h3>
+          <h3 className="text-white mb-2">{user?.name || 'Athlete'}</h3>
           
           {/* Role Toggle */}
           <div className="flex justify-center gap-2 mb-3">
@@ -232,18 +265,18 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
               <div className="grid grid-cols-2 gap-4">
                 {/* Total Sessions */}
                 <div className="text-center bg-slate-50 rounded-xl p-4">
-                  <div className="text-2xl text-slate-900 mb-1">42</div>
+                  <div className="text-2xl text-slate-900 mb-1">{user?.ratingCount ?? '—'}</div>
                   <div className="text-xs text-slate-600">Completed Sessions</div>
                 </div>
 
                 {/* User Rating */}
-                <div 
+                <div
                   onClick={() => onNavigate('receivedRatings')}
                   className="text-center bg-slate-50 rounded-xl p-4 cursor-pointer hover:bg-slate-100 active:scale-[0.98] transition-all"
                 >
                   <div className="flex items-center justify-center gap-1 mb-1">
                     <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
-                    <span className="text-2xl text-slate-900">4.9</span>
+                    <span className="text-2xl text-slate-900">{user?.averageRating ? user.averageRating.toFixed(1) : '—'}</span>
                   </div>
                   <div className="text-xs text-slate-600 flex items-center justify-center gap-1">
                     User Rating
@@ -547,7 +580,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             {/* Small QR Code */}
             <div className="flex-shrink-0">
               <QRCodeSVG 
-                value={`linkupathletics://profile/user123`}
+                value={`linkupathletics://profile/{user?._id || 'unknown'}`}
                 size={80}
                 level="H"
                 includeMargin={false}
@@ -862,7 +895,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <div className="bg-slate-50 rounded-2xl p-6 flex flex-col items-center">
               <div className="bg-white p-4 rounded-xl shadow-lg">
                 <QRCodeSVG 
-                  value={`linkupathletics://profile/user123`}
+                  value={`linkupathletics://profile/{user?._id || 'unknown'}`}
                   size={220}
                   level="H"
                   includeMargin={true}
@@ -870,9 +903,9 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
               </div>
               
               <div className="mt-6 text-center">
-                <h4 className="text-slate-900 font-semibold mb-2">Mike P</h4>
-                <p className="text-sm text-slate-500 mb-1">{userRole === 'athlete' ? 'Athlete' : 'Coach'} • {userRole === 'athlete' ? athleteSport : 'Baseball, Softball'}</p>
-                <p className="text-xs text-slate-400">ID: user123</p>
+                <h4 className="text-slate-900 font-semibold mb-2">{user?.name || 'Athlete'}</h4>
+                <p className="text-sm text-slate-500 mb-1">{userRole === 'athlete' ? 'Athlete' : 'Coach'} • {userRole === 'athlete' ? athleteSport : (user?.sportsCoached?.join(', ') || 'Coach')}</p>
+                <p className="text-xs text-slate-400">ID: {user?._id || 'N/A'}</p>
               </div>
             </div>
             

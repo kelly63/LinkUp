@@ -1,25 +1,38 @@
 import { Mail, Lock, Award, Users } from 'lucide-react';
 import { useState } from 'react';
+import { auth as authApi } from '../lib/api';
 
 interface LoginViewProps {
-  onLogin: () => void;
+  onLogin: (token?: string, user?: any) => void;
   onSignUp: () => void;
 }
 
 export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = () => {
-    // In a real app, this would authenticate with backend
-    console.log('Logging in with:', { email, password });
-    onLogin();
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Please enter your email and password');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const { token, user } = await authApi.login(email, password);
+      onLogin(token, user);
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleSignIn = () => {
-    // In a real app, this would initiate Google OAuth flow
-    console.log('Signing in with Google');
-    onLogin();
+    // Google OAuth not yet implemented — placeholder
+    setError('Google sign-in coming soon. Use email/password.');
   };
 
   return (
@@ -92,12 +105,22 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
               </a>
             </div>
 
+            {/* Error message */}
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
+                {error}
+              </p>
+            )}
+
             {/* Login Button */}
-            <button 
+            <button
               onClick={handleLogin}
-              className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 hover:shadow-xl active:scale-[0.98] font-[Magra]"
+              disabled={loading}
+              className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-60 text-white py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 hover:shadow-xl active:scale-[0.98] font-[Magra] flex items-center justify-center gap-2"
             >
-              Sign In
+              {loading ? (
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : 'Sign In'}
             </button>
 
             {/* Divider */}

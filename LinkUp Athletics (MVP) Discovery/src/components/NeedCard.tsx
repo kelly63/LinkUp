@@ -1,7 +1,7 @@
 import { MapPin, Clock, Award, Users } from 'lucide-react';
 
 interface Need {
-  id: number;
+  id: string | number;
   title: string;
   seeking: string;
   level: string;

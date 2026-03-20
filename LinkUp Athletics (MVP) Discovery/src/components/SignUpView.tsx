@@ -1,13 +1,16 @@
 import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Award, Users, Check, Upload, Shield, FileCheck, Camera, Plus, X, Info, Eye, Map } from 'lucide-react';
 import { useState } from 'react';
+import { auth as authApi } from '../lib/api';
 
 interface SignUpViewProps {
-  onComplete: () => void;
+  onComplete: (token?: string, user?: any) => void;
   onBackToLogin?: () => void;
 }
 
 export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
   const [step, setStep] = useState(1);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [userType, setUserType] = useState<'athlete' | 'coach' | null>(null);
   const [uploadedDocument, setUploadedDocument] = useState<File | null>(null);
   const [selectedDocType, setSelectedDocType] = useState<'license' | 'school_id' | 'passport' | null>(null);
@@ -162,12 +165,42 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     }
   };
 
-  const handleSubmit = () => {
-    // In a real app, this would submit to backend
-    console.log('Sign up data:', formData);
-    console.log('Document uploaded:', uploadedDocument);
-    console.log('Document type:', selectedDocType);
-    onComplete();
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const body: Record<string, unknown> = {
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        location: formData.location,
+        role: userType || 'athlete',
+        // Athlete fields
+        sport: formData.sport,
+        position: formData.position,
+        skillLevel: formData.skillLevel,
+        customSportRequest: formData.customSportRequest,
+        // Coach fields
+        sportsCoached: formData.sportsCoached,
+        yearsExperience: formData.yearsExperience,
+        certifications: formData.certifications,
+        // Privacy
+        visibilityMode: formData.visibilityMode,
+        allowedLevels: formData.allowedLevels,
+        allowedSports: formData.allowedSports,
+        allowCoaches: formData.allowCoaches,
+        searchRadius: Number(formData.searchRadius),
+        // Terms
+        signature,
+        agreedToTerms,
+      };
+      const { token, user } = await authApi.register(body);
+      onComplete(token, user);
+    } catch (err: any) {
+      setSubmitError(err.message || 'Registration failed. Please try again.');
+      setSubmitting(false);
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -955,13 +988,24 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               </p>
             </div>
 
+            {/* Error */}
+            {submitError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
+                {submitError}
+              </p>
+            )}
+
             {/* Complete Setup Button */}
-            <button 
+            <button
               onClick={handleSubmit}
-              className="w-full bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white py-4 rounded-xl transition-all shadow-lg shadow-emerald-600/20 hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
+              disabled={submitting}
+              className="w-full bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white py-4 rounded-xl transition-all shadow-lg shadow-emerald-600/20 hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              <Check className="w-5 h-5" />
-              Complete Setup
+              {submitting ? (
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <><Check className="w-5 h-5" /> Complete Setup</>
+              )}
             </button>
           </div>
         </div>

@@ -1,26 +1,13 @@
 import { Search, Filter, MapPin, Star, Award, Users, Calendar, ArrowLeft, ChevronDown, ChevronUp, X, Shield } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { QrCode, Camera, UserPlus } from 'lucide-react';
-
-interface Athlete {
-  id: number;
-  name: string;
-  avatar: string;
-  sport: string;
-  position: string;
-  level: string;
-  location: string;
-  distance: string;
-  rating: number;
-  sessionsCompleted: number;
-  lookingFor: string[];
-  onRoster?: boolean;
-}
+import { useAuth } from '../lib/auth';
+import { users as usersApi, User } from '../lib/api';
 
 interface AthleteSearchViewProps {
   onBack?: () => void;
-  onOpenChat?: (athlete: { id: number; name: string; avatar: string; sport: string; position: string; level: string }) => void;
-  onViewProfile?: (userId: number, userType: 'athlete' | 'coach') => void;
+  onOpenChat?: (athlete: { id: string; name: string; avatar: string; sport: string; position: string; level: string }) => void;
+  onViewProfile?: (userId: string, userType: 'athlete' | 'coach') => void;
 }
 
 export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: AthleteSearchViewProps) {
@@ -104,79 +91,34 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Mock athlete data
-  const athletes: Athlete[] = [
-    {
-      id: 1,
-      name: 'Sarah Johnson',
-      avatar: 'SJ',
-      sport: 'Baseball',
-      position: 'Pitcher (RHP)',
-      level: 'NCAA D1',
-      location: 'Los Angeles, CA',
-      distance: '2.3 mi',
-      rating: 4.9,
-      sessionsCompleted: 34,
-      lookingFor: ['Pitching Mechanics', 'Velocity Training'],
-      onRoster: true
-    },
-    {
-      id: 2,
-      name: 'Marcus Williams',
-      avatar: 'MW',
-      sport: 'Basketball',
-      position: 'Point Guard',
-      level: 'HS Varsity',
-      location: 'Los Angeles, CA',
-      distance: '3.7 mi',
-      rating: 4.8,
-      sessionsCompleted: 28,
-      lookingFor: ['Ball Handling', 'Shooting Form'],
-      onRoster: false
-    },
-    {
-      id: 3,
-      name: 'Emily Chen',
-      avatar: 'EC',
-      sport: 'Soccer',
-      position: 'Midfielder',
-      level: 'NCAA D2',
-      location: 'Los Angeles, CA',
-      distance: '5.1 mi',
-      rating: 5.0,
-      sessionsCompleted: 41,
-      lookingFor: ['Technical Skills', 'Tactical Awareness'],
-      onRoster: true
-    },
-    {
-      id: 4,
-      name: 'David Martinez',
-      avatar: 'DM',
-      sport: 'Football',
-      position: 'QB',
-      level: 'NCAA D1',
-      location: 'Los Angeles, CA',
-      distance: '4.2 mi',
-      rating: 4.7,
-      sessionsCompleted: 22,
-      lookingFor: ['Footwork', 'Decision Making'],
-      onRoster: false
-    },
-    {
-      id: 5,
-      name: 'Jessica Taylor',
-      avatar: 'JT',
-      sport: 'Volleyball',
-      position: 'Setter',
-      level: 'HS Varsity',
-      location: 'Los Angeles, CA',
-      distance: '6.8 mi',
-      rating: 4.9,
-      sessionsCompleted: 37,
-      lookingFor: ['Setting Technique', 'Court Vision'],
-      onRoster: false
+  const { token } = useAuth();
+  const [athletes, setAthletes] = useState<User[]>([]);
+  const [loadingAthletes, setLoadingAthletes] = useState(false);
+
+  const fetchAthletes = useCallback(async () => {
+    if (!token) return;
+    setLoadingAthletes(true);
+    try {
+      const { users } = await usersApi.search(token, {
+        search: searchQuery || undefined,
+        sport: selectedSport !== 'All Sports' ? selectedSport : undefined,
+        skillLevel: selectedLevels.length === 1 ? selectedLevels[0] : undefined,
+        location: searchLocation !== 'Los Angeles, CA' ? searchLocation : undefined,
+        limit: 20,
+      });
+      setAthletes(users);
+    } catch (err) {
+      console.error('Failed to fetch athletes:', err);
+    } finally {
+      setLoadingAthletes(false);
     }
-  ];
+  }, [token, searchQuery, selectedSport, selectedLevels, searchLocation]);
+
+  useEffect(() => {
+    const t = setTimeout(fetchAthletes, 300);
+    return () => clearTimeout(t);
+  }, [fetchAthletes]);
+
 
   const sports = ['All Sports', 'Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis'];
   const levels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro'];
@@ -189,13 +131,8 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
     }
   };
 
-  const filteredAthletes = athletes.filter(athlete => {
-    const matchesSearch = athlete.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         athlete.position.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSport = selectedSport === 'All Sports' || athlete.sport === selectedSport;
-    const matchesLevel = selectedLevels.length === 0 || selectedLevels.includes(athlete.level);
-    return matchesSearch && matchesSport && matchesLevel;
-  });
+  // Filtering is handled server-side; just use athletes directly
+  const filteredAthletes = athletes;
 
   const handleOpenQRScanner = () => {
     setShowQRScanner(true);
@@ -220,7 +157,7 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
   const handleViewScannedProfile = () => {
     if (scannedUser) {
       // Navigate to the scanned user's profile
-      onViewProfile && onViewProfile(456, 'athlete');
+      onViewProfile && onViewProfile(scannedUser.userId, 'athlete');
       setShowQRScanner(false);
     }
   };
@@ -423,97 +360,92 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
 
       {/* Athletes List */}
       <div className="p-4 space-y-3">
-        {filteredAthletes.map((athlete) => (
+        {loadingAthletes && (
+          <div className="flex justify-center py-8">
+            <span className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+        {!loadingAthletes && filteredAthletes.map((athlete) => (
           <div
-            key={athlete.id}
+            key={athlete._id}
             className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
           >
             <div className="flex gap-3">
               {/* Avatar */}
               <div className="relative w-14 h-14 flex-shrink-0">
                 <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                  {athlete.avatar}
+                  {athlete.avatar || athlete.name.split(' ').map(n => n[0]).join('').slice(0,2)}
                 </div>
-                {/* On Roster Badge */}
-                {athlete.onRoster && (
-                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-                    <Shield className="w-3.5 h-3.5 text-white fill-white" />
-                  </div>
-                )}
               </div>
 
               {/* Athlete Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    <div>
-                      <h3 className="text-slate-900 font-semibold">{athlete.name}</h3>
-                      <p className="text-sm text-slate-600">{athlete.position}</p>
-                    </div>
-                    {/* On My Roster Label */}
-                    {athlete.onRoster && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-xs rounded-full font-medium shadow-sm">
-                        <Shield className="w-3 h-3 fill-white" />
-                        On Roster
+                  <div>
+                    <h3 className="text-slate-900 font-semibold">{athlete.name}</h3>
+                    <p className="text-sm text-slate-600">{athlete.position}</p>
+                  </div>
+                  {athlete.averageRating > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                      <span className="text-sm font-semibold text-slate-900">
+                        {athlete.averageRating.toFixed(1)}
                       </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                    <span className="text-sm font-semibold text-slate-900">{athlete.rating}</span>
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Sport & Level Badge */}
                 <div className="flex flex-wrap gap-2 mb-2">
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-lg">
-                    <Award className="w-3 h-3" />
-                    {athlete.level}
-                  </span>
-                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded-lg">
-                    {athlete.sport}
-                  </span>
+                  {athlete.skillLevel && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-lg">
+                      <Award className="w-3 h-3" />
+                      {athlete.skillLevel}
+                    </span>
+                  )}
+                  {athlete.sport && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded-lg">
+                      {athlete.sport}
+                    </span>
+                  )}
                 </div>
 
                 {/* Location */}
-                <div className="flex items-center gap-1 text-xs text-slate-500 mb-2">
-                  <MapPin className="w-3 h-3" />
-                  <span>{athlete.distance} away</span>
-                </div>
-
-                {/* Looking For */}
-                <div className="mb-3">
-                  <p className="text-xs text-slate-500 mb-1">Looking for help with:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {athlete.lookingFor.map((item, idx) => (
-                      <span key={idx} className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded">
-                        {item}
-                      </span>
-                    ))}
+                {athlete.location && (
+                  <div className="flex items-center gap-1 text-xs text-slate-500 mb-3">
+                    <MapPin className="w-3 h-3" />
+                    <span>{athlete.location}</span>
                   </div>
-                </div>
+                )}
 
-                {/* Stats */}
-                <div className="flex items-center gap-4 text-xs text-slate-600 mb-3">
-                  <div className="flex items-center gap-1">
+                {/* Ratings count */}
+                {athlete.ratingCount > 0 && (
+                  <div className="flex items-center gap-1 text-xs text-slate-600 mb-3">
                     <Calendar className="w-3 h-3" />
-                    <span>{athlete.sessionsCompleted} sessions</span>
+                    <span>{athlete.ratingCount} rating{athlete.ratingCount !== 1 ? 's' : ''}</span>
                   </div>
-                </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex gap-2">
                   <button
                     className="flex-1 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-2.5 rounded-xl text-sm transition-all shadow-sm active:scale-[0.98]"
-                    onClick={() => onOpenChat && onOpenChat({ id: athlete.id, name: athlete.name, avatar: athlete.avatar, sport: athlete.sport, position: athlete.position, level: athlete.level })}
+                    onClick={() => onOpenChat && onOpenChat({
+                      id: athlete._id,
+                      name: athlete.name,
+                      avatar: athlete.avatar || athlete.name.split(' ').map(n => n[0]).join('').slice(0,2),
+                      sport: athlete.sport,
+                      position: athlete.position,
+                      level: athlete.skillLevel,
+                    })}
                   >
-                    Contact Athlete
+                    Contact
                   </button>
                   <button
                     className="px-4 bg-white border-2 border-slate-300 hover:border-slate-400 text-slate-700 py-2.5 rounded-xl text-sm transition-all"
-                    onClick={() => onViewProfile && onViewProfile(athlete.id, 'athlete')}
+                    onClick={() => onViewProfile && onViewProfile(athlete._id, athlete.role)}
                   >
-                    View Profile
+                    Profile
                   </button>
                 </div>
               </div>

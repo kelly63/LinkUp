@@ -1,84 +1,19 @@
 import { Calendar, Award, MapPin, Clock, ArrowLeft, Users, X, Search, Filter } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NeedCard } from './NeedCard';
 import { AvailableSessionView } from './AvailableSessionView';
-
-interface Need {
-  id: number;
-  title: string;
-  seeking: string;
-  level: string;
-  distance: string;
-  date: string;
-  time: string;
-}
-
-const mockNeeds: Need[] = [
-  {
-    id: 1,
-    title: 'Bullpen Session',
-    seeking: 'Catcher',
-    level: 'NCAA D1',
-    distance: '1.2 miles away',
-    date: 'Today, Jan 9',
-    time: '6:00 PM – 7:30 PM'
-  },
-  {
-    id: 2,
-    title: 'Pitching Practice',
-    seeking: 'LHP or RHP',
-    level: 'HS Varsity',
-    distance: '2.4 miles away',
-    date: 'Tomorrow, Jan 10',
-    time: '3:00 PM – 4:30 PM'
-  },
-  {
-    id: 3,
-    title: 'Breaking Ball Work',
-    seeking: 'Catcher',
-    level: 'College',
-    distance: '0.8 miles away',
-    date: 'Today, Jan 9',
-    time: '5:00 PM – 6:30 PM'
-  },
-  {
-    id: 4,
-    title: 'Live Batting Practice',
-    seeking: 'Pitcher (RHP)',
-    level: 'NCAA D3',
-    distance: '3.1 miles away',
-    date: 'Saturday, Jan 11',
-    time: '10:00 AM – 12:00 PM'
-  },
-  {
-    id: 5,
-    title: 'Velocity Training',
-    seeking: 'Catcher',
-    level: 'HS JV',
-    distance: '4.2 miles away',
-    date: 'Sunday, Jan 12',
-    time: '2:00 PM – 3:30 PM'
-  },
-  {
-    id: 6,
-    title: 'Hitting Practice',
-    seeking: 'Pitcher (Any)',
-    level: 'NCAA D2',
-    distance: '1.8 miles away',
-    date: 'Monday, Jan 13',
-    time: '4:00 PM – 5:30 PM'
-  },
-];
+import { useAuth } from '../lib/auth';
+import { sessions as sessionsApi, Session } from '../lib/api';
 
 interface PostViewProps {
   onNavigateToDashboard?: (target: string) => void;
   userSports?: string[];
-  onOpenChat?: (athlete: { 
-    id: number; 
-    name: string; 
-    avatar: string; 
-    sport: string; 
-    position: string; 
+  onOpenChat?: (athlete: {
+    id: string;
+    name: string;
+    avatar: string;
+    sport: string;
+    position: string;
     level: string;
     sessionContext?: {
       sessionTitle: string;
@@ -90,6 +25,7 @@ interface PostViewProps {
 }
 
 export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }: PostViewProps) {
+  const { token } = useAuth();
   const [viewMode, setViewMode] = useState<'post' | 'find'>('post');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSkillLevels, setSelectedSkillLevels] = useState<string[]>([]);
@@ -107,8 +43,20 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [filterSkillLevels, setFilterSkillLevels] = useState<string[]>([]);
   const [filterDistance, setFilterDistance] = useState('10');
   
+  // Post form fields
+  const locationRef = useRef<HTMLInputElement>(null);
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+  const durationRef = useRef<HTMLSelectElement>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  // Find sessions API data
+  const [availableSessions, setAvailableSessions] = useState<Session[]>([]);
+  const [loadingFind, setLoadingFind] = useState(false);
+
   // Session detail view
-  const [selectedSession, setSelectedSession] = useState<Need | null>(null);
+  const [selectedSession, setSelectedSession] = useState<any | null>(null);
   
   const skillLevels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro', 'Adult Athlete (18-45yo)', 'Adult Athlete (45+yo)'];
   
@@ -210,13 +158,38 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  const filteredNeeds = mockNeeds.filter(need => {
+  // Fetch available sessions when switching to find tab
+  useEffect(() => {
+    if (viewMode !== 'find' || !token) return;
+    setLoadingFind(true);
+    sessionsApi.getAvailable(token, {
+      sport: filterSport.length === 1 ? filterSport[0] : undefined,
+      skillLevel: filterSkillLevels.length === 1 ? filterSkillLevels[0] : undefined,
+    }).then(({ sessions }) => {
+      setAvailableSessions(sessions);
+    }).catch(err => {
+      console.error('Failed to load sessions:', err);
+    }).finally(() => setLoadingFind(false));
+  }, [viewMode, token, filterSport, filterSkillLevels]);
+
+  const filteredNeeds = availableSessions.filter(session => {
     if (searchQuery) {
-      return need.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             need.seeking.toLowerCase().includes(searchQuery.toLowerCase());
+      const q = searchQuery.toLowerCase();
+      return (session.title || '').toLowerCase().includes(q) ||
+             (session.partnerRole || '').toLowerCase().includes(q) ||
+             (session.sport || '').toLowerCase().includes(q);
     }
     return true;
-  });
+  }).map(session => ({
+    id: session._id,
+    title: session.title || session.sport,
+    seeking: session.partnerRole || session.position,
+    level: session.skillLevelRequired || '',
+    distance: session.location || 'See details',
+    date: session.date || '',
+    time: session.time || '',
+    _session: session,
+  }));
   
   // Set default sport filters based on user's sports when switching to find view
   useEffect(() => {
@@ -266,9 +239,18 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   if (selectedSession) {
     return (
       <AvailableSessionView
-        session={{ ...selectedSession, sport: 'Baseball' }}
+        session={{
+          id: selectedSession._id || selectedSession.id,
+          title: selectedSession.title || selectedSession.sport,
+          seeking: selectedSession.partnerRole || selectedSession.seeking || '',
+          level: selectedSession.skillLevelRequired || selectedSession.level || '',
+          distance: selectedSession.location || selectedSession.distance || 'See details',
+          date: selectedSession.date || '',
+          time: selectedSession.time || '',
+          sport: selectedSession.sport || 'Baseball',
+        }}
         onBack={() => setSelectedSession(null)}
-        onOpenChat={onOpenChat}
+        onOpenChat={onOpenChat as any}
       />
     );
   }
@@ -491,7 +473,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 <Clock className="w-4 h-4" />
                 Duration
               </label>
-              <select className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors">
+              <select ref={durationRef} className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors">
                 <option>1 hr</option>
                 <option>90 mins</option>
                 <option>2 hr</option>
@@ -505,6 +487,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 Field Name/Address
               </label>
               <input
+                ref={locationRef}
                 type="text"
                 placeholder="Search for a location..."
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
@@ -542,6 +525,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 Session Goal/Notes
               </label>
               <textarea
+                ref={notesRef}
                 placeholder="e.g., Need frame and block work, or focusing on curveball mechanics..."
                 rows={4}
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors resize-none"
@@ -549,8 +533,62 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
             </div>
 
             {/* Primary Action Button */}
-            <button className="w-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-red-500/20 hover:shadow-xl active:scale-[0.98]">
-              POST SESSION
+            {submitError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
+                {submitError}
+              </p>
+            )}
+            {submitSuccess && (
+              <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-center">
+                Session posted! It's now visible to other athletes.
+              </p>
+            )}
+            <button
+              disabled={submitting}
+              onClick={async () => {
+                if (!token) return;
+                if (selectedPartnerRoles.length === 0) {
+                  setSubmitError('Please select at least one partner role.');
+                  return;
+                }
+                if (selectedDates.length === 0 && !isDateFlexible) {
+                  setSubmitError('Please add a date or mark as flexible.');
+                  return;
+                }
+                setSubmitError('');
+                setSubmitting(true);
+                try {
+                  await sessionsApi.create(token, {
+                    sport: selectedSport,
+                    partnerRole: selectedPartnerRoles.join(', '),
+                    date: selectedDates[0] || 'Flexible',
+                    time: selectedTimes[0] || (isTimeFlexible ? 'Flexible' : ''),
+                    duration: durationRef.current?.value || '1 hr',
+                    location: locationRef.current?.value || '',
+                    skillLevelRequired: selectedSkillLevels.join(', '),
+                    notes: notesRef.current?.value || '',
+                    status: 'open',
+                  });
+                  setSubmitSuccess(true);
+                  // Reset form
+                  setSelectedPartnerRoles([]);
+                  setSelectedDates([]);
+                  setSelectedTimes([]);
+                  setSelectedSkillLevels([]);
+                  if (locationRef.current) locationRef.current.value = '';
+                  if (notesRef.current) notesRef.current.value = '';
+                  setTimeout(() => setSubmitSuccess(false), 4000);
+                } catch (err: any) {
+                  setSubmitError(err.message || 'Failed to post session.');
+                } finally {
+                  setSubmitting(false);
+                }
+              }}
+              className="w-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:opacity-60 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-red-500/20 hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              {submitting ? (
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : 'POST SESSION'}
             </button>
           </div>
         </div>
@@ -715,17 +753,22 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
             {/* Session Count */}
             <div className="py-2">
               <p className="text-sm text-slate-600">
-                {filteredNeeds.length} session{filteredNeeds.length !== 1 ? 's' : ''} available
+                {loadingFind ? 'Loading...' : `${filteredNeeds.length} session${filteredNeeds.length !== 1 ? 's' : ''} available`}
               </p>
             </div>
 
             {/* Sessions List */}
             <div className="space-y-3 pb-4">
-              {filteredNeeds.map((need) => (
-                <NeedCard 
-                  key={need.id} 
-                  need={need} 
-                  onClick={() => setSelectedSession(need)}
+              {loadingFind && (
+                <div className="flex justify-center py-8">
+                  <span className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              {!loadingFind && filteredNeeds.map((need) => (
+                <NeedCard
+                  key={need.id}
+                  need={need}
+                  onClick={() => setSelectedSession(need._session)}
                 />
               ))}
             </div>
