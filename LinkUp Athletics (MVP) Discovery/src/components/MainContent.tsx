@@ -17,6 +17,7 @@ import { SessionDetailsView } from './SessionDetailsView';
 import { RosterListView } from './RosterListView';
 import { EditSessionView } from './EditSessionView';
 import { useState } from 'react';
+import { getSocket } from '../lib/socket';
 
 interface MainContentProps {
   activeTab: string;
@@ -29,12 +30,16 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
   const [currentView, setCurrentView] = useState<string>('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authView, setAuthView] = useState<'login' | 'signup'>('login');
-  const [selectedAthleteForChat, setSelectedAthleteForChat] = useState<{ 
-    id: number; 
-    name: string; 
-    avatar: string; 
-    sport: string; 
-    position: string; 
+  // Auth session — populated on login/register
+  const [authToken, setAuthToken] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const [selectedAthleteForChat, setSelectedAthleteForChat] = useState<{
+    id: string;
+    name: string;
+    avatar: string;
+    sport: string;
+    position: string;
     level: string;
     sessionContext?: {
       sessionTitle: string;
@@ -43,19 +48,19 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
       location: string;
     };
   } | undefined>(undefined);
-  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserType, setSelectedUserType] = useState<'athlete' | 'coach'>('athlete');
   const [dashboardScrollTarget, setDashboardScrollTarget] = useState<string | null>(null);
   const [ratingSessionData, setRatingSessionData] = useState<any>(null);
   const [sessionDetailsData, setSessionDetailsData] = useState<any>(null);
   const [userProfileData, setUserProfileData] = useState<any>(null);
   const [editSessionData, setEditSessionData] = useState<any>(null);
-  
-  // Mock user profile data - in production this would come from backend/auth
+
+  // User profile data sourced from auth session
   const userProfile = {
-    sports: ['Baseball', 'Basketball'], // Athlete's rostered sports (primary and secondary)
-    skillLevel: 'NCAA D1',
-    position: 'Pitcher'
+    sports: currentUser?.sport ? [currentUser.sport] : ['Baseball'],
+    skillLevel: currentUser?.skillLevel || 'NCAA D1',
+    position: currentUser?.position || 'Pitcher'
   };
 
   const handleNavigate = (view: string, data?: any) => {
@@ -80,12 +85,23 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
     setCurrentView('');
   };
 
-  const handleLogin = () => {
+  const handleLogin = (token?: string, user?: any) => {
+    if (token) {
+      setAuthToken(token);
+      setCurrentUser(user);
+      // Connect socket with JWT
+      getSocket(token);
+    }
     setIsAuthenticated(true);
     onAuthChange(true);
   };
 
-  const handleSignUpComplete = () => {
+  const handleSignUpComplete = (token?: string, user?: any) => {
+    if (token) {
+      setAuthToken(token);
+      setCurrentUser(user);
+      getSocket(token);
+    }
     setIsAuthenticated(true);
     setAuthView('login');
     onAuthChange(true);
@@ -100,6 +116,9 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
   };
 
   const handleLogout = () => {
+    setAuthToken(null);
+    setCurrentUser(null);
+    import('../lib/socket').then(({ disconnectSocket }) => disconnectSocket());
     setIsAuthenticated(false);
     setAuthView('login');
     onAuthChange(false);
@@ -290,7 +309,15 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
         }}
         onOpenChat={handleOpenChat}
       />} 
-      {activeTab === 'chat' && <ChatView selectedAthlete={selectedAthleteForChat} onClearSelectedAthlete={handleClearSelectedAthlete} onTabChange={onTabChange} />}
+      {activeTab === 'chat' && (
+        <ChatView
+          currentUserId={currentUser?._id || ''}
+          token={authToken || ''}
+          selectedAthlete={selectedAthleteForChat}
+          onClearSelectedAthlete={handleClearSelectedAthlete}
+          onTabChange={onTabChange}
+        />
+      )}
       {activeTab === 'profile' && (
         <ProfileView 
           userRole={userRole} 

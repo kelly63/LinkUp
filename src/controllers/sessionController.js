@@ -200,6 +200,25 @@ const acceptSession = async (req, res) => {
     await session.populate('postedBy', USER_FIELDS);
     await session.populate('partner', USER_FIELDS);
 
+    // Notify the session poster
+    const io = req.app.get('io');
+    if (io) {
+      io.notify(session.postedBy._id.toString(), 'session_accepted', {
+        sessionId: session._id,
+        sport: session.sport,
+        date: session.date,
+        time: session.time,
+        location: session.location,
+        partner: {
+          _id: req.user._id,
+          name: req.user.name,
+          avatar: req.user.avatar,
+          sport: req.user.sport,
+          position: req.user.position,
+        },
+      });
+    }
+
     res.json({ session });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

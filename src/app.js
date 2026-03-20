@@ -1,8 +1,10 @@
 require('dotenv').config();
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const connectDB = require('./config/database');
+const { getSocketIo } = require('./socket');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -15,6 +17,11 @@ const postRoutes = require('./routes/posts');
 connectDB();
 
 const app = express();
+const httpServer = http.createServer(app);
+
+// Attach Socket.io and export io for use in controllers
+const io = getSocketIo(httpServer);
+app.set('io', io);
 
 app.use(cors({ origin: process.env.CLIENT_URL || '*', credentials: true }));
 app.use(express.json());
@@ -45,6 +52,6 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`LinkUp server running on port ${PORT}`));
+httpServer.listen(PORT, () => console.log(`LinkUp server running on port ${PORT}`));
 
-module.exports = app;
+module.exports = { app, io };

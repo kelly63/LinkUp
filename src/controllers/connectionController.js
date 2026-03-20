@@ -32,6 +32,22 @@ const sendRequest = async (req, res) => {
       recipient: recipientId,
     });
 
+    // Notify recipient in real-time
+    const io = req.app.get('io');
+    if (io) {
+      io.notify(recipientId, 'roster_request', {
+        connectionId: connection._id,
+        from: {
+          _id: req.user._id,
+          name: req.user.name,
+          avatar: req.user.avatar,
+          sport: req.user.sport,
+          position: req.user.position,
+          skillLevel: req.user.skillLevel,
+        },
+      });
+    }
+
     res.status(201).json({ connection });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -51,6 +67,21 @@ const acceptRequest = async (req, res) => {
 
     connection.status = 'accepted';
     await connection.save();
+
+    // Notify the original requester
+    const io = req.app.get('io');
+    if (io) {
+      io.notify(connection.requester.toString(), 'roster_accepted', {
+        connectionId: connection._id,
+        by: {
+          _id: req.user._id,
+          name: req.user.name,
+          avatar: req.user.avatar,
+          sport: req.user.sport,
+          position: req.user.position,
+        },
+      });
+    }
 
     res.json({ connection });
   } catch (error) {

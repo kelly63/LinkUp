@@ -1,208 +1,250 @@
 import { Search, Edit } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ChatScreen } from './ChatScreen';
 import { X, Shield, Users, Trash2 } from 'lucide-react';
+import { getActiveSocket } from '../lib/socket';
 
-interface Chat {
-  id: number;
-  name: string;
-  lastMessage: string;
-  time: string;
+interface Conversation {
+  _id: string;
+  partner: {
+    _id: string;
+    name: string;
+    avatar: string | null;
+    role: string;
+    sport: string;
+    position: string;
+    skillLevel: string;
+    isOnline: boolean;
+    lastSeen: string;
+  };
+  lastMessage: {
+    text: string;
+    createdAt: string;
+    sender: string;
+  };
   unread: number;
+}
+
+interface RosterAthlete {
+  _id: string;
+  name: string;
+  avatar: string | null;
+  sport: string;
+  position: string;
+  skillLevel: string;
+}
+
+interface ActiveChat {
+  id: string;
+  name: string;
   avatar: string;
   role?: string;
-  sessionDetails?: {
-    date: string;
-    time: string;
-    location: string;
-  };
+  sessionDetails?: { date: string; time: string; location: string };
 }
 
 interface ChatViewProps {
-  selectedAthlete?: { 
-    id: number; 
-    name: string; 
-    avatar: string; 
-    sport: string; 
-    position: string; 
+  /** Currently logged-in user's ID */
+  currentUserId: string;
+  /** JWT token */
+  token: string;
+  selectedAthlete?: {
+    id: string;
+    name: string;
+    avatar: string;
+    sport: string;
+    position: string;
     level: string;
-    sessionContext?: {
-      sessionTitle: string;
-      date: string;
-      time: string;
-      location: string;
-    };
+    sessionContext?: { sessionTitle: string; date: string; time: string; location: string };
   };
   onClearSelectedAthlete?: () => void;
   onTabChange?: (tab: string) => void;
+  apiUrl?: string;
 }
 
-const mockChats: Chat[] = [
-  {
-    id: 1,
-    name: 'Catcher Mike',
-    lastMessage: 'Thanks! See you at 5PM',
-    time: '2m ago',
-    unread: 2,
-    avatar: 'MJ',
-    role: 'catcher',
-    sessionDetails: {
-      date: 'Today',
-      time: '6:00 PM',
-      location: 'Mission Valley Sports Complex'
-    }
-  },
-  {
-    id: 2,
-    name: 'Pitcher Sarah',
-    lastMessage: 'Is the bullpen still available?',
-    time: '1h ago',
-    unread: 1,
-    avatar: 'SW',
-    role: 'pitcher',
-    sessionDetails: {
-      date: 'Tomorrow',
-      time: '3:00 PM',
-      location: 'Sunset Field'
-    }
-  },
-  {
-    id: 3,
-    name: 'Catcher David',
-    lastMessage: 'Perfect, I\'ll be there',
-    time: '3h ago',
-    unread: 0,
-    avatar: 'DC',
-    role: 'catcher',
-    sessionDetails: {
-      date: 'Friday',
-      time: '5:30 PM',
-      location: 'Downtown Baseball Academy'
-    }
-  },
-  {
-    id: 4,
-    name: 'Pitcher Tom',
-    lastMessage: 'Great session today!',
-    time: 'Yesterday',
-    unread: 0,
-    avatar: 'TA',
-    role: 'pitcher'
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-export function ChatView({ selectedAthlete, onClearSelectedAthlete, onTabChange }: ChatViewProps) {
-  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days === 1) return 'Yesterday';
+  return `${days}d ago`;
+}
+
+function getInitials(name: string): string {
+  return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+export function ChatView({
+  currentUserId,
+  token,
+  selectedAthlete,
+  onClearSelectedAthlete,
+  onTabChange,
+  apiUrl = API_URL,
+}: ChatViewProps) {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [rosterAthletes, setRosterAthletes] = useState<RosterAthlete[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedChat, setSelectedChat] = useState<ActiveChat | null>(null);
   const [showRosterModal, setShowRosterModal] = useState(false);
-  const [hiddenChatIds, setHiddenChatIds] = useState<Set<number>>(new Set());
-  const [deletingChatId, setDeletingChatId] = useState<number | null>(null);
+  const [hiddenPartnerIds, setHiddenPartnerIds] = useState<Set<string>>(new Set());
+  const [deletingPartnerId, setDeletingPartnerId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [onlineMap, setOnlineMap] = useState<Record<string, boolean>>({});
 
-  // Mock roster athletes
-  const rosterAthletes = [
-    {
-      id: 101,
-      name: 'Sarah Johnson',
-      avatar: 'SJ',
-      sport: 'Baseball',
-      position: 'Pitcher (RHP)',
-      level: 'NCAA D1'
-    },
-    {
-      id: 102,
-      name: 'Emily Chen',
-      avatar: 'EC',
-      sport: 'Soccer',
-      position: 'Midfielder',
-      level: 'NCAA D2'
-    },
-    {
-      id: 103,
-      name: 'Alex Martinez',
-      avatar: 'AM',
-      sport: 'Basketball',
-      position: 'Point Guard',
-      level: 'HS Varsity'
-    },
-    {
-      id: 104,
-      name: 'Jordan Lee',
-      avatar: 'JL',
-      sport: 'Volleyball',
-      position: 'Setter',
-      level: 'College - Other'
+  // ── Fetch conversations from REST ──────────────────────────────────────────
+  const fetchInbox = useCallback(async () => {
+    try {
+      const res = await fetch(`${apiUrl}/api/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setConversations(data.conversations || []);
+    } catch (err) {
+      console.error('Failed to load inbox', err);
+    } finally {
+      setLoading(false);
     }
-  ];
+  }, [token, apiUrl]);
 
-  const handleStartChatWithRosterAthlete = (athlete: typeof rosterAthletes[0]) => {
-    const newChat: Chat = {
-      id: athlete.id,
-      name: athlete.name,
-      lastMessage: 'Start a conversation',
-      time: 'Now',
-      unread: 0,
-      avatar: athlete.avatar,
-      role: athlete.position.toLowerCase()
+  // ── Fetch roster for new conversation modal ────────────────────────────────
+  const fetchRoster = useCallback(async () => {
+    try {
+      const res = await fetch(`${apiUrl}/api/connections`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setRosterAthletes(
+        (data.connections || []).map((c: any) => c.user)
+      );
+    } catch (err) {
+      console.error('Failed to load roster', err);
+    }
+  }, [token, apiUrl]);
+
+  useEffect(() => {
+    fetchInbox();
+    fetchRoster();
+  }, [fetchInbox, fetchRoster]);
+
+  // ── Subscribe to real-time inbox updates ───────────────────────────────────
+  useEffect(() => {
+    const socket = getActiveSocket();
+    if (!socket) return;
+
+    const handleNewMessage = (msg: any) => {
+      setConversations((prev) => {
+        const partnerId = msg.sender === currentUserId ? msg.recipient : msg.sender;
+        const idx = prev.findIndex((c) => c.partner._id === partnerId);
+        if (idx === -1) {
+          // New conversation — refetch
+          fetchInbox();
+          return prev;
+        }
+        const updated = [...prev];
+        updated[idx] = {
+          ...updated[idx],
+          lastMessage: { text: msg.text, createdAt: msg.createdAt, sender: msg.sender },
+          unread: msg.sender !== currentUserId ? updated[idx].unread + 1 : updated[idx].unread,
+        };
+        // Move to top
+        return [updated[idx], ...updated.filter((_, i) => i !== idx)];
+      });
     };
-    setSelectedChat(newChat);
+
+    const handlePresence = ({ userId, isOnline }: { userId: string; isOnline: boolean }) => {
+      setOnlineMap((prev) => ({ ...prev, [userId]: isOnline }));
+    };
+
+    socket.on('message:new', handleNewMessage);
+    socket.on('user:presence', handlePresence);
+
+    return () => {
+      socket.off('message:new', handleNewMessage);
+      socket.off('user:presence', handlePresence);
+    };
+  }, [currentUserId, fetchInbox]);
+
+  // ── Query initial online status for loaded conversations ───────────────────
+  useEffect(() => {
+    const socket = getActiveSocket();
+    if (!socket || conversations.length === 0) return;
+    const ids = conversations.map((c) => c.partner._id);
+    socket.emit('presence:query', { userIds: ids }, (status: Record<string, boolean>) => {
+      setOnlineMap(status);
+    });
+  }, [conversations.length]);
+
+  // ── If an athlete was passed in from another screen, open that chat ────────
+  useEffect(() => {
+    if (selectedAthlete && !selectedChat) {
+      setSelectedChat({
+        id: selectedAthlete.id,
+        name: selectedAthlete.name,
+        avatar: selectedAthlete.avatar || getInitials(selectedAthlete.name),
+        role: selectedAthlete.position,
+        sessionDetails: selectedAthlete.sessionContext
+          ? {
+              date: selectedAthlete.sessionContext.date,
+              time: selectedAthlete.sessionContext.time,
+              location: selectedAthlete.sessionContext.location,
+            }
+          : undefined,
+      });
+    }
+  }, [selectedAthlete]);
+
+  const handleOpenConversation = (conv: Conversation) => {
+    // Mark as read locally
+    setConversations((prev) =>
+      prev.map((c) => (c.partner._id === conv.partner._id ? { ...c, unread: 0 } : c))
+    );
+    setSelectedChat({
+      id: conv.partner._id,
+      name: conv.partner.name,
+      avatar: conv.partner.avatar || getInitials(conv.partner.name),
+      role: conv.partner.position,
+    });
+  };
+
+  const handleStartChatWithRosterAthlete = (athlete: RosterAthlete) => {
+    setSelectedChat({
+      id: athlete._id,
+      name: athlete.name,
+      avatar: athlete.avatar || getInitials(athlete.name),
+      role: athlete.position,
+    });
     setShowRosterModal(false);
   };
 
-  const handleDeleteChat = (chatId: number, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent chat from opening
-    setDeletingChatId(chatId);
+  const confirmDeleteChat = (partnerId: string) => {
+    setHiddenPartnerIds((prev) => new Set([...prev, partnerId]));
+    setDeletingPartnerId(null);
   };
 
-  const confirmDeleteChat = (chatId: number) => {
-    // In a real app, this would make an API call to archive/hide the chat
-    // The backend would mark it as hidden but preserve the messages
-    const newHiddenIds = new Set(hiddenChatIds);
-    newHiddenIds.add(chatId);
-    setHiddenChatIds(newHiddenIds);
-    setDeletingChatId(null);
-  };
-
-  const cancelDeleteChat = () => {
-    setDeletingChatId(null);
-  };
-
-  // Filter out hidden chats from display
-  const visibleChats = mockChats.filter(chat => !hiddenChatIds.has(chat.id));
-
-  // If a selectedAthlete is passed, create a new chat for them
-  if (selectedAthlete && !selectedChat) {
-    const newChat: Chat = {
-      id: selectedAthlete.id + 1000, // Offset to avoid ID collision
-      name: selectedAthlete.name,
-      lastMessage: 'Start a conversation',
-      time: 'Now',
-      unread: 0,
-      avatar: selectedAthlete.avatar,
-      role: selectedAthlete.position.toLowerCase(),
-      sessionDetails: selectedAthlete.sessionContext ? {
-        date: selectedAthlete.sessionContext.date,
-        time: selectedAthlete.sessionContext.time,
-        location: selectedAthlete.sessionContext.location
-      } : undefined
-    };
-    
-    return (
-      <ChatScreen 
-        chat={newChat} 
-        onBack={() => {
-          if (onClearSelectedAthlete) {
-            onClearSelectedAthlete();
-          }
-        }} 
-        onTabChange={onTabChange}
-      />
-    );
-  }
+  const visibleConversations = conversations.filter(
+    (c) =>
+      !hiddenPartnerIds.has(c.partner._id) &&
+      (searchQuery === '' ||
+        c.partner.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   if (selectedChat) {
     return (
-      <ChatScreen 
-        chat={selectedChat} 
-        onBack={() => setSelectedChat(null)} 
+      <ChatScreen
+        chat={selectedChat}
+        currentUserId={currentUserId}
+        token={token}
+        onBack={() => {
+          setSelectedChat(null);
+          if (onClearSelectedAthlete) onClearSelectedAthlete();
+          fetchInbox(); // Refresh inbox after closing chat
+        }}
         onTabChange={onTabChange}
       />
     );
@@ -213,7 +255,7 @@ export function ChatView({ selectedAthlete, onClearSelectedAthlete, onTabChange 
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
         <h2 className="text-slate-900">Inbox</h2>
-        <button 
+        <button
           onClick={() => setShowRosterModal(true)}
           className="p-2 hover:bg-slate-100 rounded-full transition-colors"
         >
@@ -221,83 +263,102 @@ export function ChatView({ selectedAthlete, onClearSelectedAthlete, onTabChange 
         </button>
       </div>
 
-      {/* Search Bar */}
+      {/* Search */}
       <div className="p-4 border-b border-slate-200">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
             className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border-2 border-transparent focus:border-blue-400 focus:outline-none transition-colors"
           />
         </div>
       </div>
 
-      {/* Chat List */}
+      {/* Conversation List */}
       <div className="flex-1 overflow-y-auto">
-        {visibleChats.map((chat) => (
-          <div
-            key={chat.id}
-            className="relative group px-4 py-4 border-b border-slate-100 hover:bg-slate-50 transition-colors"
-          >
-            <div 
-              onClick={() => setSelectedChat(chat)}
-              className="flex items-center gap-3 cursor-pointer"
-            >
-              {/* Avatar */}
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                {chat.avatar}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-slate-900 flex items-center gap-2">
-                    {chat.name}
-                    {chat.unread > 0 && (
-                      <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">
-                        {chat.unread}
-                      </span>
-                    )}
-                  </h4>
-                  <span className="text-xs text-slate-500">{chat.time}</span>
-                </div>
-                <p className={`text-sm truncate ${chat.unread > 0 ? 'text-slate-900' : 'text-slate-500'}`}>
-                  {chat.lastMessage}
-                </p>
-              </div>
-
-              {/* Delete Button - Shows on hover */}
-              <button
-                onClick={(e) => handleDeleteChat(chat.id, e)}
-                className="ml-2 p-2 opacity-0 group-hover:opacity-100 hover:bg-red-50 rounded-full transition-all flex-shrink-0"
-                aria-label="Delete conversation"
-              >
-                <Trash2 className="w-4 h-4 text-red-600" />
-              </button>
-            </div>
+        {loading && (
+          <div className="flex justify-center py-12">
+            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
           </div>
-        ))}
+        )}
 
-        {/* Empty State */}
-        {visibleChats.length === 0 && (
+        {!loading && visibleConversations.map((conv) => {
+          const isOnline = onlineMap[conv.partner._id] ?? conv.partner.isOnline;
+          return (
+            <div
+              key={conv.partner._id}
+              className="relative group px-4 py-4 border-b border-slate-100 hover:bg-slate-50 transition-colors"
+            >
+              <div
+                onClick={() => handleOpenConversation(conv)}
+                className="flex items-center gap-3 cursor-pointer"
+              >
+                {/* Avatar + online dot */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                    {conv.partner.avatar || getInitials(conv.partner.name)}
+                  </div>
+                  {isOnline && (
+                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="text-slate-900 flex items-center gap-2">
+                      {conv.partner.name}
+                      {conv.unread > 0 && (
+                        <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                          {conv.unread}
+                        </span>
+                      )}
+                    </h4>
+                    <span className="text-xs text-slate-500">
+                      {timeAgo(conv.lastMessage.createdAt)}
+                    </span>
+                  </div>
+                  <p className={`text-sm truncate ${conv.unread > 0 ? 'text-slate-900 font-medium' : 'text-slate-500'}`}>
+                    {conv.lastMessage.sender === currentUserId ? 'You: ' : ''}
+                    {conv.lastMessage.text}
+                  </p>
+                </div>
+
+                {/* Delete */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeletingPartnerId(conv.partner._id);
+                  }}
+                  className="ml-2 p-2 opacity-0 group-hover:opacity-100 hover:bg-red-50 rounded-full transition-all flex-shrink-0"
+                >
+                  <Trash2 className="w-4 h-4 text-red-600" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
+        {!loading && visibleConversations.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
             <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
               <Search className="w-10 h-10 text-slate-300" />
             </div>
             <h3 className="text-slate-900 font-semibold mb-2">No conversations</h3>
             <p className="text-slate-500 text-sm max-w-xs">
-              Start a new chat with athletes on your roster to begin connecting
+              Start a new chat with athletes on your roster
             </p>
           </div>
         )}
       </div>
 
-      {/* Roster Athletes Modal */}
+      {/* Roster Modal */}
       {showRosterModal && (
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-50">
-          <div className="bg-white rounded-t-3xl w-full max-w-md shadow-2xl max-h-[80vh] flex flex-col animate-slide-up">
-            {/* Modal Header */}
+          <div className="bg-white rounded-t-3xl w-full max-w-md shadow-2xl max-h-[80vh] flex flex-col">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-emerald-600" />
@@ -311,45 +372,33 @@ export function ChatView({ selectedAthlete, onClearSelectedAthlete, onTabChange 
               </button>
             </div>
 
-            {/* Subtitle */}
             <div className="px-6 py-3 bg-emerald-50 border-b border-emerald-200">
-              <p className="text-sm text-emerald-700">
-                Start a conversation with athletes on your roster
-              </p>
+              <p className="text-sm text-emerald-700">Start a conversation with your roster</p>
             </div>
 
-            {/* Roster Athletes List */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2">
               {rosterAthletes.length > 0 ? (
                 rosterAthletes.map((athlete) => (
                   <button
-                    key={athlete.id}
+                    key={athlete._id}
                     onClick={() => handleStartChatWithRosterAthlete(athlete)}
                     className="w-full bg-white hover:bg-slate-50 border-2 border-slate-200 hover:border-emerald-400 rounded-2xl p-4 transition-all text-left active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-3">
-                      {/* Avatar with Roster Badge */}
                       <div className="relative">
                         <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                          {athlete.avatar}
+                          {athlete.avatar || getInitials(athlete.name)}
                         </div>
                         <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
                           <Shield className="w-3.5 h-3.5 text-white fill-white" />
                         </div>
                       </div>
-
-                      {/* Athlete Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h4 className="text-slate-900 font-semibold">{athlete.name}</h4>
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white text-xs rounded-full font-medium shadow-sm">
-                            <Shield className="w-3 h-3 fill-white" />
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-600 mb-1">{athlete.position}</p>
-                        <div className="flex items-center gap-2">
+                        <h4 className="text-slate-900 font-semibold">{athlete.name}</h4>
+                        <p className="text-sm text-slate-600">{athlete.position}</p>
+                        <div className="flex items-center gap-2 mt-1">
                           <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
-                            {athlete.level}
+                            {athlete.skillLevel}
                           </span>
                           <span className="text-xs text-slate-500">{athlete.sport}</span>
                         </div>
@@ -361,7 +410,6 @@ export function ChatView({ selectedAthlete, onClearSelectedAthlete, onTabChange 
                 <div className="text-center py-12">
                   <Users className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <p className="text-slate-500">No athletes on your roster yet</p>
-                  <p className="text-sm text-slate-400 mt-1">Add athletes to start chatting</p>
                 </div>
               )}
             </div>
@@ -370,33 +418,26 @@ export function ChatView({ selectedAthlete, onClearSelectedAthlete, onTabChange 
       )}
 
       {/* Delete Confirmation Modal */}
-      {deletingChatId !== null && (
+      {deletingPartnerId !== null && (
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
-          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6 animate-scale-in">
-            {/* Icon */}
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6">
             <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Trash2 className="w-7 h-7 text-red-600" />
             </div>
-
-            {/* Content */}
-            <h3 className="text-slate-900 font-semibold text-center mb-2">
-              Delete Conversation?
-            </h3>
+            <h3 className="text-slate-900 font-semibold text-center mb-2">Delete Conversation?</h3>
             <p className="text-slate-600 text-sm text-center mb-6">
-              This will remove the conversation from your inbox. Your messages will still be saved and can be recovered.
+              This removes it from your inbox. Messages are still saved.
             </p>
-
-            {/* Actions */}
             <div className="flex gap-3">
               <button
-                onClick={cancelDeleteChat}
-                className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors active:scale-[0.98]"
+                onClick={() => setDeletingPartnerId(null)}
+                className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
-                onClick={() => confirmDeleteChat(deletingChatId)}
-                className="flex-1 px-4 py-3 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-medium shadow-lg shadow-red-500/30 transition-all active:scale-[0.98]"
+                onClick={() => confirmDeleteChat(deletingPartnerId)}
+                className="flex-1 px-4 py-3 bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-medium shadow-lg shadow-red-500/30 transition-all"
               >
                 Delete
               </button>

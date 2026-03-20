@@ -1,7 +1,7 @@
 const Message = require('../models/Message');
 const Connection = require('../models/Connection');
 
-// Helper: verify the two users are connected
+// Helper: verify the two users are on each other's roster
 const areConnected = async (userId1, userId2) => {
   const conn = await Connection.findOne({
     $or: [
@@ -25,7 +25,7 @@ const sendMessage = async (req, res) => {
 
     const connected = await areConnected(req.user._id, userId);
     if (!connected) {
-      return res.status(403).json({ message: 'You can only message your connections' });
+      return res.status(403).json({ message: 'You can only message your roster connections' });
     }
 
     const message = await Message.create({
@@ -33,6 +33,20 @@ const sendMessage = async (req, res) => {
       recipient: userId,
       text: text.trim(),
     });
+
+    // Push real-time delivery via socket if recipient is connected
+    const io = req.app.get('io');
+    if (io) {
+      const payload = {
+        _id: message._id,
+        sender: req.user._id.toString(),
+        recipient: userId,
+        text: message.text,
+        read: false,
+        createdAt: message.createdAt,
+      };
+      io.to(`user:${userId}`).emit('message:new', payload);
+    }
 
     res.status(201).json({ message });
   } catch (error) {
@@ -48,7 +62,7 @@ const getConversation = async (req, res) => {
 
     const connected = await areConnected(req.user._id, userId);
     if (!connected) {
-      return res.status(403).json({ message: 'You can only view messages with your connections' });
+      return res.status(403).json({ message: 'You can only view messages with your roster connections' });
     }
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -68,16 +82,24 @@ const getConversation = async (req, res) => {
       { read: true }
     );
 
+    // Notify sender via socket that messages were read
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user:${userId}`).emit('message:read', {
+        by: req.user._id.toString(),
+        from: userId,
+      });
+    }
+
     res.json({ messages: messages.reverse() });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-// GET /api/messages — list of recent conversations
+// GET /api/messages — list of recent conversations (inbox)
 const getInbox = async (req, res) => {
   try {
-    // Aggregate latest message per conversation partner
     const messages = await Message.aggregate([
       {
         $match: {
@@ -117,7 +139,17 @@ const getInbox = async (req, res) => {
       { $unwind: '$partner' },
       {
         $project: {
-          partner: { _id: 1, name: 1, avatar: 1, isOnline: 1, lastSeen: 1 },
+          partner: {
+            _id: 1,
+            name: 1,
+            avatar: 1,
+            role: 1,
+            sport: 1,
+            position: 1,
+            skillLevel: 1,
+            isOnline: 1,
+            lastSeen: 1,
+          },
           lastMessage: 1,
           unread: 1,
         },
