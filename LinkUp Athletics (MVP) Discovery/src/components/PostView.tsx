@@ -1,0 +1,743 @@
+import { Calendar, Award, MapPin, Clock, ArrowLeft, Users, X, Search, Filter } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { NeedCard } from './NeedCard';
+import { AvailableSessionView } from './AvailableSessionView';
+
+interface Need {
+  id: number;
+  title: string;
+  seeking: string;
+  level: string;
+  distance: string;
+  date: string;
+  time: string;
+}
+
+const mockNeeds: Need[] = [
+  {
+    id: 1,
+    title: 'Bullpen Session',
+    seeking: 'Catcher',
+    level: 'NCAA D1',
+    distance: '1.2 miles away',
+    date: 'Today, Jan 9',
+    time: '6:00 PM – 7:30 PM'
+  },
+  {
+    id: 2,
+    title: 'Pitching Practice',
+    seeking: 'LHP or RHP',
+    level: 'HS Varsity',
+    distance: '2.4 miles away',
+    date: 'Tomorrow, Jan 10',
+    time: '3:00 PM – 4:30 PM'
+  },
+  {
+    id: 3,
+    title: 'Breaking Ball Work',
+    seeking: 'Catcher',
+    level: 'College',
+    distance: '0.8 miles away',
+    date: 'Today, Jan 9',
+    time: '5:00 PM – 6:30 PM'
+  },
+  {
+    id: 4,
+    title: 'Live Batting Practice',
+    seeking: 'Pitcher (RHP)',
+    level: 'NCAA D3',
+    distance: '3.1 miles away',
+    date: 'Saturday, Jan 11',
+    time: '10:00 AM – 12:00 PM'
+  },
+  {
+    id: 5,
+    title: 'Velocity Training',
+    seeking: 'Catcher',
+    level: 'HS JV',
+    distance: '4.2 miles away',
+    date: 'Sunday, Jan 12',
+    time: '2:00 PM – 3:30 PM'
+  },
+  {
+    id: 6,
+    title: 'Hitting Practice',
+    seeking: 'Pitcher (Any)',
+    level: 'NCAA D2',
+    distance: '1.8 miles away',
+    date: 'Monday, Jan 13',
+    time: '4:00 PM – 5:30 PM'
+  },
+];
+
+interface PostViewProps {
+  onNavigateToDashboard?: (target: string) => void;
+  userSports?: string[];
+  onOpenChat?: (athlete: { 
+    id: number; 
+    name: string; 
+    avatar: string; 
+    sport: string; 
+    position: string; 
+    level: string;
+    sessionContext?: {
+      sessionTitle: string;
+      date: string;
+      time: string;
+      location: string;
+    };
+  }) => void;
+}
+
+export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }: PostViewProps) {
+  const [viewMode, setViewMode] = useState<'post' | 'find'>('post');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSkillLevels, setSelectedSkillLevels] = useState<string[]>([]);
+  const [selectedSport, setSelectedSport] = useState(userSports.length > 0 ? userSports[0] : 'Baseball');
+  const [selectedPartnerRoles, setSelectedPartnerRoles] = useState<string[]>([]);
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
+  const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
+  const [isDateFlexible, setIsDateFlexible] = useState(false);
+  const [isTimeFlexible, setIsTimeFlexible] = useState(false);
+  
+  // Find Sessions filters
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterSport, setFilterSport] = useState<string[]>([]);
+  const [filterPositions, setFilterPositions] = useState<string[]>([]);
+  const [filterSkillLevels, setFilterSkillLevels] = useState<string[]>([]);
+  const [filterDistance, setFilterDistance] = useState('10');
+  
+  // Session detail view
+  const [selectedSession, setSelectedSession] = useState<Need | null>(null);
+  
+  const skillLevels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro', 'Adult Athlete (18-45yo)', 'Adult Athlete (45+yo)'];
+  
+  const sportPartnerRoles: Record<string, string[]> = {
+    'Baseball': ['Pitcher (LHP)', 'Pitcher (RHP)', 'Catcher', 'Live Batter', 'Infielder', 'Outfielder', 'Utility', 'Lifting Partner', 'Conditioning Partner'],
+    'Softball': ['Pitcher (LHP)', 'Pitcher (RHP)', 'Catcher', 'Live Batter', 'Infielder', 'Outfielder', 'Utility', 'Lifting Partner', 'Conditioning Partner'],
+    'Soccer': ['Goalkeeper', 'Defender', 'Midfielder', 'Forward', 'Winger', 'Any Position', 'Lifting Partner', 'Conditioning Partner'],
+    'Basketball': ['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center', 'Any Position', 'Lifting Partner', 'Conditioning Partner'],
+    'Volleyball': ['Setter', 'Outside Hitter', 'Middle Blocker', 'Libero', 'Opposite', 'Any Position', 'Lifting Partner', 'Conditioning Partner'],
+    'Football': ['QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB', 'Special Teams', 'Any Position', 'Lifting Partner', 'Conditioning Partner'],
+    'Lacrosse': ['Attack', 'Midfield', 'Defense', 'Goalie', 'Any Position', 'Lifting Partner', 'Conditioning Partner'],
+    'Field Hockey': ['Forward', 'Midfielder', 'Defender', 'Goalkeeper', 'Any Position', 'Lifting Partner', 'Conditioning Partner'],
+    'Track and Field': ['Sprinter', 'Distance Runner', 'Hurdler', 'Long Jumper', 'High Jumper', 'Triple Jumper', 'Pole Vaulter', 'Shot Putter', 'Discus Thrower', 'Javelin Thrower', 'Decathlete/Heptathlete', 'Any Event', 'Training Partner', 'Conditioning Partner'],
+    'Golf': ['Driver', 'Irons', 'Short Game', 'Putting', 'Course Management', 'Any Area', 'Practice Partner', 'Conditioning Partner'],
+    'Tennis': ['Singles', 'Doubles', 'Serve & Volley', 'Baseline', 'Net Play', 'Any Style', 'Practice Partner', 'Conditioning Partner']
+  };
+
+  const partnerRoles = sportPartnerRoles[selectedSport] || sportPartnerRoles['Baseball'];
+
+  const togglePartnerRole = (role: string) => {
+    if (selectedPartnerRoles.includes(role)) {
+      setSelectedPartnerRoles(selectedPartnerRoles.filter(r => r !== role));
+    } else {
+      setSelectedPartnerRoles([...selectedPartnerRoles, role]);
+    }
+  };
+  
+  const toggleSkillLevel = (level: string) => {
+    if (selectedSkillLevels.includes(level)) {
+      setSelectedSkillLevels(selectedSkillLevels.filter(l => l !== level));
+    } else {
+      setSelectedSkillLevels([...selectedSkillLevels, level]);
+    }
+  };
+  
+  const toggleFilterSport = (sport: string) => {
+    if (filterSport.includes(sport)) {
+      setFilterSport(filterSport.filter(s => s !== sport));
+    } else {
+      setFilterSport([...filterSport, sport]);
+    }
+  };
+  
+  const toggleFilterPosition = (position: string) => {
+    if (filterPositions.includes(position)) {
+      setFilterPositions(filterPositions.filter(p => p !== position));
+    } else {
+      setFilterPositions([...filterPositions, position]);
+    }
+  };
+  
+  const toggleFilterSkillLevel = (level: string) => {
+    if (filterSkillLevels.includes(level)) {
+      setFilterSkillLevels(filterSkillLevels.filter(l => l !== level));
+    } else {
+      setFilterSkillLevels([...filterSkillLevels, level]);
+    }
+  };
+  
+  const clearFilters = () => {
+    setFilterSport([]);
+    setFilterPositions([]);
+    setFilterSkillLevels([]);
+    setFilterDistance('10');
+  };
+  
+  const activeFilterCount = filterSport.length + filterPositions.length + filterSkillLevels.length + (filterDistance !== '10' ? 1 : 0);
+
+  const handleDateAdd = (date: string) => {
+    if (date && !selectedDates.includes(date)) {
+      setSelectedDates([...selectedDates, date]);
+    }
+  };
+
+  const handleDateRemove = (dateToRemove: string) => {
+    setSelectedDates(selectedDates.filter(date => date !== dateToRemove));
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const handleTimeAdd = (time: string) => {
+    if (time && !selectedTimes.includes(time)) {
+      setSelectedTimes([...selectedTimes, time]);
+    }
+  };
+
+  const handleTimeRemove = (timeToRemove: string) => {
+    setSelectedTimes(selectedTimes.filter(time => time !== timeToRemove));
+  };
+
+  const formatTime = (timeString: string) => {
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
+
+  const filteredNeeds = mockNeeds.filter(need => {
+    if (searchQuery) {
+      return need.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             need.seeking.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+    return true;
+  });
+  
+  // Set default sport filters based on user's sports when switching to find view
+  useEffect(() => {
+    if (viewMode === 'find' && userSports.length > 0 && filterSport.length === 0) {
+      setFilterSport(userSports);
+    }
+  }, [viewMode, userSports]);
+  
+  // Clear position filters when sport selection changes to invalid positions
+  useEffect(() => {
+    if (filterSport.length === 0) {
+      // No sports selected, clear positions
+      setFilterPositions([]);
+      return;
+    }
+    
+    // Get all available positions for selected sports
+    const availablePositions = new Set<string>();
+    filterSport.forEach(sport => {
+      const positions = sportPartnerRoles[sport] || [];
+      positions.forEach(pos => availablePositions.add(pos));
+    });
+    
+    // Remove positions that are no longer valid
+    setFilterPositions(prev => prev.filter(pos => availablePositions.has(pos)));
+  }, [filterSport]);
+  
+  // Get available positions based on selected sports
+  const getAvailablePositions = (): string[] => {
+    if (filterSport.length === 0) {
+      // No sports selected - show only general training partner roles
+      return ['Lifting Partner', 'Conditioning Partner'];
+    }
+    
+    // Return positions for selected sports
+    const availablePositions = new Set<string>();
+    filterSport.forEach(sport => {
+      const positions = sportPartnerRoles[sport] || [];
+      positions.forEach(pos => availablePositions.add(pos));
+    });
+    return Array.from(availablePositions).sort();
+  };
+  
+  const availableFilterPositions = getAvailablePositions();
+
+  // If viewing a specific session, show the detail view
+  if (selectedSession) {
+    return (
+      <AvailableSessionView
+        session={{ ...selectedSession, sport: 'Baseball' }}
+        onBack={() => setSelectedSession(null)}
+        onOpenChat={onOpenChat}
+      />
+    );
+  }
+
+  return (
+    <div className="h-full overflow-y-auto bg-slate-50">
+      {/* Header */}
+      <div className="bg-white border-b border-slate-200 px-6 py-4">
+        <div className="flex items-center gap-3 mb-4">
+          <button 
+            onClick={() => onNavigateToDashboard?.('upcoming-sessions')}
+            className="p-2 hover:bg-slate-100 rounded-full transition-colors -ml-2"
+          >
+            <ArrowLeft className="w-5 h-5 text-slate-700" />
+          </button>
+          <h2 className="text-slate-900">Sessions</h2>
+        </div>
+
+        {/* Segmented Control Toggle */}
+        <div className="bg-slate-100 p-1 rounded-xl flex gap-1">
+          <button
+            onClick={() => setViewMode('post')}
+            className={`flex-1 py-2.5 rounded-lg transition-all ${
+              viewMode === 'post'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Post a Need
+          </button>
+          <button
+            onClick={() => setViewMode('find')}
+            className={`flex-1 py-2.5 rounded-lg transition-all ${
+              viewMode === 'find'
+                ? 'bg-white text-slate-900 shadow-sm'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Find Sessions
+          </button>
+        </div>
+      </div>
+
+      {/* Content Area */}
+      {viewMode === 'post' ? (
+        // POST A NEED VIEW
+        <div className="p-6">
+          <div className="max-w-md mx-auto space-y-5">
+            {/* Sport for Session */}
+            <div>
+              <label className="text-sm text-slate-700 mb-2 block">
+                Sport for Session
+              </label>
+              <select 
+                value={selectedSport}
+                onChange={(e) => {
+                  setSelectedSport(e.target.value);
+                  setSelectedPartnerRoles([]);
+                }}
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+              >
+                {userSports.length > 0 ? (
+                  userSports.map((sport) => (
+                    <option key={sport} value={sport}>{sport}</option>
+                  ))
+                ) : (
+                  <>
+                    <option>Baseball</option>
+                    <option>Softball</option>
+                    <option>Soccer</option>
+                    <option>Basketball</option>
+                    <option>Volleyball</option>
+                    <option>Football</option>
+                    <option>Lacrosse</option>
+                    <option>Field Hockey</option>
+                    <option>Track and Field</option>
+                    <option>Golf</option>
+                    <option>Tennis</option>
+                  </>
+                )}
+              </select>
+              {userSports.length > 0 && (
+                <p className="text-xs text-slate-500 mt-1.5 ml-1">
+                  ✓ Only showing sports you're rostered on
+                </p>
+              )}
+            </div>
+
+            {/* Partner Role Needed */}
+            <div>
+              <label className="text-sm text-slate-700 mb-3 block flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                Partner Role Needed
+              </label>
+              <p className="text-xs text-slate-500 mb-2">Select all that apply</p>
+              <div className="flex flex-wrap gap-2">
+                {partnerRoles.map((role) => (
+                  <button
+                    key={role}
+                    onClick={() => togglePartnerRole(role)}
+                    className={`px-4 py-2.5 rounded-xl transition-all ${
+                      selectedPartnerRoles.includes(role)
+                        ? 'bg-blue-900 text-white border-2 border-blue-800 shadow-lg shadow-blue-900/20'
+                        : 'bg-white text-slate-700 border-2 border-slate-300 hover:border-slate-400'
+                    }`}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Date & Time & Duration */}
+            <div>
+              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Date
+              </label>
+              <input
+                type="date"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                onChange={(e) => handleDateAdd(e.target.value)}
+              />
+              {selectedDates.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {selectedDates.map((date) => (
+                    <div
+                      key={date}
+                      className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-900 rounded-lg border border-blue-200"
+                    >
+                      <span className="text-sm font-medium">{formatDate(date)}</span>
+                      <button
+                        onClick={() => handleDateRemove(date)}
+                        className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Flexible Date Option */}
+              <label className="flex items-center gap-2 mt-3 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={isDateFlexible}
+                    onChange={() => setIsDateFlexible(!isDateFlexible)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                    {isDateFlexible && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">
+                  Flexible on date <span className="text-xs text-slate-400">(Will discuss with partner)</span>
+                </span>
+              </label>
+            </div>
+
+            <div>
+              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Time
+              </label>
+              <input
+                type="time"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                onChange={(e) => handleTimeAdd(e.target.value)}
+              />
+              {selectedTimes.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {selectedTimes.map((time) => (
+                    <div
+                      key={time}
+                      className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-900 rounded-lg border border-blue-200"
+                    >
+                      <span className="text-sm font-medium">{formatTime(time)}</span>
+                      <button
+                        onClick={() => handleTimeRemove(time)}
+                        className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Flexible Time Option */}
+              <label className="flex items-center gap-2 mt-3 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={isTimeFlexible}
+                    onChange={() => setIsTimeFlexible(!isTimeFlexible)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                    {isTimeFlexible && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">
+                  Flexible on time <span className="text-xs text-slate-400">(Will discuss with partner)</span>
+                </span>
+              </label>
+            </div>
+
+            <div>
+              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Duration
+              </label>
+              <select className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors">
+                <option>1 hr</option>
+                <option>90 mins</option>
+                <option>2 hr</option>
+              </select>
+            </div>
+
+            {/* Location with Google Maps Autocomplete */}
+            <div>
+              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Field Name/Address
+              </label>
+              <input
+                type="text"
+                placeholder="Search for a location..."
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+              />
+              <p className="text-xs text-slate-500 mt-1.5 ml-1">Google Maps Autocomplete</p>
+            </div>
+
+            {/* Partner Skill Level */}
+            <div>
+              <label className="text-sm text-slate-700 mb-3 block flex items-center gap-2">
+                <Award className="w-4 h-4" />
+                Partner Skill Level
+              </label>
+              <p className="text-xs text-slate-500 mb-2">Select all that apply</p>
+              <div className="flex flex-wrap gap-2">
+                {skillLevels.map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => toggleSkillLevel(level)}
+                    className={`px-4 py-2.5 rounded-xl transition-all ${
+                      selectedSkillLevels.includes(level)
+                        ? 'bg-blue-900 text-white border-2 border-blue-800 shadow-lg shadow-blue-900/20'
+                        : 'bg-white text-slate-700 border-2 border-slate-300 hover:border-slate-400'
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Session Goal/Notes */}
+            <div>
+              <label className="text-sm text-slate-700 mb-2 block">
+                Session Goal/Notes
+              </label>
+              <textarea
+                placeholder="e.g., Need frame and block work, or focusing on curveball mechanics..."
+                rows={4}
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors resize-none"
+              />
+            </div>
+
+            {/* Primary Action Button */}
+            <button className="w-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-red-500/20 hover:shadow-xl active:scale-[0.98]">
+              POST SESSION
+            </button>
+          </div>
+        </div>
+      ) : (
+        // FIND SESSIONS VIEW
+        <div className="p-6">
+          <div className="max-w-md mx-auto space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search sessions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+              />
+            </div>
+
+            {/* Filter Button */}
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-colors ${
+                showFilters 
+                  ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span>Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="ml-1 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+
+            {/* Filters Panel */}
+            {showFilters && (
+              <div className="bg-white rounded-2xl border-2 border-slate-200 p-5 space-y-5">
+                {/* Sport Filter */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-sm text-slate-700 font-medium">Sport</label>
+                    {filterSport.length > 0 && (
+                      <button 
+                        onClick={() => setFilterSport([])}
+                        className="text-xs text-blue-600 hover:text-blue-700"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {['Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis'].map((sport) => (
+                      <button
+                        key={sport}
+                        onClick={() => toggleFilterSport(sport)}
+                        className={`px-3 py-2 rounded-lg text-sm transition-all ${
+                          filterSport.includes(sport)
+                            ? 'bg-blue-600 text-white border-2 border-blue-500'
+                            : 'bg-slate-50 text-slate-700 border-2 border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        {sport}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Position Filter */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-sm text-slate-700 font-medium">Position</label>
+                    {filterPositions.length > 0 && (
+                      <button 
+                        onClick={() => setFilterPositions([])}
+                        className="text-xs text-blue-600 hover:text-blue-700"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {availableFilterPositions.map((position) => (
+                      <button
+                        key={position}
+                        onClick={() => toggleFilterPosition(position)}
+                        className={`px-3 py-2 rounded-lg text-sm transition-all ${
+                          filterPositions.includes(position)
+                            ? 'bg-blue-600 text-white border-2 border-blue-500'
+                            : 'bg-slate-50 text-slate-700 border-2 border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        {position}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Skill Level Filter */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-sm text-slate-700 font-medium">Skill Level</label>
+                    {filterSkillLevels.length > 0 && (
+                      <button 
+                        onClick={() => setFilterSkillLevels([])}
+                        className="text-xs text-blue-600 hover:text-blue-700"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {skillLevels.map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => toggleFilterSkillLevel(level)}
+                        className={`px-3 py-2 rounded-lg text-sm transition-all ${
+                          filterSkillLevels.includes(level)
+                            ? 'bg-blue-600 text-white border-2 border-blue-500'
+                            : 'bg-slate-50 text-slate-700 border-2 border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Distance Filter */}
+                <div>
+                  <label className="text-sm text-slate-700 font-medium mb-3 block">
+                    Max Distance: {filterDistance} miles
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="50"
+                    value={filterDistance}
+                    onChange={(e) => setFilterDistance(e.target.value)}
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  />
+                  <div className="flex justify-between text-xs text-slate-500 mt-1">
+                    <span>1 mi</span>
+                    <span>50 mi</span>
+                  </div>
+                </div>
+
+                {/* Clear All Button */}
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={clearFilters}
+                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors text-sm font-medium"
+                  >
+                    Clear All Filters
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Session Count */}
+            <div className="py-2">
+              <p className="text-sm text-slate-600">
+                {filteredNeeds.length} session{filteredNeeds.length !== 1 ? 's' : ''} available
+              </p>
+            </div>
+
+            {/* Sessions List */}
+            <div className="space-y-3 pb-4">
+              {filteredNeeds.map((need) => (
+                <NeedCard 
+                  key={need.id} 
+                  need={need} 
+                  onClick={() => setSelectedSession(need)}
+                />
+              ))}
+            </div>
+
+            {/* Expand Search CTA */}
+            <button className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 hover:border-blue-300 text-blue-900 py-4 px-6 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex flex-col items-center gap-1">
+              <span className="font-medium">Extend criteria and unlock 23 more sessions</span>
+              <span className="text-sm text-blue-700">Expand your search radius and skill levels</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
