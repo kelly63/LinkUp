@@ -1,27 +1,75 @@
 const User = require('../models/User');
 const Connection = require('../models/Connection');
 
-// GET /api/users — search/discover users
+// GET /api/users — search/discover athletes and coaches
 const getUsers = async (req, res) => {
   try {
-    const { search, interest, location, page = 1, limit = 20 } = req.query;
+    const {
+      search,
+      sport,
+      skillLevel,
+      role,
+      location,
+      page = 1,
+      limit = 20,
+    } = req.query;
+
     const query = { _id: { $ne: req.user._id } };
 
+    // Text search across name and position
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { profession: { $regex: search, $options: 'i' } },
+        { position: { $regex: search, $options: 'i' } },
+        { sport: { $regex: search, $options: 'i' } },
       ];
     }
-    if (interest) query.interests = interest;
+
+    // Athletics filters
+    if (sport) query.sport = { $regex: sport, $options: 'i' };
+    if (skillLevel) query.skillLevel = skillLevel;
+    if (role) query.role = role;
     if (location) query.location = { $regex: location, $options: 'i' };
+
+    // Visibility filtering: only return users whose visibilityMode allows the requesting user
+    // "everyone" users are always visible
+    // "filtered" users are visible only if the requester's sport/level passes their allowedSports/allowedLevels
+    const visibilityFilter = {
+      $or: [
+        { visibilityMode: 'everyone' },
+        {
+          visibilityMode: 'filtered',
+          $and: [
+            {
+              $or: [
+                { allowedLevels: { $size: 0 } },
+                { allowedLevels: req.user.skillLevel || '' },
+              ],
+            },
+            {
+              $or: [
+                { allowedSports: { $size: 0 } },
+                { allowedSports: req.user.sport || '' },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    // Merge visibility into query
+    if (query.$and) {
+      query.$and.push(visibilityFilter);
+    } else {
+      query.$and = [visibilityFilter];
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
     const users = await User.find(query)
       .select('-password')
       .skip(skip)
       .limit(Number(limit))
-      .sort({ createdAt: -1 });
+      .sort({ averageRating: -1, createdAt: -1 });
 
     const total = await User.countDocuments(query);
 
@@ -45,7 +93,18 @@ const getUserById = async (req, res) => {
 // PUT /api/users/profile
 const updateProfile = async (req, res) => {
   try {
-    const allowedFields = ['name', 'bio', 'location', 'profession', 'interests'];
+    const allowedFields = [
+      'name', 'bio', 'location', 'phone',
+      // Athlete fields
+      'sport', 'position', 'skillLevel', 'customSportRequest',
+      // Coach fields
+      'sportsCoached', 'yearsExperience', 'certifications', 'coachingPhilosophy', 'hourlyRate',
+      // Privacy
+      'visibilityMode', 'allowedLevels', 'allowedSports', 'allowCoaches', 'searchRadius',
+      // Social links
+      'hudlUrl', 'instagramUrl', 'twitterUrl', 'linkedinUrl',
+    ];
+
     const updates = {};
     for (const field of allowedFields) {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
@@ -88,4 +147,24 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, getUserById, updateProfile, changePassword };
+// PUT /api/users/role — toggle between athlete and coach mode
+const updateRole = async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!['athlete', 'coach'].includes(role)) {
+      return res.status(400).json({ message: 'Role must be athlete or coach' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { role },
+      { new: true }
+    ).select('-password');
+
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = { getUsers, getUserById, updateProfile, changePassword, updateRole };

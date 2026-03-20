@@ -8,6 +8,9 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const connectionRoutes = require('./routes/connections');
 const messageRoutes = require('./routes/messages');
+const sessionRoutes = require('./routes/sessions');
+const ratingRoutes = require('./routes/ratings');
+const postRoutes = require('./routes/posts');
 
 connectDB();
 
@@ -25,6 +28,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/ratings', ratingRoutes);
+app.use('/api/posts', postRoutes);
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));

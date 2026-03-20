@@ -9,9 +9,42 @@ const generateToken = (id) =>
 // POST /api/auth/register
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const {
+      // Required core fields
+      fullName,
+      name,
+      email,
+      password,
+      // Optional basic
+      phone,
+      location,
+      // Role
+      userType,
+      role,
+      // Athlete fields
+      sport,
+      position,
+      skillLevel,
+      customSportRequest,
+      // Coach fields
+      sportsCoached,
+      yearsExperience,
+      certifications,
+      coachingPhilosophy,
+      hourlyRate,
+      // Privacy
+      visibilityMode,
+      allowedLevels,
+      allowedSports,
+      allowCoaches,
+      searchRadius,
+      // Agreement
+      signature,
+      agreedToTerms,
+    } = req.body;
 
-    if (!name || !email || !password) {
+    const displayName = fullName || name;
+    if (!displayName || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
 
@@ -20,7 +53,37 @@ const register = async (req, res) => {
       return res.status(409).json({ message: 'Email already in use' });
     }
 
-    const user = await User.create({ name, email, password });
+    const userData = {
+      name: displayName,
+      email,
+      password,
+      role: userType || role || 'athlete',
+    };
+
+    // Optional fields
+    if (phone) userData.phone = phone;
+    if (location) userData.location = location;
+    if (sport) userData.sport = sport;
+    if (position) userData.position = position;
+    if (skillLevel) userData.skillLevel = skillLevel;
+    if (customSportRequest) userData.customSportRequest = customSportRequest;
+    if (sportsCoached) userData.sportsCoached = sportsCoached;
+    if (yearsExperience) userData.yearsExperience = yearsExperience;
+    if (certifications) userData.certifications = certifications;
+    if (coachingPhilosophy) userData.coachingPhilosophy = coachingPhilosophy;
+    if (hourlyRate != null) userData.hourlyRate = hourlyRate;
+    if (visibilityMode) userData.visibilityMode = visibilityMode;
+    if (allowedLevels) userData.allowedLevels = allowedLevels;
+    if (allowedSports) userData.allowedSports = allowedSports;
+    if (allowCoaches != null) userData.allowCoaches = allowCoaches;
+    if (searchRadius) userData.searchRadius = Number(searchRadius);
+    if (signature) userData.signature = signature;
+    if (agreedToTerms) {
+      userData.agreedToTerms = true;
+      userData.agreedAt = new Date();
+    }
+
+    const user = await User.create(userData);
     const token = generateToken(user._id);
 
     res.status(201).json({ token, user: user.toPublicJSON() });

@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema(
   {
+    // Core identity
     name: {
       type: String,
       required: [true, 'Name is required'],
@@ -22,13 +23,26 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
       select: false,
     },
+    phone: {
+      type: String,
+      default: '',
+    },
+
+    // Role
+    role: {
+      type: String,
+      enum: ['athlete', 'coach'],
+      default: 'athlete',
+    },
+
+    // Profile
     avatar: {
       type: String,
       default: null,
     },
     bio: {
       type: String,
-      maxlength: 300,
+      maxlength: 500,
       default: '',
     },
     location: {
@@ -36,15 +50,103 @@ const userSchema = new mongoose.Schema(
       maxlength: 100,
       default: '',
     },
-    profession: {
+
+    // Athlete-specific fields
+    sport: {
       type: String,
-      maxlength: 100,
       default: '',
     },
-    interests: {
+    position: {
+      type: String,
+      default: '',
+    },
+    skillLevel: {
+      type: String,
+      enum: ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro', 'Athlete - Other', ''],
+      default: '',
+    },
+    customSportRequest: {
+      type: String,
+      default: '',
+    },
+
+    // Coach-specific fields
+    sportsCoached: {
       type: [String],
       default: [],
     },
+    yearsExperience: {
+      type: String,
+      default: '',
+    },
+    certifications: {
+      type: String,
+      default: '',
+    },
+    coachingPhilosophy: {
+      type: String,
+      maxlength: 1000,
+      default: '',
+    },
+    hourlyRate: {
+      type: Number,
+      default: null,
+    },
+
+    // Privacy & visibility
+    visibilityMode: {
+      type: String,
+      enum: ['everyone', 'filtered'],
+      default: 'filtered',
+    },
+    allowedLevels: {
+      type: [String],
+      default: [],
+    },
+    allowedSports: {
+      type: [String],
+      default: [],
+    },
+    allowCoaches: {
+      type: Boolean,
+      default: true,
+    },
+    searchRadius: {
+      type: Number,
+      default: 25,
+    },
+
+    // Agreement
+    signature: {
+      type: String,
+      default: '',
+    },
+    agreedToTerms: {
+      type: Boolean,
+      default: false,
+    },
+    agreedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // Social links
+    hudlUrl: { type: String, default: '' },
+    instagramUrl: { type: String, default: '' },
+    twitterUrl: { type: String, default: '' },
+    linkedinUrl: { type: String, default: '' },
+
+    // Rating stats (denormalized for performance)
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
+    ratingCount: {
+      type: Number,
+      default: 0,
+    },
+
+    // Status
     isOnline: {
       type: Boolean,
       default: false,
