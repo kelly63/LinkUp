@@ -324,7 +324,7 @@ export const posts = {
 
   create: (
     token: string,
-    body: { type: string; content?: string; sport?: string; sessionId?: string; sessionPartnerId?: string; sessionSummary?: string }
+    body: { type: string; content?: string; sport?: string; sessionId?: string; sessionPartnerId?: string; sessionSummary?: string; sharedUrl?: string; articleTitle?: string }
   ) =>
     request<{ post: Post }>('/api/posts', {
       method: 'POST',

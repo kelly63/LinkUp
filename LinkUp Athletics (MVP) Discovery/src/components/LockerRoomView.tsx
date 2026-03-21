@@ -1,11 +1,9 @@
-import { 
-  Heart, 
-  MessageCircle, 
-  Share2, 
+import {
+  Heart,
+  MessageCircle,
+  Share2,
   MoreVertical,
   Trophy,
-  TrendingUp,
-  Image as ImageIcon,
   Link2,
   PlusCircle,
   Award,
@@ -13,554 +11,325 @@ import {
   Clock,
   MapPin,
   ExternalLink,
-  ChevronDown,
-  ChevronUp
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
+import { useAuth } from '../lib/auth';
+import { posts as postsApi, Post } from '../lib/api';
+import { toast } from 'sonner';
 
-interface Post {
-  id: number;
-  type: 'session_completion' | 'thought' | 'article';
-  author: {
-    name: string;
-    avatar: string;
-    position: string;
-    sport: string;
-  };
-  timestamp: string;
-  content?: string;
-  session?: {
-    sport: string;
-    partner: string;
-    location: string;
-    type: string;
-    rating: number;
-  };
-  article?: {
-    title: string;
-    source: string;
-    url: string;
-    imageUrl?: string;
-  };
-  likes: number;
-  comments: number;
-  isLiked: boolean;
+type Filter = 'all' | 'session_completion' | 'thought' | 'article';
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return days === 1 ? 'Yesterday' : `${days}d ago`;
+}
+
+function getInitials(name: string) {
+  return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
 export function LockerRoomView() {
-  const posts: Post[] = [
-    {
-      id: 1,
-      type: 'session_completion',
-      author: {
-        name: 'Mike Johnson',
-        avatar: 'MJ',
-        position: 'Pitcher',
-        sport: 'Baseball'
-      },
-      timestamp: '2 hours ago',
-      session: {
-        sport: 'Baseball',
-        partner: 'Alex Rivera',
-        location: 'Diamond Sports Complex',
-        type: 'Bullpen Session',
-        rating: 5
-      },
-      likes: 24,
-      comments: 5,
-      isLiked: false
-    },
-    {
-      id: 2,
-      type: 'thought',
-      author: {
-        name: 'Sarah Williams',
-        avatar: 'SW',
-        position: 'Point Guard',
-        sport: 'Basketball'
-      },
-      timestamp: '4 hours ago',
-      content: 'Just wrapped up an intense shooting session. Working on my catch-and-shoot mechanics has been a game changer. Consistency is key! 🏀 Who else is putting in work this weekend?',
-      likes: 47,
-      comments: 12,
-      isLiked: true
-    },
-    {
-      id: 3,
-      type: 'article',
-      author: {
-        name: 'Chris Martinez',
-        avatar: 'CM',
-        position: 'Quarterback',
-        sport: 'Football'
-      },
-      timestamp: '6 hours ago',
-      content: 'Great read on QB mechanics and footwork fundamentals. This is exactly what we work on in our sessions.',
-      article: {
-        title: 'The Science Behind Elite Quarterback Footwork',
-        source: 'Athletic Performance Lab',
-        url: '#'
-      },
-      likes: 31,
-      comments: 8,
-      isLiked: false
-    },
-    {
-      id: 4,
-      type: 'session_completion',
-      author: {
-        name: 'Emma Davis',
-        avatar: 'ED',
-        position: 'Setter',
-        sport: 'Volleyball'
-      },
-      timestamp: '8 hours ago',
-      session: {
-        sport: 'Volleyball',
-        partner: 'Jessica Thompson',
-        location: 'Coastal Volleyball Center',
-        type: 'Setting Practice',
-        rating: 5
-      },
-      likes: 18,
-      comments: 3,
-      isLiked: true
-    },
-    {
-      id: 5,
-      type: 'thought',
-      author: {
-        name: 'John Doe',
-        avatar: 'JD',
-        position: 'Catcher',
-        sport: 'Baseball'
-      },
-      timestamp: '1 day ago',
-      content: 'Pitch framing session today was incredible. Shoutout to all the pitchers grinding on their mechanics. The trust between pitcher and catcher is everything. 💪',
-      likes: 56,
-      comments: 15,
-      isLiked: true
-    },
-    {
-      id: 6,
-      type: 'article',
-      author: {
-        name: 'Taylor Brooks',
-        avatar: 'TB',
-        position: 'Shortstop',
-        sport: 'Softball'
-      },
-      timestamp: '1 day ago',
-      content: 'Interesting breakdown of defensive positioning strategies. Worth a read for all infielders.',
-      article: {
-        title: 'Advanced Defensive Metrics: Reading the Hitter',
-        source: 'Softball IQ',
-        url: '#'
-      },
-      likes: 22,
-      comments: 6,
-      isLiked: false
-    }
-  ];
-
-  const renderSessionCompletionPost = (post: Post) => (
-    <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-2xl p-4 mb-4 border-2 border-emerald-200">
-      <div className="flex items-center gap-2 mb-3">
-        <Trophy className="w-5 h-5 text-emerald-600" />
-        <span className="text-emerald-700">Session Completed</span>
-      </div>
-      
-      <div className="bg-white rounded-xl p-4 space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <Users className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <p className="text-slate-900">{post.session?.type}</p>
-            <p className="text-sm text-slate-600">with {post.session?.partner}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <MapPin className="w-4 h-4" />
-          <span>{post.session?.location}</span>
-        </div>
-
-        <div className="flex items-center gap-1 pt-2 border-t border-slate-200">
-          <span className="text-sm text-slate-600">Rating:</span>
-          {[...Array(post.session?.rating || 0)].map((_, i) => (
-            <Award key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderThoughtPost = (post: Post) => (
-    <div className="bg-white rounded-2xl p-4">
-      <p className="text-slate-900 leading-relaxed">{post.content}</p>
-    </div>
-  );
-
-  const renderArticlePost = (post: Post) => (
-    <div className="bg-white rounded-2xl overflow-hidden">
-      {post.content && (
-        <div className="p-4 pb-3">
-          <p className="text-slate-900">{post.content}</p>
-        </div>
-      )}
-      
-      <div className="border-2 border-slate-200 rounded-xl m-4 mt-0 overflow-hidden hover:border-blue-400 transition-colors">
-        {post.article?.imageUrl && (
-          <div className="aspect-video bg-slate-200"></div>
-        )}
-        <div className="p-4">
-          <h4 className="text-slate-900 mb-2 line-clamp-2">{post.article?.title}</h4>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-500">{post.article?.source}</p>
-            <ExternalLink className="w-4 h-4 text-blue-600" />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
+  const { token, user } = useAuth();
+  const [feedPosts, setFeedPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<Filter>('all');
   const [isCreatePostDialogOpen, setIsCreatePostDialogOpen] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<{
-    createPost: boolean;
-    filters: boolean;
-    sessions: boolean;
-    thoughts: boolean;
-    articles: boolean;
-  }>({
-    createPost: true,
-    filters: true,
-    sessions: true,
-    thoughts: true,
-    articles: true,
-  });
+  // optimistic like tracking: postId → liked by me
+  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+  const fetchPage = useCallback(async (p: number, replace: boolean) => {
+    if (!token) return;
+    replace ? setLoading(true) : setLoadingMore(true);
+    try {
+      const params: Parameters<typeof postsApi.getFeed>[1] = { page: p };
+      if (activeFilter !== 'all') params.type = activeFilter;
+      const { posts: fetched, pages } = await postsApi.getFeed(token, params);
+      setTotalPages(pages ?? 1);
+      setPage(p);
+
+      // Seed like maps from API data
+      const myId = user?._id;
+      const newLikedMap: Record<string, boolean> = {};
+      const newLikeCounts: Record<string, number> = {};
+      fetched.forEach((post) => {
+        newLikedMap[post._id] = myId ? post.likes.includes(myId) : false;
+        newLikeCounts[post._id] = post.likes.length;
+      });
+
+      if (replace) {
+        setFeedPosts(fetched);
+        setLikedMap(newLikedMap);
+        setLikeCounts(newLikeCounts);
+      } else {
+        setFeedPosts((prev) => [...prev, ...fetched]);
+        setLikedMap((prev) => ({ ...prev, ...newLikedMap }));
+        setLikeCounts((prev) => ({ ...prev, ...newLikeCounts }));
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not load feed');
+    } finally {
+      replace ? setLoading(false) : setLoadingMore(false);
+    }
+  }, [token, user?._id, activeFilter]);
+
+  useEffect(() => {
+    fetchPage(1, true);
+  }, [activeFilter, token]);
+
+  const handleLike = async (postId: string) => {
+    if (!token) return;
+    const wasLiked = likedMap[postId] ?? false;
+    // optimistic update
+    setLikedMap((prev) => ({ ...prev, [postId]: !wasLiked }));
+    setLikeCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + (wasLiked ? -1 : 1) }));
+    try {
+      await postsApi.toggleLike(token, postId);
+    } catch {
+      // revert on failure
+      setLikedMap((prev) => ({ ...prev, [postId]: wasLiked }));
+      setLikeCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + (wasLiked ? 1 : -1) }));
+    }
   };
 
-  // Group posts by type
-  const sessionPosts = posts.filter(p => p.type === 'session_completion');
-  const thoughtPosts = posts.filter(p => p.type === 'thought');
-  const articlePosts = posts.filter(p => p.type === 'article');
+  const handlePostCreated = (post: Post) => {
+    setFeedPosts((prev) => [post, ...prev]);
+    setLikedMap((prev) => ({ ...prev, [post._id]: false }));
+    setLikeCounts((prev) => ({ ...prev, [post._id]: 0 }));
+  };
+
+  const filters: { id: Filter; label: string }[] = [
+    { id: 'all', label: 'All' },
+    { id: 'session_completion', label: 'Sessions' },
+    { id: 'thought', label: 'Thoughts' },
+    { id: 'article', label: 'Articles' },
+  ];
+
+  const userInitials = user ? getInitials(user.name) : '??';
+
+  // ── Post card components ───────────────────────────────────────────────────
+
+  const renderSessionContent = (post: Post) => (
+    <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-2xl p-4 mb-1 border-2 border-emerald-200">
+      <div className="flex items-center gap-2 mb-3">
+        <Trophy className="w-5 h-5 text-emerald-600" />
+        <span className="text-emerald-700 font-medium text-sm">Session Completed</span>
+      </div>
+      <div className="bg-white rounded-xl p-4 space-y-2">
+        {post.sessionPartner && typeof post.sessionPartner === 'object' && (
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Users className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-900 font-medium">
+                {post.sessionSummary || `Session with ${post.sessionPartner.name}`}
+              </p>
+              <p className="text-xs text-slate-500">with {post.sessionPartner.name}</p>
+            </div>
+          </div>
+        )}
+        {post.session && typeof post.session === 'object' && post.session.location && (
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <MapPin className="w-4 h-4 flex-shrink-0" />
+            <span>{post.session.location}</span>
+          </div>
+        )}
+        {post.content && (
+          <p className="text-sm text-slate-700 pt-1 border-t border-slate-100">{post.content}</p>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderThoughtContent = (post: Post) => (
+    <p className="text-slate-900 leading-relaxed text-sm">{post.content}</p>
+  );
+
+  const renderArticleContent = (post: Post) => (
+    <div>
+      {post.content && (
+        <p className="text-slate-900 text-sm mb-3">{post.content}</p>
+      )}
+      {post.sharedUrl && (
+        <a
+          href={post.sharedUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block border-2 border-slate-200 rounded-xl overflow-hidden hover:border-blue-400 transition-colors"
+        >
+          <div className="p-4">
+            <h4 className="text-slate-900 text-sm font-medium mb-1 line-clamp-2">
+              {post.articleTitle || post.sharedUrl}
+            </h4>
+            <div className="flex items-center gap-2 text-xs text-blue-600">
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span className="truncate">{new URL(post.sharedUrl).hostname}</span>
+            </div>
+          </div>
+        </a>
+      )}
+    </div>
+  );
+
+  const PostCard = ({ post }: { post: Post }) => {
+    const author = post.author;
+    const initials = author ? getInitials(author.name) : '??';
+    const isLiked = likedMap[post._id] ?? false;
+    const likeCount = likeCounts[post._id] ?? post.likes.length;
+
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        {/* Header */}
+        <div className="px-4 pt-4 pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                {author?.avatar
+                  ? <img src={author.avatar} alt={author.name} className="w-full h-full rounded-full object-cover" />
+                  : initials}
+              </div>
+              <div>
+                <h4 className="text-slate-900 text-sm font-medium">{author?.name}</h4>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                  {author?.position && <span>{author.position}</span>}
+                  {author?.position && author?.sport && <span>•</span>}
+                  {author?.sport && <span>{author.sport}</span>}
+                </div>
+                <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
+                  <Clock className="w-3 h-3" />
+                  <span>{timeAgo(post.createdAt)}</span>
+                </div>
+              </div>
+            </div>
+            <button className="p-1.5 hover:bg-slate-100 rounded-full transition-colors">
+              <MoreVertical className="w-4 h-4 text-slate-400" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="px-4 pb-3">
+          {post.type === 'session_completion' && renderSessionContent(post)}
+          {post.type === 'thought' && renderThoughtContent(post)}
+          {post.type === 'article' && renderArticleContent(post)}
+        </div>
+
+        {/* Actions */}
+        <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-around">
+          <button
+            onClick={() => handleLike(post._id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              isLiked ? 'text-red-600 bg-red-50' : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-600' : ''}`} />
+            <span className="text-sm">{likeCount}</span>
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <MessageCircle className="w-4 h-4" />
+            <span className="text-sm">{post.comments.length}</span>
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+            <Share2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="text-slate-900">Locker Room</h2>
-          <button 
+          <button
             onClick={() => setIsCreatePostDialogOpen(true)}
             className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors"
           >
             <PlusCircle className="w-5 h-5 text-white" />
           </button>
         </div>
-      </div>
 
-      {/* Create Post Quick Action */}
-      <div className="px-6 pt-4 pb-3 border-b border-slate-200">
-        <div 
-          className="flex items-center justify-between mb-3 cursor-pointer"
-          onClick={() => toggleSection('createPost')}
-        >
-          <h3 className="text-slate-700">Quick Post</h3>
-          {expandedSections.createPost ? (
-            <ChevronUp className="w-5 h-5 text-slate-500" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-slate-500" />
-          )}
+        {/* Filter chips */}
+        <div className="flex gap-2 overflow-x-auto pb-1 -mb-1">
+          {filters.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setActiveFilter(f.id)}
+              className={`px-4 py-1.5 rounded-full text-sm flex-shrink-0 transition-colors ${
+                activeFilter === f.id
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:border-blue-400'
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
-        {expandedSections.createPost && (
-          <button className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 flex items-center gap-3 hover:border-blue-400 transition-all" onClick={() => setIsCreatePostDialogOpen(true)}>
-            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-700">
-              JD
-            </div>
-            <span className="text-slate-500 text-sm">Share your thoughts or session update...</span>
-          </button>
-        )}
       </div>
 
-      {/* Feed Filters */}
-      <div className="px-6 py-4 border-b border-slate-200">
-        <div 
-          className="flex items-center justify-between mb-3 cursor-pointer"
-          onClick={() => toggleSection('filters')}
+      {/* Quick Post bar */}
+      <div className="px-6 pt-4 pb-3">
+        <button
+          onClick={() => setIsCreatePostDialogOpen(true)}
+          className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 flex items-center gap-3 hover:border-blue-400 transition-all"
         >
-          <h3 className="text-slate-700">Filters</h3>
-          {expandedSections.filters ? (
-            <ChevronUp className="w-5 h-5 text-slate-500" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-slate-500" />
-          )}
-        </div>
-        {expandedSections.filters && (
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-full text-sm flex-shrink-0">
-              All Posts
-            </button>
-            <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-full text-sm hover:border-blue-400 transition-colors flex-shrink-0">
-              Sessions
-            </button>
-            <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-full text-sm hover:border-blue-400 transition-colors flex-shrink-0">
-              Articles
-            </button>
-            <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-full text-sm hover:border-blue-400 transition-colors flex-shrink-0">
-              My Network
+          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
+            {userInitials}
+          </div>
+          <span className="text-slate-400 text-sm">Share thoughts or a session update…</span>
+        </button>
+      </div>
+
+      {/* Feed */}
+      <div className="px-6 space-y-4 pb-6">
+        {loading && (
+          <div className="flex justify-center py-12">
+            <span className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {!loading && feedPosts.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 gap-2 text-slate-400">
+            <Award className="w-10 h-10 opacity-30" />
+            <p className="text-sm">No posts yet — be the first!</p>
+          </div>
+        )}
+
+        {!loading && feedPosts.map((post) => <PostCard key={post._id} post={post} />)}
+
+        {page < totalPages && !loading && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => fetchPage(page + 1, false)}
+              disabled={loadingMore}
+              className="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm hover:bg-slate-50 transition-colors disabled:opacity-60"
+            >
+              {loadingMore ? 'Loading…' : 'Load more'}
             </button>
           </div>
         )}
       </div>
 
-      {/* Posts Feed */}
-      <div className="space-y-6 pb-6">
-        {/* Session Completions Section */}
-        {sessionPosts.length > 0 && (
-          <div>
-            <div 
-              className="px-6 py-3 bg-emerald-50 border-b border-emerald-200 cursor-pointer flex items-center justify-between"
-              onClick={() => toggleSection('sessions')}
-            >
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-emerald-700">Session Completions ({sessionPosts.length})</h3>
-              </div>
-              {expandedSections.sessions ? (
-                <ChevronUp className="w-5 h-5 text-emerald-600" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-emerald-600" />
-              )}
-            </div>
-            {expandedSections.sessions && (
-              <div className="px-6 pt-4 space-y-4">
-                {sessionPosts.map((post) => (
-                  <div key={post.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    {/* Post Header */}
-                    <div className="px-4 pt-4 pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                            {post.author.avatar}
-                          </div>
-                          <div>
-                            <h4 className="text-slate-900">{post.author.name}</h4>
-                            <div className="flex items-center gap-2 text-sm text-slate-500">
-                              <span>{post.author.position}</span>
-                              <span>•</span>
-                              <span>{post.author.sport}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
-                              <Clock className="w-3 h-3" />
-                              <span>{post.timestamp}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                          <MoreVertical className="w-5 h-5 text-slate-400" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Post Content */}
-                    <div className="px-4 pb-3">
-                      {renderSessionCompletionPost(post)}
-                    </div>
-
-                    {/* Post Actions */}
-                    <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-around">
-                      <button className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                        post.isLiked 
-                          ? 'text-red-600 bg-red-50' 
-                          : 'text-slate-600 hover:bg-slate-50'
-                      }`}>
-                        <Heart className={`w-5 h-5 ${post.isLiked ? 'fill-red-600' : ''}`} />
-                        <span className="text-sm">{post.likes}</span>
-                      </button>
-                      <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                        <MessageCircle className="w-5 h-5" />
-                        <span className="text-sm">{post.comments}</span>
-                      </button>
-                      <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                        <Share2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Thoughts Section */}
-        {thoughtPosts.length > 0 && (
-          <div>
-            <div 
-              className="px-6 py-3 bg-blue-50 border-b border-blue-200 cursor-pointer flex items-center justify-between"
-              onClick={() => toggleSection('thoughts')}
-            >
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-blue-600" />
-                <h3 className="text-blue-700">Thoughts & Updates ({thoughtPosts.length})</h3>
-              </div>
-              {expandedSections.thoughts ? (
-                <ChevronUp className="w-5 h-5 text-blue-600" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-blue-600" />
-              )}
-            </div>
-            {expandedSections.thoughts && (
-              <div className="px-6 pt-4 space-y-4">
-                {thoughtPosts.map((post) => (
-                  <div key={post.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    {/* Post Header */}
-                    <div className="px-4 pt-4 pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                            {post.author.avatar}
-                          </div>
-                          <div>
-                            <h4 className="text-slate-900">{post.author.name}</h4>
-                            <div className="flex items-center gap-2 text-sm text-slate-500">
-                              <span>{post.author.position}</span>
-                              <span>•</span>
-                              <span>{post.author.sport}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
-                              <Clock className="w-3 h-3" />
-                              <span>{post.timestamp}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                          <MoreVertical className="w-5 h-5 text-slate-400" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Post Content */}
-                    <div className="px-4 pb-3">
-                      {renderThoughtPost(post)}
-                    </div>
-
-                    {/* Post Actions */}
-                    <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-around">
-                      <button className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                        post.isLiked 
-                          ? 'text-red-600 bg-red-50' 
-                          : 'text-slate-600 hover:bg-slate-50'
-                      }`}>
-                        <Heart className={`w-5 h-5 ${post.isLiked ? 'fill-red-600' : ''}`} />
-                        <span className="text-sm">{post.likes}</span>
-                      </button>
-                      <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                        <MessageCircle className="w-5 h-5" />
-                        <span className="text-sm">{post.comments}</span>
-                      </button>
-                      <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                        <Share2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Articles Section */}
-        {articlePosts.length > 0 && (
-          <div>
-            <div 
-              className="px-6 py-3 bg-purple-50 border-b border-purple-200 cursor-pointer flex items-center justify-between"
-              onClick={() => toggleSection('articles')}
-            >
-              <div className="flex items-center gap-2">
-                <Link2 className="w-5 h-5 text-purple-600" />
-                <h3 className="text-purple-700">Shared Articles ({articlePosts.length})</h3>
-              </div>
-              {expandedSections.articles ? (
-                <ChevronUp className="w-5 h-5 text-purple-600" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-purple-600" />
-              )}
-            </div>
-            {expandedSections.articles && (
-              <div className="px-6 pt-4 space-y-4">
-                {articlePosts.map((post) => (
-                  <div key={post.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                    {/* Post Header */}
-                    <div className="px-4 pt-4 pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                            {post.author.avatar}
-                          </div>
-                          <div>
-                            <h4 className="text-slate-900">{post.author.name}</h4>
-                            <div className="flex items-center gap-2 text-sm text-slate-500">
-                              <span>{post.author.position}</span>
-                              <span>•</span>
-                              <span>{post.author.sport}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
-                              <Clock className="w-3 h-3" />
-                              <span>{post.timestamp}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                          <MoreVertical className="w-5 h-5 text-slate-400" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Post Content */}
-                    <div className="px-4 pb-3">
-                      {renderArticlePost(post)}
-                    </div>
-
-                    {/* Post Actions */}
-                    <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-around">
-                      <button className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                        post.isLiked 
-                          ? 'text-red-600 bg-red-50' 
-                          : 'text-slate-600 hover:bg-slate-50'
-                      }`}>
-                        <Heart className={`w-5 h-5 ${post.isLiked ? 'fill-red-600' : ''}`} />
-                        <span className="text-sm">{post.likes}</span>
-                      </button>
-                      <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                        <MessageCircle className="w-5 h-5" />
-                        <span className="text-sm">{post.comments}</span>
-                      </button>
-                      <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-                        <Share2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Bottom Spacing */}
-      <div className="h-6"></div>
-
-      {/* Create Post Dialog */}
-      <CreatePostDialog isOpen={isCreatePostDialogOpen} onClose={() => setIsCreatePostDialogOpen(false)} />
+      <CreatePostDialog
+        isOpen={isCreatePostDialogOpen}
+        onClose={() => setIsCreatePostDialogOpen(false)}
+        token={token}
+        user={user}
+        onPostCreated={handlePostCreated}
+      />
     </div>
   );
 }

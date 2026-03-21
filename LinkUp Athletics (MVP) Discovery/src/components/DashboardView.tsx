@@ -354,9 +354,11 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
 
     
 
-      <CreatePostDialog 
+      <CreatePostDialog
         isOpen={isCreatePostDialogOpen}
         onClose={() => setIsCreatePostDialogOpen(false)}
+        token={token}
+        user={user}
       />
 
       {/* Bottom Spacing */}
