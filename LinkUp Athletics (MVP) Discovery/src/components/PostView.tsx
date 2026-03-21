@@ -27,12 +27,13 @@ interface PostViewProps {
 }
 
 export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }: PostViewProps) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [viewMode, setViewMode] = useState<'post' | 'find'>('post');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSkillLevels, setSelectedSkillLevels] = useState<string[]>([]);
   const [selectedSport, setSelectedSport] = useState(userSports.length > 0 ? userSports[0] : 'Baseball');
   const [selectedPartnerRoles, setSelectedPartnerRoles] = useState<string[]>([]);
+  const [posterRole, setPosterRole] = useState('');
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [isDateFlexible, setIsDateFlexible] = useState(false);
@@ -50,8 +51,6 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const durationRef = useRef<HTMLSelectElement>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  const [submitSuccess, setSubmitSuccess] = useState(false);
 
   // Find sessions API data
   const [availableSessions, setAvailableSessions] = useState<Session[]>([]);
@@ -354,6 +353,24 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               )}
             </div>
 
+            {/* My Position */}
+            <div>
+              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                My Position
+              </label>
+              <select
+                value={posterRole || user?.position || ''}
+                onChange={(e) => setPosterRole(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+              >
+                <option value="">Select your position…</option>
+                {(sportPartnerRoles[selectedSport] || []).map((role) => (
+                  <option key={role} value={role}>{role}</option>
+                ))}
+              </select>
+            </div>
+
             {/* Partner Role Needed */}
             <div>
               <label className="text-sm text-slate-700 mb-3 block flex items-center gap-2">
@@ -546,53 +563,49 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
             </div>
 
             {/* Primary Action Button */}
-            {submitError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
-                {submitError}
-              </p>
-            )}
-            {submitSuccess && (
-              <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2 text-center">
-                Session posted! It's now visible to other athletes.
-              </p>
-            )}
             <button
               disabled={submitting}
               onClick={async () => {
                 if (!token) return;
                 if (selectedPartnerRoles.length === 0) {
-                  setSubmitError('Please select at least one partner role.');
+                  toast.error('Please select at least one partner role.');
                   return;
                 }
                 if (selectedDates.length === 0 && !isDateFlexible) {
-                  setSubmitError('Please add a date or mark as flexible.');
+                  toast.error('Please add a date or mark as flexible.');
                   return;
                 }
-                setSubmitError('');
                 setSubmitting(true);
+                const resolvedPosterRole = posterRole || user?.position || '';
+                const notes = notesRef.current?.value || '';
                 try {
                   await sessionsApi.create(token, {
                     sport: selectedSport,
+                    posterRole: resolvedPosterRole,
                     partnerRole: selectedPartnerRoles.join(', '),
+                    title: `${selectedSport} – ${selectedPartnerRoles.join(' / ')} needed`,
                     date: selectedDates[0] || 'Flexible',
                     time: selectedTimes[0] || (isTimeFlexible ? 'Flexible' : ''),
                     duration: durationRef.current?.value || '1 hr',
                     location: locationValue,
                     skillLevelRequired: selectedSkillLevels.join(', '),
-                    notes: notesRef.current?.value || '',
+                    notes,
+                    goals: notes,
+                    sessionType: 'need',
                     status: 'open',
                   });
-                  setSubmitSuccess(true);
+                  toast.success('Session posted! It\'s now visible to other athletes.');
                   // Reset form
                   setSelectedPartnerRoles([]);
+                  setPosterRole('');
                   setSelectedDates([]);
                   setSelectedTimes([]);
                   setSelectedSkillLevels([]);
                   setLocationValue('');
                   if (notesRef.current) notesRef.current.value = '';
-                  setTimeout(() => setSubmitSuccess(false), 4000);
+                  onNavigateToDashboard?.('upcoming-sessions');
                 } catch (err: any) {
-                  setSubmitError(err.message || 'Failed to post session.');
+                  toast.error(err.message || 'Failed to post session.');
                 } finally {
                   setSubmitting(false);
                 }
