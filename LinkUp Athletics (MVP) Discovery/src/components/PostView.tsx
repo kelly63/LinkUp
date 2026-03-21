@@ -5,6 +5,7 @@ import { AvailableSessionView } from './AvailableSessionView';
 import { LocationAutocomplete } from './LocationAutocomplete';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, Session } from '../lib/api';
+import { toast } from 'sonner';
 
 interface PostViewProps {
   onNavigateToDashboard?: (target: string) => void;
@@ -56,6 +57,9 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [availableSessions, setAvailableSessions] = useState<Session[]>([]);
   const [totalSessionCount, setTotalSessionCount] = useState<number | null>(null);
   const [loadingFind, setLoadingFind] = useState(false);
+  const [findPage, setFindPage] = useState(1);
+  const [findTotalPages, setFindTotalPages] = useState(1);
+  const [loadingMoreSessions, setLoadingMoreSessions] = useState(false);
 
   // Session detail view
   const [selectedSession, setSelectedSession] = useState<any | null>(null);
@@ -160,31 +164,37 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  // Fetch unfiltered total once when entering find tab
-  useEffect(() => {
-    if (viewMode !== 'find' || !token || totalSessionCount !== null) return;
-    sessionsApi.getAvailable(token).then(({ sessions }) => {
-      setTotalSessionCount(sessions.length);
-    }).catch(() => {});
-  }, [viewMode, token, totalSessionCount]);
-
-  // Fetch available sessions when switching to find tab or filters change
+  // Fetch available sessions when switching to find tab or filters change (resets to page 1)
   useEffect(() => {
     if (viewMode !== 'find' || !token) return;
+    setFindPage(1);
     setLoadingFind(true);
     sessionsApi.getAvailable(token, {
       sport: filterSport.length === 1 ? filterSport[0] : undefined,
       skillLevel: filterSkillLevels.length === 1 ? filterSkillLevels[0] : undefined,
-    }).then(({ sessions }) => {
+      page: 1,
+    }).then(({ sessions, total, pages }) => {
       setAvailableSessions(sessions);
-      // If no filters active, this IS the full set — keep total in sync
-      if (filterSport.length === 0 && filterSkillLevels.length === 0) {
-        setTotalSessionCount(sessions.length);
-      }
-    }).catch(err => {
-      console.error('Failed to load sessions:', err);
+      setTotalSessionCount(total ?? sessions.length);
+      setFindTotalPages(pages ?? 1);
+    }).catch((err: any) => {
+      toast.error(err?.message || 'Could not load sessions');
     }).finally(() => setLoadingFind(false));
   }, [viewMode, token, filterSport, filterSkillLevels]);
+
+  const handleLoadMoreSessions = () => {
+    if (!token || loadingMoreSessions) return;
+    const nextPage = findPage + 1;
+    setLoadingMoreSessions(true);
+    sessionsApi.getAvailable(token, {
+      sport: filterSport.length === 1 ? filterSport[0] : undefined,
+      skillLevel: filterSkillLevels.length === 1 ? filterSkillLevels[0] : undefined,
+      page: nextPage,
+    }).then(({ sessions }) => {
+      setAvailableSessions((prev) => [...prev, ...sessions]);
+      setFindPage(nextPage);
+    }).catch(() => {}).finally(() => setLoadingMoreSessions(false));
+  };
 
   const filteredNeeds = availableSessions.filter(session => {
     if (searchQuery) {
@@ -775,6 +785,19 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 />
               ))}
             </div>
+
+            {/* Load more */}
+            {!loadingFind && findPage < findTotalPages && (
+              <div className="flex justify-center mt-1 mb-3">
+                <button
+                  onClick={handleLoadMoreSessions}
+                  disabled={loadingMoreSessions}
+                  className="px-6 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm hover:bg-slate-50 transition-colors disabled:opacity-60"
+                >
+                  {loadingMoreSessions ? 'Loading…' : 'Load more sessions'}
+                </button>
+              </div>
+            )}
 
             {/* Expand Search CTA — only shown when filters are hiding sessions */}
             {activeFilterCount > 0 && totalSessionCount !== null && totalSessionCount > filteredNeeds.length && (

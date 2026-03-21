@@ -12,6 +12,7 @@ import { useState, useRef, useEffect } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, connections as connectionsApi, ratings as ratingsApi } from '../lib/api';
+import { toast } from 'sonner';
 
 interface DashboardViewProps {
   onTabChange: (tab: string) => void;
@@ -58,8 +59,8 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
         setUpcomingSessions(sessData.sessions || []);
         setPendingRequests(connData.requests || []);
         setRecentRatings(ratingData.ratings || []);
-      } catch (err) {
-        console.error('Dashboard fetch error:', err);
+      } catch (err: any) {
+        toast.error(err?.message || 'Could not load dashboard data');
       } finally {
         setLoading(false);
       }
@@ -173,7 +174,12 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-slate-900">Upcoming Sessions</h3>
           {upcomingSessions.length > DISPLAYED_SESSIONS_COUNT && (
-            <button className="text-sm text-blue-600 hover:text-blue-700">View All</button>
+            <button
+              onClick={() => onNavigate && onNavigate('mySessions')}
+              className="text-sm text-blue-600 hover:text-blue-700"
+            >
+              View All
+            </button>
           )}
         </div>
         

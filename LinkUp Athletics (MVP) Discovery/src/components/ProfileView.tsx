@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { users as usersApi } from '../lib/api';
+import { toast } from 'sonner';
 
 interface ProfileViewProps {
   userRole: 'athlete' | 'coach';
@@ -13,7 +14,7 @@ interface ProfileViewProps {
 }
 
 export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: ProfileViewProps) {
-  const { token, user } = useAuth();
+  const { token, user, updateUser } = useAuth();
 
   // Edit modal states
   const [showAthleteProfileEdit, setShowAthleteProfileEdit] = useState(false);
@@ -83,13 +84,15 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     if (token) {
       setSavingProfile(true);
       try {
-        await usersApi.updateProfile(token, {
+        const { user: updated } = await usersApi.updateProfile(token, {
           sport: tempSport,
           position: tempPosition,
           skillLevel: tempLevel,
         });
-      } catch (err) {
-        console.error('Profile update failed:', err);
+        updateUser(updated);
+        toast.success('Profile updated');
+      } catch (err: any) {
+        toast.error(err?.message || 'Could not save profile');
       } finally {
         setSavingProfile(false);
       }
@@ -106,9 +109,11 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     setShowAboutMeEdit(false);
     if (token) {
       try {
-        await usersApi.updateProfile(token, { bio: tempAboutMe });
-      } catch (err) {
-        console.error('Bio update failed:', err);
+        const { user: updated } = await usersApi.updateProfile(token, { bio: tempAboutMe });
+        updateUser(updated);
+        toast.success('Bio saved');
+      } catch (err: any) {
+        toast.error(err?.message || 'Could not save bio');
       }
     }
   };
@@ -123,9 +128,11 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     setShowPhilosophyEdit(false);
     if (token) {
       try {
-        await usersApi.updateProfile(token, { coachingPhilosophy: tempPhilosophy });
-      } catch (err) {
-        console.error('Philosophy update failed:', err);
+        const { user: updated } = await usersApi.updateProfile(token, { coachingPhilosophy: tempPhilosophy });
+        updateUser(updated);
+        toast.success('Philosophy saved');
+      } catch (err: any) {
+        toast.error(err?.message || 'Could not save philosophy');
       }
     }
   };

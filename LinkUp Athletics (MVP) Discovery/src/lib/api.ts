@@ -199,7 +199,7 @@ export const sessions = {
         .filter(([, v]) => v !== undefined && v !== '')
         .map(([k, v]) => [k, String(v)])
     ).toString();
-    return request<{ sessions: Session[] }>(
+    return request<{ sessions: Session[]; total: number; page: number; pages: number }>(
       `/api/sessions/available${q ? `?${q}` : ''}`,
       {},
       token
@@ -309,13 +309,13 @@ export const ratings = {
 // ─── Posts ────────────────────────────────────────────────────────────────────
 
 export const posts = {
-  getFeed: (token: string, params: { sport?: string; type?: string } = {}) => {
+  getFeed: (token: string, params: { sport?: string; type?: string; page?: number } = {}) => {
     const q = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== '')
         .map(([k, v]) => [k, String(v)])
     ).toString();
-    return request<{ posts: Post[] }>(
+    return request<{ posts: Post[]; total: number; page: number; pages: number }>(
       `/api/posts${q ? `?${q}` : ''}`,
       {},
       token

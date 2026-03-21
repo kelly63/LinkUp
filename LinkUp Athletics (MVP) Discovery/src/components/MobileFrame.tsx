@@ -3,7 +3,7 @@ import { HeaderBar } from './HeaderBar';
 import { BottomTabBar } from './BottomTabBar';
 import { MainContent } from './MainContent';
 import { NotificationPanel } from './NotificationPanel';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useAuth } from '../lib/auth';
 import { useSocket, Notification } from '../hooks/useSocket';
 import { usePushNotifications } from '../hooks/usePushNotifications';
@@ -31,20 +31,23 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
 
 export function MobileFrame() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  // Notifications that arrived via socket while panel may be open
+  const [chatUnread, setChatUnread] = useState(0);
   const [liveQueue, setLiveQueue] = useState<StoredNotification[]>([]);
 
-  const { token } = useAuth();
+  // Auth state comes directly from context — survives page refresh automatically
+  const { token, isAuthenticated } = useAuth();
 
   usePushNotifications(token);
 
   const handleNotification = useCallback((notification: Notification) => {
     setUnreadCount((c) => c + 1);
 
-    // If notification has an _id (persisted), add to live queue for the panel
+    if (notification.type === 'message_new') {
+      setChatUnread((c) => c + 1);
+    }
+
     if ((notification as any)._id) {
       setLiveQueue((q) => [notification as unknown as StoredNotification, ...q]);
     }
@@ -58,17 +61,18 @@ export function MobileFrame() {
 
   useSocket({ token, onNotification: handleNotification });
 
-  const handleBellClick = useCallback(() => {
-    setPanelOpen((open) => !open);
-  }, []);
+  const handleBellClick = useCallback(() => setPanelOpen((open) => !open), []);
 
   const handlePanelClose = useCallback(() => {
     setPanelOpen(false);
     setLiveQueue([]);
   }, []);
 
-  const handleAllRead = useCallback(() => {
-    setUnreadCount(0);
+  const handleAllRead = useCallback(() => setUnreadCount(0), []);
+
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+    if (tab === 'chat') setChatUnread(0);
   }, []);
 
   return (
@@ -86,7 +90,6 @@ export function MobileFrame() {
           panelOpen={panelOpen}
         />
 
-        {/* Notification panel sits inside the frame, below the header */}
         {isAuthenticated && token && (
           <NotificationPanel
             token={token}
@@ -99,12 +102,16 @@ export function MobileFrame() {
 
         <MainContent
           activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onAuthChange={setIsAuthenticated}
+          onTabChange={handleTabChange}
+          onAuthChange={() => {}}
         />
 
         {isAuthenticated && (
-          <BottomTabBar activeTab={activeTab} onTabChange={setActiveTab} />
+          <BottomTabBar
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            badges={{ chat: chatUnread }}
+          />
         )}
       </div>
     </div>

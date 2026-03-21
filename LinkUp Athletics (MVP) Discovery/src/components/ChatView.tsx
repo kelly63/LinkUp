@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ChatScreen } from './ChatScreen';
 import { X, Shield, Users, Trash2 } from 'lucide-react';
 import { getActiveSocket } from '../lib/socket';
+import { toast } from 'sonner';
 
 interface Conversation {
   _id: string;
@@ -105,8 +106,8 @@ export function ChatView({
       });
       const data = await res.json();
       setConversations(data.conversations || []);
-    } catch (err) {
-      console.error('Failed to load inbox', err);
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not load messages');
     } finally {
       setLoading(false);
     }
@@ -122,8 +123,8 @@ export function ChatView({
       setRosterAthletes(
         (data.connections || []).map((c: any) => c.user)
       );
-    } catch (err) {
-      console.error('Failed to load roster', err);
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not load roster');
     }
   }, [token, apiUrl]);
 

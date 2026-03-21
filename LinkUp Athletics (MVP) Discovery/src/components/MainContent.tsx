@@ -16,9 +16,11 @@ import { ReceivedRatingsView } from './ReceivedRatingsView';
 import { SessionDetailsView } from './SessionDetailsView';
 import { RosterListView } from './RosterListView';
 import { EditSessionView } from './EditSessionView';
+import { MySessionsView } from './MySessionsView';
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, ratings as ratingsApi } from '../lib/api';
+import { toast } from 'sonner';
 
 interface MainContentProps {
   activeTab: string;
@@ -146,6 +148,10 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
     return <RosterListView onBack={handleBack} onNavigate={handleNavigate} onOpenChat={handleOpenChat} />;
   }
 
+  if (currentView === 'mySessions') {
+    return <MySessionsView onBack={handleBack} onNavigate={handleNavigate} />;
+  }
+
   if (currentView === 'reviews') {
     return <ReviewsView onBack={handleBack} onNavigate={handleNavigate} />;
   }
@@ -193,8 +199,9 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
               feedback: ratingData.feedback,
               sport: ratingSessionData.sport,
             });
-          } catch (err) {
-            console.error('Rating submission failed:', err);
+            toast.success('Rating submitted!');
+          } catch (err: any) {
+            toast.error(err?.message || 'Could not submit rating');
           }
           handleBack();
         }}
@@ -247,8 +254,9 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
           if (token && editSessionData._id) {
             try {
               await sessionsApi.update(token, editSessionData._id, updatedSession);
-            } catch (err) {
-              console.error('Session update failed:', err);
+              toast.success('Session updated');
+            } catch (err: any) {
+              toast.error(err?.message || 'Could not update session');
             }
           }
           setSessionDetailsData(updatedSession);
