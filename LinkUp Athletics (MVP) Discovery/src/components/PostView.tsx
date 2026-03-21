@@ -54,6 +54,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
 
   // Find sessions API data
   const [availableSessions, setAvailableSessions] = useState<Session[]>([]);
+  const [totalSessionCount, setTotalSessionCount] = useState<number | null>(null);
   const [loadingFind, setLoadingFind] = useState(false);
 
   // Session detail view
@@ -159,7 +160,15 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  // Fetch available sessions when switching to find tab
+  // Fetch unfiltered total once when entering find tab
+  useEffect(() => {
+    if (viewMode !== 'find' || !token || totalSessionCount !== null) return;
+    sessionsApi.getAvailable(token).then(({ sessions }) => {
+      setTotalSessionCount(sessions.length);
+    }).catch(() => {});
+  }, [viewMode, token, totalSessionCount]);
+
+  // Fetch available sessions when switching to find tab or filters change
   useEffect(() => {
     if (viewMode !== 'find' || !token) return;
     setLoadingFind(true);
@@ -168,6 +177,10 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
       skillLevel: filterSkillLevels.length === 1 ? filterSkillLevels[0] : undefined,
     }).then(({ sessions }) => {
       setAvailableSessions(sessions);
+      // If no filters active, this IS the full set — keep total in sync
+      if (filterSport.length === 0 && filterSkillLevels.length === 0) {
+        setTotalSessionCount(sessions.length);
+      }
     }).catch(err => {
       console.error('Failed to load sessions:', err);
     }).finally(() => setLoadingFind(false));
@@ -763,11 +776,21 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               ))}
             </div>
 
-            {/* Expand Search CTA */}
-            <button className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 hover:border-blue-300 text-blue-900 py-4 px-6 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex flex-col items-center gap-1">
-              <span className="font-medium">Extend criteria and unlock 23 more sessions</span>
-              <span className="text-sm text-blue-700">Expand your search radius and skill levels</span>
-            </button>
+            {/* Expand Search CTA — only shown when filters are hiding sessions */}
+            {activeFilterCount > 0 && totalSessionCount !== null && totalSessionCount > filteredNeeds.length && (
+              <button
+                onClick={() => {
+                  clearFilters();
+                  setShowFilters(false);
+                }}
+                className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 hover:border-blue-300 text-blue-900 py-4 px-6 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex flex-col items-center gap-1"
+              >
+                <span className="font-medium">
+                  Unlock {totalSessionCount - filteredNeeds.length} more session{totalSessionCount - filteredNeeds.length !== 1 ? 's' : ''}
+                </span>
+                <span className="text-sm text-blue-700">Clear filters to see all available sessions</span>
+              </button>
+            )}
           </div>
         </div>
       )}
