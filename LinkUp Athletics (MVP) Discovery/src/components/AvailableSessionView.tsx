@@ -197,10 +197,15 @@ export function AvailableSessionView({ session, onBack, onNavigate, onOpenChat }
                 <div className="flex-1">
                   <p className="text-sm text-slate-500 mb-0.5">Location</p>
                   <p className="text-slate-900 font-medium mb-2">{location}</p>
-                  <button className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700">
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                  >
                     <Navigation className="w-4 h-4" />
                     Get Directions
-                  </button>
+                  </a>
                 </div>
               </div>
             )}

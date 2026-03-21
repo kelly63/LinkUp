@@ -1,8 +1,9 @@
 import { Search, Filter, MapPin, Star, Award, Users, Calendar, ArrowLeft, ChevronDown, ChevronUp, X, Shield } from 'lucide-react';
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { QrCode, Camera, UserPlus } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { users as usersApi, User } from '../lib/api';
+import { LocationAutocomplete } from './LocationAutocomplete';
 
 interface AthleteSearchViewProps {
   onBack?: () => void;
@@ -21,75 +22,6 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
   const [searchLocation, setSearchLocation] = useState('Los Angeles, CA');
   const [searchRadius, setSearchRadius] = useState(25);
   const [showLocationSearch, setShowLocationSearch] = useState(false);
-  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
-  const [locationSuggestions, setLocationSuggestions] = useState<string[]>([]);
-  const locationInputRef = useRef<HTMLInputElement>(null);
-
-  // Mock US cities database for autocomplete
-  const usCities = [
-    'Los Angeles, CA', 'San Diego, CA', 'San Francisco, CA', 'Sacramento, CA', 'Fresno, CA',
-    'San Jose, CA', 'Oakland, CA', 'Santa Barbara, CA', 'Riverside, CA', 'Anaheim, CA',
-    'New York, NY', 'Buffalo, NY', 'Rochester, NY', 'Albany, NY', 'Syracuse, NY',
-    'Chicago, IL', 'Aurora, IL', 'Naperville, IL', 'Rockford, IL', 'Joliet, IL',
-    'Houston, TX', 'San Antonio, TX', 'Dallas, TX', 'Austin, TX', 'Fort Worth, TX',
-    'Phoenix, AZ', 'Tucson, AZ', 'Mesa, AZ', 'Scottsdale, AZ', 'Chandler, AZ',
-    'Philadelphia, PA', 'Pittsburgh, PA', 'Allentown, PA', 'Erie, PA', 'Reading, PA',
-    'Miami, FL', 'Orlando, FL', 'Tampa, FL', 'Jacksonville, FL', 'Fort Lauderdale, FL',
-    'Naples, FL', 'Sarasota, FL', 'Tallahassee, FL', 'Gainesville, FL', 'West Palm Beach, FL',
-    'Seattle, WA', 'Spokane, WA', 'Tacoma, WA', 'Vancouver, WA', 'Bellevue, WA',
-    'Boston, MA', 'Worcester, MA', 'Springfield, MA', 'Cambridge, MA', 'Lowell, MA',
-    'Denver, CO', 'Colorado Springs, CO', 'Aurora, CO', 'Fort Collins, CO', 'Boulder, CO',
-    'Atlanta, GA', 'Savannah, GA', 'Columbus, GA', 'Augusta, GA', 'Macon, GA',
-    'Detroit, MI', 'Grand Rapids, MI', 'Ann Arbor, MI', 'Lansing, MI', 'Flint, MI',
-    'Portland, OR', 'Eugene, OR', 'Salem, OR', 'Bend, OR', 'Medford, OR',
-    'Las Vegas, NV', 'Reno, NV', 'Henderson, NV', 'North Las Vegas, NV', 'Sparks, NV',
-    'Nashville, TN', 'Memphis, TN', 'Knoxville, TN', 'Chattanooga, TN', 'Clarksville, TN',
-    'Charlotte, NC', 'Raleigh, NC', 'Greensboro, NC', 'Durham, NC', 'Winston-Salem, NC',
-    'Indianapolis, IN', 'Fort Wayne, IN', 'Evansville, IN', 'South Bend, IN', 'Carmel, IN',
-    'Columbus, OH', 'Cleveland, OH', 'Cincinnati, OH', 'Toledo, OH', 'Akron, OH',
-    'Milwaukee, WI', 'Madison, WI', 'Green Bay, WI', 'Kenosha, WI', 'Racine, WI',
-    'Baltimore, MD', 'Frederick, MD', 'Rockville, MD', 'Gaithersburg, MD', 'Annapolis, MD',
-    'Minneapolis, MN', 'St. Paul, MN', 'Rochester, MN', 'Duluth, MN', 'Bloomington, MN',
-    'Kansas City, MO', 'St. Louis, MO', 'Springfield, MO', 'Columbia, MO', 'Independence, MO',
-    'Salt Lake City, UT', 'West Valley City, UT', 'Provo, UT', 'West Jordan, UT', 'Orem, UT'
-  ];
-
-  // Handle location input change with autocomplete
-  const handleLocationChange = (value: string) => {
-    setSearchLocation(value);
-    
-    if (value.length > 0) {
-      // Filter cities based on input
-      const filtered = usCities.filter(city => 
-        city.toLowerCase().includes(value.toLowerCase())
-      ).slice(0, 8); // Limit to 8 suggestions
-      
-      setLocationSuggestions(filtered);
-      setShowLocationSuggestions(filtered.length > 0);
-    } else {
-      setLocationSuggestions([]);
-      setShowLocationSuggestions(false);
-    }
-  };
-
-  // Handle selecting a location suggestion
-  const handleSelectLocation = (location: string) => {
-    setSearchLocation(location);
-    setShowLocationSuggestions(false);
-    setLocationSuggestions([]);
-  };
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (locationInputRef.current && !locationInputRef.current.contains(event.target as Node)) {
-        setShowLocationSuggestions(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const { token } = useAuth();
   const [athletes, setAthletes] = useState<User[]>([]);
@@ -232,32 +164,12 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
             <div className="mt-2 p-4 bg-white border-2 border-purple-200 rounded-xl space-y-3">
               <div>
                 <label className="text-xs text-slate-600 font-medium mb-1.5 block">Search Location</label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
-                  <input
-                    type="text"
-                    placeholder="Enter city, state (e.g., Naples, FL)"
-                    value={searchLocation}
-                    onChange={(e) => handleLocationChange(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-lg border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-purple-500 focus:outline-none transition-colors text-sm"
-                    ref={locationInputRef}
-                  />
-                  {/* Location Suggestions Dropdown */}
-                  {showLocationSuggestions && locationSuggestions.length > 0 && (
-                    <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-white border-2 border-purple-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                      {locationSuggestions.map((suggestion, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleSelectLocation(suggestion)}
-                          className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-purple-50 transition-colors flex items-center gap-2 border-b border-slate-100 last:border-b-0"
-                        >
-                          <MapPin className="w-3.5 h-3.5 text-purple-600 flex-shrink-0" />
-                          <span>{suggestion}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <LocationAutocomplete
+                  value={searchLocation}
+                  onChange={setSearchLocation}
+                  placeholder="Enter city or address (e.g., Naples, FL)"
+                  className="text-sm py-2.5"
+                />
                 <p className="text-xs text-slate-500 mt-1.5">Perfect for finding partners when you travel</p>
               </div>
 

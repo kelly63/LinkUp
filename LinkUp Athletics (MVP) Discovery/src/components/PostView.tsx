@@ -2,6 +2,7 @@ import { Calendar, Award, MapPin, Clock, ArrowLeft, Users, X, Search, Filter } f
 import { useState, useEffect, useRef } from 'react';
 import { NeedCard } from './NeedCard';
 import { AvailableSessionView } from './AvailableSessionView';
+import { LocationAutocomplete } from './LocationAutocomplete';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, Session } from '../lib/api';
 
@@ -44,7 +45,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [filterDistance, setFilterDistance] = useState('10');
   
   // Post form fields
-  const locationRef = useRef<HTMLInputElement>(null);
+  const [locationValue, setLocationValue] = useState('');
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const durationRef = useRef<HTMLSelectElement>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -471,19 +472,17 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               </select>
             </div>
 
-            {/* Location with Google Maps Autocomplete */}
+            {/* Location */}
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 Field Name/Address
               </label>
-              <input
-                ref={locationRef}
-                type="text"
-                placeholder="Search for a location..."
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+              <LocationAutocomplete
+                value={locationValue}
+                onChange={setLocationValue}
+                placeholder="Search for a field or address..."
               />
-              <p className="text-xs text-slate-500 mt-1.5 ml-1">Google Maps Autocomplete</p>
             </div>
 
             {/* Partner Skill Level */}
@@ -555,7 +554,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     date: selectedDates[0] || 'Flexible',
                     time: selectedTimes[0] || (isTimeFlexible ? 'Flexible' : ''),
                     duration: durationRef.current?.value || '1 hr',
-                    location: locationRef.current?.value || '',
+                    location: locationValue,
                     skillLevelRequired: selectedSkillLevels.join(', '),
                     notes: notesRef.current?.value || '',
                     status: 'open',
@@ -566,7 +565,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   setSelectedDates([]);
                   setSelectedTimes([]);
                   setSelectedSkillLevels([]);
-                  if (locationRef.current) locationRef.current.value = '';
+                  setLocationValue('');
                   if (notesRef.current) notesRef.current.value = '';
                   setTimeout(() => setSubmitSuccess(false), 4000);
                 } catch (err: any) {
