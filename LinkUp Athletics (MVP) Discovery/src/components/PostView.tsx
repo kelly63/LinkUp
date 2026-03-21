@@ -239,16 +239,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   if (selectedSession) {
     return (
       <AvailableSessionView
-        session={{
-          id: selectedSession._id || selectedSession.id,
-          title: selectedSession.title || selectedSession.sport,
-          seeking: selectedSession.partnerRole || selectedSession.seeking || '',
-          level: selectedSession.skillLevelRequired || selectedSession.level || '',
-          distance: selectedSession.location || selectedSession.distance || 'See details',
-          date: selectedSession.date || '',
-          time: selectedSession.time || '',
-          sport: selectedSession.sport || 'Baseball',
-        }}
+        session={selectedSession}
         onBack={() => setSelectedSession(null)}
         onOpenChat={onOpenChat as any}
       />
