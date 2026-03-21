@@ -180,6 +180,19 @@ export const users = {
       body: JSON.stringify(body),
     }, token),
 
+  uploadAvatar: async (token: string, file: File): Promise<{ user: User }> => {
+    const form = new FormData();
+    form.append('avatar', file);
+    const res = await fetch(`${BASE_URL}/api/users/profile`, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || `Upload failed: ${res.status}`);
+    return data as { user: User };
+  },
+
   changePassword: (token: string, currentPassword: string, newPassword: string) =>
     request<{ message: string }>('/api/users/password', {
       method: 'PUT',

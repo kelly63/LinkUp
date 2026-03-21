@@ -1,5 +1,5 @@
 import { Settings, Star, Award, Shield, Bell, LogOut, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
 import { useAuth } from '../lib/auth';
@@ -21,8 +21,14 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [showAboutMeEdit, setShowAboutMeEdit] = useState(false);
   const [showPhilosophyEdit, setShowPhilosophyEdit] = useState(false);
   const [showQRCodeModal, setShowQRCodeModal] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // Keep preview in sync if the auth user's avatar changes from outside
+  useEffect(() => {
+    if (user?.avatar) setProfileImage(user.avatar);
+  }, [user?.avatar]);
 
   // Athlete profile data — initialised from auth context
   const [athleteSport, setAthleteSport] = useState(user?.sport || 'Baseball');
@@ -137,24 +143,34 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     }
   };
   
-  const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      // Check if file is an image
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        return;
-      }
-      
-      // Check file size (limit to 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size should be less than 5MB');
-        return;
-      }
-      
-      // Create preview URL
-      const imageUrl = URL.createObjectURL(file);
-      setProfileImage(imageUrl);
+    if (!file || !token) return;
+    event.target.value = '';
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be smaller than 5 MB');
+      return;
+    }
+
+    // Optimistic preview
+    const previewUrl = URL.createObjectURL(file);
+    setProfileImage(previewUrl);
+    setUploadingAvatar(true);
+    try {
+      const { user: updated } = await usersApi.uploadAvatar(token, file);
+      updateUser(updated);
+      setProfileImage(updated.avatar || previewUrl);
+      toast.success('Profile photo updated');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to upload photo');
+      setProfileImage(user?.avatar || null);
+    } finally {
+      setUploadingAvatar(false);
     }
   };
   
@@ -179,16 +195,19 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
               )}
             </div>
             {/* Upload Button */}
-            <label 
+            <label
               htmlFor="profile-upload"
               className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-colors border-2 border-white"
             >
-              <Camera className="w-4 h-4 text-white" />
+              {uploadingAvatar
+                ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                : <Camera className="w-4 h-4 text-white" />}
             </label>
             <input
               id="profile-upload"
               type="file"
               accept="image/*"
+              disabled={uploadingAvatar}
               onChange={handleProfileImageUpload}
               className="hidden"
             />
