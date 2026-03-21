@@ -2,10 +2,47 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const PushSubscription = require('../models/PushSubscription');
+const Notification = require('../models/Notification');
 
-// GET /api/notifications/vapid-key — public, no auth needed
+// GET /api/notifications/vapid-key — public
 router.get('/vapid-key', (req, res) => {
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
+
+// GET /api/notifications — fetch most recent 50 for the authed user
+router.get('/', auth, async (req, res) => {
+  try {
+    const notifications = await Notification.find({ user: req.user.id })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .lean();
+    res.json({ notifications });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// PATCH /api/notifications/read-all — mark all as read
+router.patch('/read-all', auth, async (req, res) => {
+  try {
+    await Notification.updateMany({ user: req.user.id, read: false }, { read: true });
+    res.json({ message: 'All marked as read' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// PATCH /api/notifications/:id/read — mark one as read
+router.patch('/:id/read', auth, async (req, res) => {
+  try {
+    await Notification.findOneAndUpdate(
+      { _id: req.params.id, user: req.user.id },
+      { read: true }
+    );
+    res.json({ message: 'Marked as read' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // POST /api/notifications/subscribe
@@ -15,16 +52,13 @@ router.post('/subscribe', auth, async (req, res) => {
     if (!endpoint || !keys?.p256dh || !keys?.auth) {
       return res.status(400).json({ message: 'Invalid subscription object' });
     }
-
     await PushSubscription.findOneAndUpdate(
       { endpoint },
       { user: req.user.id, endpoint, keys },
       { upsert: true, new: true }
     );
-
     res.status(201).json({ message: 'Subscribed' });
   } catch (err) {
-    console.error('[push] subscribe error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

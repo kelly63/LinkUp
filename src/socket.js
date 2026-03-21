@@ -5,6 +5,7 @@ const User = require('./models/User');
 const Message = require('./models/Message');
 const Connection = require('./models/Connection');
 const PushSubscription = require('./models/PushSubscription');
+const Notification = require('./models/Notification');
 
 webpush.setVapidDetails(
   process.env.VAPID_EMAIL,
@@ -183,7 +184,10 @@ function getSocketIo(httpServer) {
   // ── Utility: push a notification to a user from anywhere in the app ─────────
   io.notify = async (userId, type, data) => {
     const userIdStr = userId.toString();
-    const notification = { type, data, createdAt: new Date() };
+
+    // Persist to DB so the panel can show history
+    const saved = await Notification.create({ user: userId, type, data }).catch(() => null);
+    const notification = { _id: saved?._id, type, data, read: false, createdAt: saved?.createdAt ?? new Date() };
 
     // Real-time via Socket.io (works when app is open)
     io.to(`user:${userIdStr}`).emit('notification', notification);

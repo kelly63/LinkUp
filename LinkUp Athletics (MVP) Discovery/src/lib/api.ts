@@ -82,6 +82,14 @@ export interface Post {
   createdAt: string;
 }
 
+export interface StoredNotification {
+  _id: string;
+  type: 'roster_request' | 'roster_accepted' | 'session_accepted' | 'message_new';
+  data: Record<string, any>;
+  read: boolean;
+  createdAt: string;
+}
+
 export interface Rating {
   _id: string;
   rater: User;
@@ -333,4 +341,15 @@ export const posts = {
       method: 'POST',
       body: JSON.stringify({ text }),
     }, token),
+};
+
+export const notifications = {
+  getAll: (token: string) =>
+    request<{ notifications: StoredNotification[] }>('/api/notifications', {}, token),
+
+  markAllRead: (token: string) =>
+    request<{ message: string }>('/api/notifications/read-all', { method: 'PATCH' }, token),
+
+  markRead: (token: string, id: string) =>
+    request<{ message: string }>(`/api/notifications/${id}/read`, { method: 'PATCH' }, token),
 };
