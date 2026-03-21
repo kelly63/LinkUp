@@ -1,8 +1,16 @@
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
+const webpush = require('web-push');
 const User = require('./models/User');
 const Message = require('./models/Message');
 const Connection = require('./models/Connection');
+const PushSubscription = require('./models/PushSubscription');
+
+webpush.setVapidDetails(
+  process.env.VAPID_EMAIL,
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 // Track userId → Set of socket IDs (a user can have multiple tabs/devices)
 const onlineUsers = new Map();
@@ -173,8 +181,27 @@ function getSocketIo(httpServer) {
   });
 
   // ── Utility: push a notification to a user from anywhere in the app ─────────
-  io.notify = (userId, type, data) => {
-    io.to(`user:${userId}`).emit('notification', { type, data, createdAt: new Date() });
+  io.notify = async (userId, type, data) => {
+    const userIdStr = userId.toString();
+    const notification = { type, data, createdAt: new Date() };
+
+    // Real-time via Socket.io (works when app is open)
+    io.to(`user:${userIdStr}`).emit('notification', notification);
+
+    // Web Push for users not currently connected (app closed / backgrounded)
+    const isOnline = onlineUsers.has(userIdStr) && onlineUsers.get(userIdStr).size > 0;
+    if (!isOnline) {
+      const subs = await PushSubscription.find({ user: userId }).lean().catch(() => []);
+      const payload = JSON.stringify({ type, data });
+      for (const sub of subs) {
+        webpush.sendNotification(sub, payload).catch((err) => {
+          // 410 Gone = subscription expired; clean it up
+          if (err.statusCode === 410) {
+            PushSubscription.findByIdAndDelete(sub._id).catch(() => {});
+          }
+        });
+      }
+    }
   };
 
   return io;

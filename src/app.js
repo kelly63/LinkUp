@@ -13,6 +13,7 @@ const messageRoutes = require('./routes/messages');
 const sessionRoutes = require('./routes/sessions');
 const ratingRoutes = require('./routes/ratings');
 const postRoutes = require('./routes/posts');
+const notificationRoutes = require('./routes/notifications');
 
 connectDB();
 
@@ -38,6 +39,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
