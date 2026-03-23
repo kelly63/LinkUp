@@ -202,8 +202,8 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
             toast.success('Rating submitted!');
           } catch (err: any) {
             toast.error(err?.message || 'Could not submit rating');
+            handleBack();
           }
-          handleBack();
         }}
       />
     );

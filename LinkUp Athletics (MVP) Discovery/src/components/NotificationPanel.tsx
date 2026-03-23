@@ -122,9 +122,8 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead }
 
       {/* Panel — slides down from the header */}
       <div
-        className={`absolute top-[88px] left-0 right-0 z-40 bg-white rounded-b-2xl shadow-2xl
-          flex flex-col max-h-[70%] transition-all duration-300 ease-out
-          ${open ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}
+        style={open ? undefined : { display: 'none' }}
+        className="absolute top-[88px] left-0 right-0 z-40 bg-white rounded-b-2xl shadow-2xl flex flex-col max-h-[70%] overflow-y-auto"
       >
         {/* Panel header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
