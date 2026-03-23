@@ -11,6 +11,7 @@ import {
   Clock,
   MapPin,
   ExternalLink,
+  Send,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
@@ -47,6 +48,12 @@ export function LockerRoomView() {
   // optimistic like tracking: postId → liked by me
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+  // comment panel state
+  const [openCommentPostId, setOpenCommentPostId] = useState<string | null>(null);
+  const [postComments, setPostComments] = useState<Record<string, Post['comments']>>({});
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
+  const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
 
   const fetchPage = useCallback(async (p: number, replace: boolean) => {
     if (!token) return;
@@ -58,23 +65,31 @@ export function LockerRoomView() {
       setTotalPages(pages ?? 1);
       setPage(p);
 
-      // Seed like maps from API data
+      // Seed like + comment maps from API data
       const myId = user?._id;
       const newLikedMap: Record<string, boolean> = {};
       const newLikeCounts: Record<string, number> = {};
+      const newCommentCounts: Record<string, number> = {};
+      const newPostComments: Record<string, Post['comments']> = {};
       fetched.forEach((post) => {
         newLikedMap[post._id] = myId ? post.likes.includes(myId) : false;
         newLikeCounts[post._id] = post.likes.length;
+        newCommentCounts[post._id] = post.comments.length;
+        newPostComments[post._id] = post.comments;
       });
 
       if (replace) {
         setFeedPosts(fetched);
         setLikedMap(newLikedMap);
         setLikeCounts(newLikeCounts);
+        setCommentCounts(newCommentCounts);
+        setPostComments(newPostComments);
       } else {
         setFeedPosts((prev) => [...prev, ...fetched]);
         setLikedMap((prev) => ({ ...prev, ...newLikedMap }));
         setLikeCounts((prev) => ({ ...prev, ...newLikeCounts }));
+        setCommentCounts((prev) => ({ ...prev, ...newCommentCounts }));
+        setPostComments((prev) => ({ ...prev, ...newPostComments }));
       }
     } catch (err: any) {
       toast.error(err?.message || 'Could not load feed');
@@ -106,6 +121,50 @@ export function LockerRoomView() {
     setFeedPosts((prev) => [post, ...prev]);
     setLikedMap((prev) => ({ ...prev, [post._id]: false }));
     setLikeCounts((prev) => ({ ...prev, [post._id]: 0 }));
+    setCommentCounts((prev) => ({ ...prev, [post._id]: 0 }));
+    setPostComments((prev) => ({ ...prev, [post._id]: [] }));
+  };
+
+  const handleToggleComments = (postId: string) => {
+    setOpenCommentPostId((prev) => (prev === postId ? null : postId));
+  };
+
+  const handleSubmitComment = async (postId: string) => {
+    if (!token) return;
+    const text = (commentDrafts[postId] || '').trim();
+    if (!text) return;
+
+    // Optimistic update
+    const optimistic: Post['comments'][0] = {
+      _id: `temp-${Date.now()}`,
+      author: user as any,
+      text,
+      createdAt: new Date().toISOString(),
+    };
+    setPostComments((prev) => ({ ...prev, [postId]: [...(prev[postId] ?? []), optimistic] }));
+    setCommentCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + 1 }));
+    setCommentDrafts((prev) => ({ ...prev, [postId]: '' }));
+    setSubmittingComment((prev) => ({ ...prev, [postId]: true }));
+
+    try {
+      const { comment } = await postsApi.addComment(token, postId, text);
+      // Replace optimistic entry with real one
+      setPostComments((prev) => ({
+        ...prev,
+        [postId]: prev[postId].map((c) => (c._id === optimistic._id ? comment : c)),
+      }));
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not post comment');
+      // Revert
+      setPostComments((prev) => ({
+        ...prev,
+        [postId]: (prev[postId] ?? []).filter((c) => c._id !== optimistic._id),
+      }));
+      setCommentCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 1) - 1 }));
+      setCommentDrafts((prev) => ({ ...prev, [postId]: text }));
+    } finally {
+      setSubmittingComment((prev) => ({ ...prev, [postId]: false }));
+    }
   };
 
   const filters: { id: Filter; label: string }[] = [
@@ -187,6 +246,11 @@ export function LockerRoomView() {
     const initials = author ? getInitials(author.name) : '??';
     const isLiked = likedMap[post._id] ?? false;
     const likeCount = likeCounts[post._id] ?? post.likes.length;
+    const commentCount = commentCounts[post._id] ?? post.comments.length;
+    const comments = postComments[post._id] ?? post.comments;
+    const isCommentsOpen = openCommentPostId === post._id;
+    const draft = commentDrafts[post._id] ?? '';
+    const isSubmitting = submittingComment[post._id] ?? false;
 
     return (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -236,14 +300,74 @@ export function LockerRoomView() {
             <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-600' : ''}`} />
             <span className="text-sm">{likeCount}</span>
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <MessageCircle className="w-4 h-4" />
-            <span className="text-sm">{post.comments.length}</span>
+          <button
+            onClick={() => handleToggleComments(post._id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              isCommentsOpen ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <MessageCircle className={`w-4 h-4 ${isCommentsOpen ? 'fill-blue-100' : ''}`} />
+            <span className="text-sm">{commentCount}</span>
           </button>
           <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
             <Share2 className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Comment panel */}
+        {isCommentsOpen && (
+          <div className="border-t border-slate-100 px-4 pb-4 pt-3 space-y-3">
+            {/* Existing comments */}
+            {comments.length > 0 ? (
+              <div className="space-y-3">
+                {comments.map((c) => (
+                  <div key={c._id} className="flex gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
+                      {c.author?.avatar
+                        ? <img src={c.author.avatar} alt={c.author.name} className="w-full h-full object-cover" />
+                        : getInitials(c.author?.name || '?')}
+                    </div>
+                    <div className="flex-1 bg-slate-50 rounded-xl px-3 py-2">
+                      <span className="text-xs font-medium text-slate-900">{c.author?.name} </span>
+                      <span className="text-xs text-slate-700">{c.text}</span>
+                      <p className="text-xs text-slate-400 mt-0.5">{timeAgo(c.createdAt)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 text-center py-1">No comments yet — be the first!</p>
+            )}
+
+            {/* New comment input */}
+            <div className="flex gap-2 items-center pt-1">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
+                {user?.avatar
+                  ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                  : userInitials}
+              </div>
+              <div className="flex-1 flex items-center gap-2 bg-slate-100 rounded-full px-3 py-1.5">
+                <input
+                  type="text"
+                  value={draft}
+                  onChange={(e) => setCommentDrafts((prev) => ({ ...prev, [post._id]: e.target.value }))}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment(post._id); } }}
+                  placeholder="Add a comment…"
+                  className="flex-1 bg-transparent text-sm text-slate-900 placeholder-slate-400 outline-none"
+                />
+                <button
+                  onClick={() => handleSubmitComment(post._id)}
+                  disabled={!draft.trim() || isSubmitting}
+                  className="text-blue-600 disabled:text-slate-300 transition-colors"
+                >
+                  {isSubmitting
+                    ? <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin block" />
+                    : <Send className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
