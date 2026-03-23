@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "MONGOMS_SYSTEM_BINARY=/opt/miniconda3/bin/mongod jest",
+    "test:watch": "MONGOMS_SYSTEM_BINARY=/opt/miniconda3/bin/mongod jest --watch",
     "seed": "node scripts/seed.js",
     "db:start": "bash scripts/start-mongo.sh",
     "db:seed": "bash scripts/start-mongo.sh && node scripts/seed.js"
