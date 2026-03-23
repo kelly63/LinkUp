@@ -27,9 +27,7 @@ export function useSocket({ token, onNotification, onPresenceChange }: UseSocket
     const s = getSocket(token);
     socketRef.current = s;
 
-    s.on('connect', () => {
-      console.log('[socket] connected');
-    });
+    s.on('connect', () => {});
 
     s.on('connect_error', (err) => {
       console.error('[socket] connection error', err.message);

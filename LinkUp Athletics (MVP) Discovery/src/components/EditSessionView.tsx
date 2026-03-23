@@ -36,7 +36,6 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
       notes
     };
     
-    console.log('Saving session:', updatedSession);
     if (onSave) {
       onSave(updatedSession);
     }
