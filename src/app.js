@@ -15,7 +15,7 @@ const ratingRoutes = require('./routes/ratings');
 const postRoutes = require('./routes/posts');
 const notificationRoutes = require('./routes/notifications');
 
-connectDB();
+if (process.env.NODE_ENV !== 'test') connectDB();
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -54,6 +54,8 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => console.log(`LinkUp server running on port ${PORT}`));
+if (require.main === module) {
+  httpServer.listen(PORT, () => console.log(`LinkUp server running on port ${PORT}`));
+}
 
 module.exports = { app, io };
