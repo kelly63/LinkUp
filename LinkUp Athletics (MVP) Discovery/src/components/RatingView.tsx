@@ -1,5 +1,6 @@
 import { Star, X, CheckCircle, ThumbsUp, Clock, MessageCircle, Target, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface RatingViewProps {
   sessionPartner: {
@@ -15,7 +16,7 @@ interface RatingViewProps {
     duration: string;
   };
   onBack?: () => void;
-  onSubmit?: (rating: RatingData) => void;
+  onSubmit?: (rating: RatingData) => Promise<void> | void;
 }
 
 interface RatingData {
@@ -38,10 +39,11 @@ export function RatingView({ sessionPartner, sessionDetails, onBack, onSubmit }:
   const [wouldTrainAgain, setWouldTrainAgain] = useState(true);
   const [feedback, setFeedback] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (overallRating === 0) {
-      alert('Please provide an overall rating');
+      toast.error('Please provide an overall rating');
       return;
     }
 
@@ -52,15 +54,18 @@ export function RatingView({ sessionPartner, sessionDetails, onBack, onSubmit }:
       communication,
       attitude,
       wouldTrainAgain,
-      feedback
+      feedback,
     };
 
-    setShowSuccessModal(true);
-    
-    // Simulate submission delay
-    setTimeout(() => {
-      onSubmit && onSubmit(ratingData);
-    }, 1500);
+    setSubmitting(true);
+    try {
+      await onSubmit?.(ratingData);
+      setShowSuccessModal(true);
+    } catch {
+      // onSubmit is expected to toast its own error
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const renderStars = (
@@ -287,14 +292,14 @@ export function RatingView({ sessionPartner, sessionDetails, onBack, onSubmit }:
           </button>
           <button
             onClick={handleSubmit}
-            disabled={overallRating === 0}
+            disabled={overallRating === 0 || submitting}
             className={`flex-1 px-4 py-4 rounded-xl font-medium transition-all shadow-sm ${
-              overallRating === 0
+              overallRating === 0 || submitting
                 ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
                 : 'bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white active:scale-[0.98]'
             }`}
           >
-            Submit Rating
+            {submitting ? 'Submitting…' : 'Submit Rating'}
           </button>
         </div>
       </div>
