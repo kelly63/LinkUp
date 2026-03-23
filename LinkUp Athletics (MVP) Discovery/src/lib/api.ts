@@ -354,6 +354,11 @@ export const posts = {
       method: 'POST',
       body: JSON.stringify({ text }),
     }, token),
+
+  delete: (token: string, postId: string) =>
+    request<{ message: string }>(`/api/posts/${postId}`, {
+      method: 'DELETE',
+    }, token),
 };
 
 export const notifications = {

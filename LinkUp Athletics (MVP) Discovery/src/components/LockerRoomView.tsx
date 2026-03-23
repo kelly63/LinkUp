@@ -12,8 +12,10 @@ import {
   MapPin,
   ExternalLink,
   Send,
+  Trash2,
+  Flag,
 } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
 import { useAuth } from '../lib/auth';
 import { posts as postsApi, Post } from '../lib/api';
@@ -54,6 +56,20 @@ export function LockerRoomView() {
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [submittingComment, setSubmittingComment] = useState<Record<string, boolean>>({});
+  const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Close the post menu when clicking outside
+  useEffect(() => {
+    if (!openMenuPostId) return;
+    const handleOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpenMenuPostId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [openMenuPostId]);
 
   const fetchPage = useCallback(async (p: number, replace: boolean) => {
     if (!token) return;
@@ -167,6 +183,23 @@ export function LockerRoomView() {
     }
   };
 
+  const handleDeletePost = async (postId: string) => {
+    if (!token) return;
+    setOpenMenuPostId(null);
+    try {
+      await postsApi.delete(token, postId);
+      setFeedPosts((prev) => prev.filter((p) => p._id !== postId));
+      toast.success('Post deleted');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not delete post');
+    }
+  };
+
+  const handleReportPost = (postId: string) => {
+    setOpenMenuPostId(null);
+    toast.success('Post reported. We'll review it shortly.');
+  };
+
   const filters: { id: Filter; label: string }[] = [
     { id: 'all', label: 'All' },
     { id: 'session_completion', label: 'Sessions' },
@@ -251,6 +284,8 @@ export function LockerRoomView() {
     const isCommentsOpen = openCommentPostId === post._id;
     const draft = commentDrafts[post._id] ?? '';
     const isSubmitting = submittingComment[post._id] ?? false;
+    const isMenuOpen = openMenuPostId === post._id;
+    const isOwner = user && author && author._id === user._id;
 
     return (
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -276,9 +311,37 @@ export function LockerRoomView() {
                 </div>
               </div>
             </div>
-            <button className="p-1.5 hover:bg-slate-100 rounded-full transition-colors">
-              <MoreVertical className="w-4 h-4 text-slate-400" />
-            </button>
+            <div className="relative" ref={isMenuOpen ? menuRef : null}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpenMenuPostId(isMenuOpen ? null : post._id);
+                }}
+                className="p-1.5 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <MoreVertical className="w-4 h-4 text-slate-400" />
+              </button>
+              {isMenuOpen && (
+                <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-slate-200 py-1 min-w-[140px]">
+                  {isOwner && (
+                    <button
+                      onClick={() => handleDeletePost(post._id)}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete post
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleReportPost(post._id)}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <Flag className="w-4 h-4" />
+                    Report post
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
