@@ -238,7 +238,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
           });
           handleBackFromUserProfile();
         }}
-        onSendPracticeRequest={() => {}}
+        onSendPracticeRequest={handleBackFromUserProfile}
         onAcceptRoster={handleBackFromUserProfile}
         onDeclineRoster={handleBackFromUserProfile}
       />
