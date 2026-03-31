@@ -95,8 +95,8 @@ test.describe('Chat tab', () => {
   test('shows unread badge on conversations with unread messages', async ({ page }) => {
     await mockChatEndpoints(page);
     await goToChat(page);
-    // MOCK_CONV has unread: 2
-    await expect(page.locator('text=2')).toBeVisible({ timeout: 8000 });
+    // MOCK_CONV has unread: 2 — target the badge span specifically
+    await expect(page.locator('span.bg-blue-600:has-text("2")')).toBeVisible({ timeout: 8000 });
   });
 
   test('shows empty state when there are no conversations', async ({ page }) => {
