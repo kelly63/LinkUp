@@ -57,6 +57,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "test": "playwright test",
+    "test:ci": "playwright test --reporter=github"
   }
 }

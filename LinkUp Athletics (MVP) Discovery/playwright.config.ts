@@ -19,7 +19,8 @@ export default defineConfig({
     headless: true,
     viewport: { width: 393, height: 852 },
     launchOptions: {
-      executablePath: CHROMIUM_HEADLESS_SHELL,
+      // In CI, Playwright manages its own browser; locally use the pre-installed headless shell.
+      executablePath: process.env.CI ? undefined : CHROMIUM_HEADLESS_SHELL,
     },
   },
   projects: [
