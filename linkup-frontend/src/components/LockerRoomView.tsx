@@ -198,7 +198,7 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
 
   const handleReportPost = (postId: string) => {
     setOpenMenuPostId(null);
-    toast.success('Post reported. We'll review it shortly.');
+    toast.success("Post reported. We'll review it shortly.");
   };
 
   const filters: { id: Filter; label: string }[] = [
