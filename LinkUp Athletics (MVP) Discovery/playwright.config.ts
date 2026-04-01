@@ -11,7 +11,8 @@ export default defineConfig({
   testDir: './tests',
   timeout: 30_000,
   expect: { timeout: 8_000 },
-  fullyParallel: false,
+  fullyParallel: true,
+  workers: '100%',
   retries: 0,
   reporter: 'list',
   use: {
