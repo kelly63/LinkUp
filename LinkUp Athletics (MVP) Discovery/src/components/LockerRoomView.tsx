@@ -14,6 +14,7 @@ import {
   Send,
   Trash2,
   Flag,
+  ArrowLeft,
 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
@@ -38,7 +39,7 @@ function getInitials(name: string) {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
-export function LockerRoomView() {
+export function LockerRoomView({ onBack }: { onBack?: () => void }) {
   const { token, user } = useAuth();
   const [feedPosts, setFeedPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -440,7 +441,17 @@ export function LockerRoomView() {
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-slate-900">Locker Room</h2>
+          <div className="flex items-center gap-2">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors -ml-2"
+              >
+                <ArrowLeft className="w-5 h-5 text-slate-700" />
+              </button>
+            )}
+            <h2 className="text-slate-900">Locker Room</h2>
+          </div>
           <button
             onClick={() => setIsCreatePostDialogOpen(true)}
             className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors"

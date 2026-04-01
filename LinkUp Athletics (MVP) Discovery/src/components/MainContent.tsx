@@ -1,3 +1,4 @@
+import { LockerRoomView } from './LockerRoomView';
 import { PostView } from './PostView';
 import { ChatView } from './ChatView';
 import { ProfileView } from './ProfileView';
@@ -124,6 +125,8 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
   }
 
   // ── Sub-views ────────────────────────────────────────────────────────────────
+  if (currentView === 'lockerRoom') return <LockerRoomView onBack={handleBack} />;
+
   if (currentView === 'coachSetup') return <CoachProfileSetup onBack={handleBack} />;
 
   if (currentView === 'athleteSearch') {

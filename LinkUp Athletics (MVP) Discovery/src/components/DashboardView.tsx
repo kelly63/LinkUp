@@ -6,7 +6,8 @@ import {
   Users,
   ChevronRight,
   Search,
-  Trophy
+  Trophy,
+  MessageSquare,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
@@ -152,7 +153,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
 
         {/* Search Athletes Button */}
         {onNavigate && (
-          <button 
+          <button
             onClick={() => onNavigate('athleteSearch')}
             className="w-full bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white p-5 rounded-2xl flex items-center justify-between transition-all shadow-lg shadow-emerald-600/20 active:scale-[0.98]"
           >
@@ -163,6 +164,25 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
               <div className="text-left">
                 <h4 className="text-white font-semibold">Search Athletes</h4>
                 <p className="text-sm text-emerald-100">Find practice partners nearby</p>
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-white/70" />
+          </button>
+        )}
+
+        {/* Community Feed Button */}
+        {onNavigate && (
+          <button
+            onClick={() => onNavigate('lockerRoom')}
+            className="w-full mt-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white p-4 rounded-2xl flex items-center justify-between transition-all border border-white/20 active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <h4 className="text-white font-semibold text-sm">Community Feed</h4>
+                <p className="text-xs text-blue-200">Posts, sessions & thoughts</p>
               </div>
             </div>
             <ChevronRight className="w-5 h-5 text-white/70" />
