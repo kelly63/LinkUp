@@ -1,114 +1,196 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 import { seedAuth } from './helpers/auth';
-import { blockWebSocket, mockDashboard, MOCK_POST, OTHER_USER_POST } from './helpers/mocks';
+import { blockWebSocket, mockDashboard } from './helpers/mocks';
 
-/**
- * NOTE: Post actions (like, comment, delete, report) live in LockerRoomView.tsx.
- * That component is currently not mounted in the main app navigation — it needs
- * to be wired to a tab (e.g. the "Locker room" / dashboard tab) for these tests
- * to run against the real UI.
- *
- * Once LockerRoomView is mounted, remove the test.skip calls and these tests
- * will cover the wired-up API calls.
- */
+const AVAILABLE_SESSION = {
+  _id: 'avail-001',
+  title: 'Baseball Practice',
+  sport: 'Baseball',
+  partnerRole: 'Catcher',
+  date: 'Apr 15, 2026',
+  time: '9:00 AM',
+  location: 'Lincoln Park Fields',
+  duration: '2 hours',
+  skillLevelRequired: 'NCAA D1',
+  status: 'open',
+  postedBy: {
+    _id: 'user-999',
+    name: 'Marcus Webb',
+    avatar: 'MW',
+    sport: 'Baseball',
+    position: 'Pitcher',
+    skillLevel: 'NCAA D1',
+  },
+};
 
-test.describe('Post actions (LockerRoomView)', () => {
+async function goToPostTab(page: Page) {
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('button:has-text("View All")', { timeout: 8000 });
+  await page.locator('button').filter({ has: page.locator('span:has-text("LinkUp")') }).click();
+  await page.waitForSelector('text=Post a Need', { timeout: 6000 });
+}
+
+test.describe('PostView', () => {
   test.beforeEach(async ({ page }) => {
     await seedAuth(page);
     await blockWebSocket(page);
     await mockDashboard(page);
 
-    await page.route('**/api/posts**', (route) => {
-      const url = route.request().url();
-      const method = route.request().method();
-
-      if (method === 'POST' && url.includes('/like')) {
-        return route.fulfill({ json: { likes: ['user-001'] } });
-      }
-      if (method === 'POST' && url.includes('/comment')) {
-        return route.fulfill({
-          json: {
-            comment: {
-              _id: 'comment-001',
-              text: 'Great session!',
-              author: { _id: 'user-001', name: 'Alex Pitcher', avatar: 'AP' },
-              createdAt: new Date().toISOString(),
-            },
-          },
-        });
-      }
-      if (method === 'DELETE') {
-        return route.fulfill({ json: { message: 'Deleted' } });
-      }
-      // GET feed
-      return route.fulfill({
-        json: { posts: [MOCK_POST, OTHER_USER_POST], total: 2, page: 1, pages: 1 },
+    await page.route('**/api/sessions/available**', (route) => {
+      route.fulfill({
+        json: {
+          sessions: [AVAILABLE_SESSION],
+          total: 1,
+          page: 1,
+          pages: 1,
+        },
       });
     });
 
-    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    await page.route('**/api/sessions', (route) => {
+      if (route.request().method() === 'POST') {
+        return route.fulfill({
+          json: { session: { _id: 'new-session-001', ...AVAILABLE_SESSION } },
+        });
+      }
+      return route.continue();
+    });
   });
 
-  test.skip('like button calls POST /api/posts/:id/like', async ({ page }) => {
-    // TODO: LockerRoomView needs to be mounted on a navigable tab first.
-    // When ready, navigate to the locker room tab, find the like button, click it,
-    // and assert that POST /api/posts/post-001/like was called.
-    const likeRequest = page.waitForRequest(
-      (req) => req.url().includes(`/api/posts/${MOCK_POST._id}/like`) && req.method() === 'POST'
-    );
+  // ── Navigation & header ──────────────────────────────────────────────────────
 
-    // Navigate to locker room tab (adjust selector when tab is wired)
-    await page.click('button:has-text("Locker room")');
-    await page.waitForSelector(`text=${MOCK_POST.content}`, { timeout: 8000 });
-
-    await page.locator(`[data-post-id="${MOCK_POST._id}"] button[aria-label="like"]`).click();
-    const req = await likeRequest;
-    expect(req.url()).toContain(`/api/posts/${MOCK_POST._id}/like`);
+  test('navigating to LinkUp tab renders the view', async ({ page }) => {
+    await goToPostTab(page);
+    await expect(page.locator('h2:has-text("Sessions")')).toBeVisible();
   });
 
-  test.skip('comment submit calls POST /api/posts/:id/comment', async ({ page }) => {
-    // TODO: LockerRoomView needs to be mounted on a navigable tab first.
-    const commentRequest = page.waitForRequest(
-      (req) => req.url().includes(`/api/posts/${MOCK_POST._id}/comment`) && req.method() === 'POST'
+  test('shows "Post a Need" and "Find Sessions" mode toggle buttons', async ({ page }) => {
+    await goToPostTab(page);
+    await expect(page.locator('button:has-text("Post a Need")')).toBeVisible();
+    await expect(page.locator('button:has-text("Find Sessions")')).toBeVisible();
+  });
+
+  // ── Post a Need (default mode) ───────────────────────────────────────────────
+
+  test('default mode is "Post a Need"', async ({ page }) => {
+    await goToPostTab(page);
+    await expect(page.locator('text=Sport for Session')).toBeVisible();
+  });
+
+  test('shows "Sport for Session" label and dropdown', async ({ page }) => {
+    await goToPostTab(page);
+    await expect(page.locator('label:has-text("Sport for Session")')).toBeVisible();
+    await expect(page.locator('select').first()).toBeVisible();
+  });
+
+  test('shows "Partner Role Needed" section', async ({ page }) => {
+    await goToPostTab(page);
+    await expect(page.locator('text=Partner Role Needed')).toBeVisible();
+  });
+
+  test('shows baseball partner role buttons by default', async ({ page }) => {
+    await goToPostTab(page);
+    await expect(page.locator('button:has-text("Catcher")').first()).toBeVisible();
+    await expect(page.locator('button:has-text("Pitcher (RHP)")').first()).toBeVisible();
+  });
+
+  test('can select a partner role', async ({ page }) => {
+    await goToPostTab(page);
+    const catcherBtn = page.locator('button:has-text("Catcher")').first();
+    await catcherBtn.click();
+    // Selected buttons get dark background styling
+    await expect(catcherBtn).toHaveClass(/bg-blue-900/);
+  });
+
+  test('shows "POST SESSION" submit button', async ({ page }) => {
+    await goToPostTab(page);
+    await expect(page.locator('button:has-text("POST SESSION")')).toBeVisible();
+  });
+
+  test('POST SESSION calls POST /api/sessions with correct data', async ({ page }) => {
+    const createRequest = page.waitForRequest(
+      (req) => req.url().includes('/api/sessions') && req.method() === 'POST'
     );
 
-    await page.click('button:has-text("Locker room")');
-    await page.waitForSelector(`text=${MOCK_POST.content}`, { timeout: 8000 });
+    await goToPostTab(page);
 
-    // Open comment panel, type comment, submit
-    await page.locator(`[data-post-id="${MOCK_POST._id}"] button[aria-label="comment"]`).click();
-    await page.locator(`[data-post-id="${MOCK_POST._id}"] input[placeholder*="comment"]`).fill('Great session!');
-    await page.keyboard.press('Enter');
+    // Select a partner role (required)
+    await page.locator('button:has-text("Catcher")').first().click();
+    // Mark date as flexible (required if no dates added)
+    await page.locator('label').filter({ hasText: 'Flexible' }).first().click();
+    // Submit
+    await page.click('button:has-text("POST SESSION")');
 
-    const req = await commentRequest;
+    const req = await createRequest;
     const body = JSON.parse(req.postData() || '{}');
-    expect(body.text).toBe('Great session!');
+    expect(body.sport).toBe('Baseball');
+    expect(req.method()).toBe('POST');
   });
 
-  test.skip('delete own post calls DELETE /api/posts/:id', async ({ page }) => {
-    // TODO: LockerRoomView needs to be mounted on a navigable tab first.
-    const deleteRequest = page.waitForRequest(
-      (req) => req.url().includes(`/api/posts/${MOCK_POST._id}`) && req.method() === 'DELETE'
+  test('shows "Partner Skill Level" section', async ({ page }) => {
+    await goToPostTab(page);
+    await expect(page.locator('text=Partner Skill Level')).toBeVisible();
+  });
+
+  test('shows Session Notes textarea', async ({ page }) => {
+    await goToPostTab(page);
+    await expect(page.locator('textarea')).toBeVisible();
+  });
+
+  // ── Find Sessions mode ───────────────────────────────────────────────────────
+
+  test('switching to Find Sessions calls GET /api/sessions/available', async ({ page }) => {
+    const findRequest = page.waitForRequest(
+      (req) => req.url().includes('/api/sessions/available') && req.method() === 'GET'
     );
 
-    await page.click('button:has-text("Locker room")');
-    await page.waitForSelector(`text=${MOCK_POST.content}`, { timeout: 8000 });
+    await goToPostTab(page);
+    await page.click('button:has-text("Find Sessions")');
 
-    // Open 3-dot menu on own post and click Delete
-    await page.locator(`[data-post-id="${MOCK_POST._id}"] button[aria-label="more"]`).click();
-    await page.locator('button:has-text("Delete")').click();
-
-    await deleteRequest;
-    await expect(page.locator(`text=${MOCK_POST.content}`)).not.toBeVisible();
+    await findRequest; // assert the request was made
   });
 
-  test.skip('report button is shown for posts by other users', async ({ page }) => {
-    // TODO: LockerRoomView needs to be mounted on a navigable tab first.
-    await page.click('button:has-text("Locker room")');
-    await page.waitForSelector(`text=${OTHER_USER_POST.content}`, { timeout: 8000 });
+  test('Find Sessions shows session cards after loading', async ({ page }) => {
+    await goToPostTab(page);
+    await page.click('button:has-text("Find Sessions")');
+    await expect(page.locator('h4:has-text("Baseball Practice")')).toBeVisible({ timeout: 8000 });
+  });
 
-    await page.locator(`[data-post-id="${OTHER_USER_POST._id}"] button[aria-label="more"]`).click();
-    await expect(page.locator('button:has-text("Report")')).toBeVisible();
-    await expect(page.locator('button:has-text("Delete")')).not.toBeVisible();
+  test('Find Sessions shows "Seeking" label on session card', async ({ page }) => {
+    await goToPostTab(page);
+    await page.click('button:has-text("Find Sessions")');
+    await expect(page.locator('text=Catcher').first()).toBeVisible({ timeout: 8000 });
+  });
+
+  test('Find Sessions shows "VIEW & ACCEPT" button on each card', async ({ page }) => {
+    await goToPostTab(page);
+    await page.click('button:has-text("Find Sessions")');
+    await expect(page.locator('button:has-text("VIEW & ACCEPT")')).toBeVisible({ timeout: 8000 });
+  });
+
+  test('Find Sessions shows search input field', async ({ page }) => {
+    await goToPostTab(page);
+    await page.click('button:has-text("Find Sessions")');
+    await expect(page.locator('input[type="text"]').first()).toBeVisible({ timeout: 8000 });
+  });
+
+  test('clicking VIEW & ACCEPT opens AvailableSessionView', async ({ page }) => {
+    await goToPostTab(page);
+    await page.click('button:has-text("Find Sessions")');
+    await page.waitForSelector('button:has-text("VIEW & ACCEPT")', { timeout: 8000 });
+    await page.click('button:has-text("VIEW & ACCEPT")');
+    // AvailableSessionView shows a "Seeking: ..." badge
+    await expect(page.locator('text=Seeking:')).toBeVisible({ timeout: 6000 });
+  });
+
+  test('back button on AvailableSessionView returns to Find Sessions list', async ({ page }) => {
+    await goToPostTab(page);
+    await page.click('button:has-text("Find Sessions")');
+    await page.waitForSelector('button:has-text("VIEW & ACCEPT")', { timeout: 8000 });
+    await page.click('button:has-text("VIEW & ACCEPT")');
+    await page.waitForSelector('text=Seeking:', { timeout: 6000 });
+    // AvailableSessionView back button has backdrop-blur-sm class
+    await page.locator('button.backdrop-blur-sm').click();
+    await expect(page.locator('button:has-text("VIEW & ACCEPT")')).toBeVisible({ timeout: 6000 });
   });
 });

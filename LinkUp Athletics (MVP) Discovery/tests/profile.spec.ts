@@ -142,4 +142,47 @@ test.describe('Profile tab', () => {
     // After logout the auth gate shows the login form
     await expect(page.locator('h2:has-text("Welcome Back")')).toBeVisible({ timeout: 8000 });
   });
+
+  // ── Settings navigation ─────────────────────────────────────────────────────
+
+  test('shows "Privacy & Visibility" settings button', async ({ page }) => {
+    await goToProfile(page);
+    await expect(page.locator('h4:has-text("Privacy & Visibility")')).toBeVisible();
+  });
+
+  test('clicking "Privacy & Visibility" navigates to PreferencesView', async ({ page }) => {
+    await goToProfile(page);
+    await page.click('h4:has-text("Privacy & Visibility")');
+    await expect(page.locator('h2:has-text("Privacy & Visibility")')).toBeVisible({ timeout: 8000 });
+  });
+
+  test('shows "Notifications" settings button', async ({ page }) => {
+    await goToProfile(page);
+    await expect(page.locator('h4:has-text("Notifications")')).toBeVisible();
+  });
+
+  // ── Profile content ────────────────────────────────────────────────────────
+
+  test('shows position field in athlete profile card', async ({ page }) => {
+    await goToProfile(page);
+    // MOCK_USER.position is 'Pitcher'
+    await expect(page.locator('text=Pitcher').first()).toBeVisible();
+  });
+
+  test('shows completed sessions stat', async ({ page }) => {
+    await goToProfile(page);
+    // Sessions stat tile label
+    await expect(page.locator('text=Sessions').first()).toBeVisible();
+  });
+
+  test('shows "About Me" section', async ({ page }) => {
+    await goToProfile(page);
+    await expect(page.locator('text=About Me').first()).toBeVisible();
+  });
+
+  test('shows "My QR Code" section', async ({ page }) => {
+    await goToProfile(page);
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(page.locator('text=My QR Code')).toBeVisible();
+  });
 });

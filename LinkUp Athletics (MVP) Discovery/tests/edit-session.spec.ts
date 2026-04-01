@@ -90,4 +90,130 @@ test.describe('Edit session', () => {
     // The edit form (Save Changes) should no longer be visible
     await expect(page.locator('button:has-text("Save Changes")')).not.toBeVisible({ timeout: 8000 });
   });
+
+  // ── Form rendering ──────────────────────────────────────────────────────────
+
+  test('edit form shows "Edit Session" heading', async ({ page }) => {
+    await navigateToSessionDetails(page);
+    await page.click('button:has-text("Edit Session")');
+    await page.waitForSelector('h2:has-text("Edit Session")', { timeout: 8000 });
+    await expect(page.locator('h2:has-text("Edit Session")')).toBeVisible();
+  });
+
+  test('edit form shows sport name in the header subtitle', async ({ page }) => {
+    await navigateToSessionDetails(page);
+    await page.click('button:has-text("Edit Session")');
+    // Header shows "{sport} Practice" — OPEN_SESSION.sport is "Baseball"
+    await expect(page.locator('text=Baseball Practice')).toBeVisible({ timeout: 8000 });
+  });
+
+  test('edit form shows Date, Time, Duration, Location, and Notes fields', async ({ page }) => {
+    await navigateToSessionDetails(page);
+    await page.click('button:has-text("Edit Session")');
+    await page.waitForSelector('button:has-text("Save Changes")', { timeout: 8000 });
+    await expect(page.locator('label:has-text("Date")').first()).toBeVisible();
+    await expect(page.locator('label:has-text("Time")').first()).toBeVisible();
+    await expect(page.locator('label:has-text("Duration")').first()).toBeVisible();
+    await expect(page.locator('label:has-text("Location")').first()).toBeVisible();
+    await expect(page.locator('label:has-text("Session Notes")')).toBeVisible();
+  });
+
+  test('date field is pre-filled from the session', async ({ page }) => {
+    await navigateToSessionDetails(page);
+    await page.click('button:has-text("Edit Session")');
+    await page.waitForSelector('button:has-text("Save Changes")', { timeout: 8000 });
+    // OPEN_SESSION.date is 'Apr 01, 2026'
+    const dateInput = page.locator('input').first();
+    await expect(dateInput).toHaveValue(OPEN_SESSION.date);
+  });
+
+  test('time field is pre-filled from the session', async ({ page }) => {
+    await navigateToSessionDetails(page);
+    await page.click('button:has-text("Edit Session")');
+    await page.waitForSelector('button:has-text("Save Changes")', { timeout: 8000 });
+    // OPEN_SESSION.time is '9:00 AM'
+    const timeInput = page.locator('input').nth(1);
+    await expect(timeInput).toHaveValue(OPEN_SESSION.time);
+  });
+
+  test('location field is pre-filled from the session', async ({ page }) => {
+    await navigateToSessionDetails(page);
+    await page.click('button:has-text("Edit Session")');
+    await page.waitForSelector('button:has-text("Save Changes")', { timeout: 8000 });
+    await expect(page.locator('input[placeholder="Enter location"]')).toHaveValue(OPEN_SESSION.location);
+  });
+
+  test('duration select defaults to "2 hours"', async ({ page }) => {
+    await navigateToSessionDetails(page);
+    await page.click('button:has-text("Edit Session")');
+    await page.waitForSelector('button:has-text("Save Changes")', { timeout: 8000 });
+    await expect(page.locator('select')).toHaveValue('2 hours');
+  });
+
+  test('duration select includes all five options', async ({ page }) => {
+    await navigateToSessionDetails(page);
+    await page.click('button:has-text("Edit Session")');
+    await page.waitForSelector('button:has-text("Save Changes")', { timeout: 8000 });
+    const select = page.locator('select');
+    await expect(select.locator('option:has-text("1 hour")')).toBeAttached();
+    await expect(select.locator('option:has-text("1.5 hours")')).toBeAttached();
+    await expect(select.locator('option:has-text("2 hours")')).toBeAttached();
+    await expect(select.locator('option:has-text("2.5 hours")')).toBeAttached();
+    await expect(select.locator('option:has-text("3 hours")')).toBeAttached();
+  });
+
+  test('editing time sends updated time in the request body', async ({ page }) => {
+    const updateRequest = page.waitForRequest(
+      (req) =>
+        req.url().includes(`/api/sessions/${OPEN_SESSION._id}`) && req.method() === 'PUT'
+    );
+
+    await navigateToSessionDetails(page);
+    await page.click('button:has-text("Edit Session")');
+    await page.waitForSelector('button:has-text("Save Changes")', { timeout: 8000 });
+
+    const timeInput = page.locator('input').nth(1);
+    await timeInput.fill('2:00 PM');
+    await page.click('button:has-text("Save Changes")');
+
+    const req = await updateRequest;
+    const body = JSON.parse(req.postData() || '{}');
+    expect(body.time).toBe('2:00 PM');
+  });
+
+  test('editing duration sends updated duration in the request body', async ({ page }) => {
+    const updateRequest = page.waitForRequest(
+      (req) =>
+        req.url().includes(`/api/sessions/${OPEN_SESSION._id}`) && req.method() === 'PUT'
+    );
+
+    await navigateToSessionDetails(page);
+    await page.click('button:has-text("Edit Session")');
+    await page.waitForSelector('button:has-text("Save Changes")', { timeout: 8000 });
+
+    await page.locator('select').selectOption('1.5 hours');
+    await page.click('button:has-text("Save Changes")');
+
+    const req = await updateRequest;
+    const body = JSON.parse(req.postData() || '{}');
+    expect(body.duration).toBe('1.5 hours');
+  });
+
+  test('editing notes sends updated notes in the request body', async ({ page }) => {
+    const updateRequest = page.waitForRequest(
+      (req) =>
+        req.url().includes(`/api/sessions/${OPEN_SESSION._id}`) && req.method() === 'PUT'
+    );
+
+    await navigateToSessionDetails(page);
+    await page.click('button:has-text("Edit Session")');
+    await page.waitForSelector('button:has-text("Save Changes")', { timeout: 8000 });
+
+    await page.locator('textarea').fill('Updated notes for this session.');
+    await page.click('button:has-text("Save Changes")');
+
+    const req = await updateRequest;
+    const body = JSON.parse(req.postData() || '{}');
+    expect(body.notes).toBe('Updated notes for this session.');
+  });
 });

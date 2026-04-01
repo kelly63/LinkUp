@@ -86,4 +86,69 @@ test.describe('Practice request', () => {
 
     await expect(page.locator('text=Request Sent')).toBeVisible({ timeout: 8000 });
   });
+
+  // ── Profile content ─────────────────────────────────────────────────────────
+
+  test('athlete profile shows the user name in the hero', async ({ page }) => {
+    await page.click('button:has-text("Search Athletes")');
+    await page.waitForSelector(`text=${ATHLETE.name}`, { timeout: 8000 });
+    await page.click('button:has-text("Profile")');
+    await expect(page.locator('h1:has-text("Jordan Outfield")')).toBeVisible({ timeout: 8000 });
+  });
+
+  test('athlete profile shows sport and position', async ({ page }) => {
+    await page.click('button:has-text("Search Athletes")');
+    await page.waitForSelector(`text=${ATHLETE.name}`, { timeout: 8000 });
+    await page.click('button:has-text("Profile")');
+    await page.waitForSelector('h1:has-text("Jordan Outfield")', { timeout: 8000 });
+    await expect(page.locator(`text=${ATHLETE.sport}`).first()).toBeVisible();
+    await expect(page.locator(`text=${ATHLETE.position}`).first()).toBeVisible();
+  });
+
+  test('athlete profile shows skill level badge', async ({ page }) => {
+    await page.click('button:has-text("Search Athletes")');
+    await page.waitForSelector(`text=${ATHLETE.name}`, { timeout: 8000 });
+    await page.click('button:has-text("Profile")');
+    await page.waitForSelector('h1:has-text("Jordan Outfield")', { timeout: 8000 });
+    await expect(page.locator(`text=${ATHLETE.skillLevel}`).first()).toBeVisible();
+  });
+
+  test('athlete profile shows average rating in stats grid', async ({ page }) => {
+    await page.click('button:has-text("Search Athletes")');
+    await page.waitForSelector(`text=${ATHLETE.name}`, { timeout: 8000 });
+    await page.click('button:has-text("Profile")');
+    await page.waitForSelector('h1:has-text("Jordan Outfield")', { timeout: 8000 });
+    await expect(page.locator(`text=${ATHLETE.averageRating.toFixed(1)}`)).toBeVisible();
+  });
+
+  test('athlete profile shows "Message" button', async ({ page }) => {
+    await page.click('button:has-text("Search Athletes")');
+    await page.waitForSelector(`text=${ATHLETE.name}`, { timeout: 8000 });
+    await page.click('button:has-text("Profile")');
+    await expect(page.locator('button:has-text("Message")')).toBeVisible({ timeout: 8000 });
+  });
+
+  test('athlete profile shows "Rate" button', async ({ page }) => {
+    await page.click('button:has-text("Search Athletes")');
+    await page.waitForSelector(`text=${ATHLETE.name}`, { timeout: 8000 });
+    await page.click('button:has-text("Profile")');
+    await expect(page.locator('button:has-text("Rate")')).toBeVisible({ timeout: 8000 });
+  });
+
+  test('athlete profile shows bio text', async ({ page }) => {
+    await page.click('button:has-text("Search Athletes")');
+    await page.waitForSelector(`text=${ATHLETE.name}`, { timeout: 8000 });
+    await page.click('button:has-text("Profile")');
+    await expect(page.locator(`text=${ATHLETE.bio}`)).toBeVisible({ timeout: 8000 });
+  });
+
+  test('back button returns from athlete profile', async ({ page }) => {
+    await page.click('button:has-text("Search Athletes")');
+    await page.waitForSelector(`text=${ATHLETE.name}`, { timeout: 8000 });
+    await page.click('button:has-text("Profile")');
+    await page.waitForSelector('h1:has-text("Jordan Outfield")', { timeout: 8000 });
+    await page.locator('xpath=//h2[text()="Profile"]/../button').click();
+    // Returns to main view; athlete profile hero no longer visible
+    await expect(page.locator('h1:has-text("Jordan Outfield")')).not.toBeVisible({ timeout: 6000 });
+  });
 });
