@@ -314,7 +314,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
           onBack={handleBack}
         />
       )}
-      {activeTab === 'rosterList' && <RosterListView />}
+      {activeTab === 'rosterList' && <RosterListView onBack={handleBack} onNavigate={handleNavigate} onOpenChat={handleOpenChat} />}
     </div>
   );
 }
