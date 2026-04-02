@@ -32,7 +32,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
 
   // Athlete profile data — initialised from auth context
   const [athleteSport, setAthleteSport] = useState(user?.sport || 'Baseball');
-  const [athletePosition, setAthletePosition] = useState(user?.position || 'Catcher');
+  const [athletePosition, setAthletePosition] = useState(user?.position || '');
   const [athleteSecondarySport, setAthleteSecondarySport] = useState('Basketball');
   const [athleteSecondaryPosition, setAthleteSecondaryPosition] = useState('Point Guard');
   const [athleteLevel, setAthleteLevel] = useState(user?.skillLevel || 'NCAA D1');
@@ -225,7 +225,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           {/* Primary Role Badge */}
           <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
             <div className="w-2 h-2 bg-emerald-400 rounded-full"></div>
-            <span className="text-white text-sm">{userRole === 'athlete' ? 'Catcher' : 'Baseball Coach'}</span>
+            <span className="text-white text-sm">{userRole === 'athlete' ? (user?.position || 'Athlete') : (user?.sportsCoached?.[0] ? `${user.sportsCoached[0]} Coach` : 'Coach')}</span>
           </div>
         </div>
       </div>
