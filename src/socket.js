@@ -127,6 +127,13 @@ function getSocketIo(httpServer) {
         // Echo back to sender (other tabs)
         socket.to(`user:${userId}`).emit('message:new', payload);
 
+        // Push notification if recipient is offline
+        io.notify(recipientId, 'message_new', {
+          senderName: socket.user.name,
+          senderId: userId,
+          text: text.trim().slice(0, 100),
+        });
+
         // Acknowledge to the sending socket
         ack?.({ message: payload });
       } catch (err) {

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
 import { useAuth } from '../lib/auth';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { users as usersApi } from '../lib/api';
 import { toast } from 'sonner';
 
@@ -15,6 +16,7 @@ interface ProfileViewProps {
 
 export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: ProfileViewProps) {
   const { token, user, updateUser } = useAuth();
+  const { supported: pushSupported, permission, subscribed, loading: pushLoading, enable: enablePush, disable: disablePush } = usePushNotifications(token);
 
   // Edit modal states
   const [showAthleteProfileEdit, setShowAthleteProfileEdit] = useState(false);
@@ -628,16 +630,33 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           </button>
 
           {/* Notifications */}
-          <button className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors border-b border-slate-100">
+          <div className="w-full px-5 py-4 flex items-center gap-4 border-b border-slate-100">
             <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
               <Bell className="w-5 h-5 text-purple-600" />
             </div>
             <div className="flex-1 text-left">
-              <h4 className="text-slate-900">Notifications</h4>
-              <p className="text-sm text-slate-500">Manage notification preferences</p>
+              <h4 className="text-slate-900">Push Notifications</h4>
+              <p className="text-sm text-slate-500">
+                {!pushSupported ? 'Not supported on this device' :
+                 permission === 'denied' ? 'Blocked in browser settings' :
+                 subscribed ? 'Enabled — you\'ll get alerts when offline' :
+                 'Get notified about messages & requests'}
+              </p>
             </div>
-            <ChevronRight className="w-5 h-5 text-slate-400" />
-          </button>
+            {pushSupported && permission !== 'denied' && (
+              <button
+                onClick={subscribed ? disablePush : enablePush}
+                disabled={pushLoading}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  subscribed ? 'bg-purple-600' : 'bg-slate-300'
+                } ${pushLoading ? 'opacity-50' : ''}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  subscribed ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+            )}
+          </div>
 
           {/* Log Out */}
           <button className="w-full px-5 py-4 flex items-center gap-4 hover:bg-red-50 transition-colors" onClick={onLogout}>
