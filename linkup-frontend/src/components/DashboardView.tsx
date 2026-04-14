@@ -53,7 +53,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
     (async () => {
       try {
         const [sessData, connData, ratingData] = await Promise.all([
-          sessionsApi.getMine(token, 'open,confirmed'),
+          sessionsApi.getMine(token),
           connectionsApi.getPending(token),
           ratingsApi.getReceived(token),
         ]);
@@ -83,16 +83,16 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
       id: req._id,
       type: 'roster_addition',
       title: 'Roster Request',
-      description: `${req.user?.name || 'Someone'} wants to join your roster`,
+      description: `${req.requester?.name || 'Someone'} wants to join your roster`,
       time: timeAgo(req.createdAt || new Date().toISOString()),
       userProfile: {
-        _id: req.user?._id,
-        name: req.user?.name || '',
-        avatar: req.user?.avatar || getInitials(req.user?.name || '?'),
-        sport: req.user?.sport || '',
-        position: req.user?.position || '',
-        level: req.user?.skillLevel || '',
-        connectionId: req.connectionId,
+        _id: req.requester?._id,
+        name: req.requester?.name || '',
+        avatar: req.requester?.avatar || getInitials(req.requester?.name || '?'),
+        sport: req.requester?.sport || '',
+        position: req.requester?.position || '',
+        level: req.requester?.skillLevel || '',
+        connectionId: req._id,
         isRosterRequest: true,
       },
     })),
@@ -251,7 +251,10 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                   <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <Calendar className="w-3 h-3 text-amber-600" />
                   </div>
-                  <span className="text-slate-700">{session.date}{session.time ? ` at ${session.time}` : ''}</span>
+                  <span className="text-slate-700">
+                    {session.date ? new Date(session.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'TBD'}
+                    {session.time ? ` at ${session.time}` : ''}
+                  </span>
                 </div>
                 {session.location && (
                   <div className="flex items-center gap-2 text-sm">
@@ -290,6 +293,11 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
         </div>
         
         <div className="space-y-3">
+          {!loading && displayedActivity.length === 0 && (
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 text-center">
+              <p className="text-slate-500 text-sm">No recent activity yet.</p>
+            </div>
+          )}
           {displayedActivity.map((activity) => (
             <div
               key={activity.id}
