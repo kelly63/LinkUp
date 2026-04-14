@@ -317,6 +317,9 @@ export const ratings = {
 
   getReceived: (token: string) =>
     request<{ ratings: Rating[] }>('/api/ratings/received', {}, token),
+
+  getGiven: (token: string) =>
+    request<{ ratings: Rating[] }>('/api/ratings/given', {}, token),
 };
 
 // ─── Posts ────────────────────────────────────────────────────────────────────

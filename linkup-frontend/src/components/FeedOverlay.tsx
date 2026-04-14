@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronUp } from 'lucide-react';
 import { NeedCard } from './NeedCard';
+import { sessions as sessionsApi } from '../lib/api';
+import { useAuth } from '../lib/auth';
 
 interface FeedOverlayProps {
   filters: {
@@ -10,67 +12,50 @@ interface FeedOverlayProps {
   onCardClick: () => void;
 }
 
-interface Need {
-  id: number;
-  title: string;
-  seeking: string;
-  level: string;
-  distance: string;
-  date: string;
-  time: string;
+function formatSessionDate(dateStr: string) {
+  const date = new Date(dateStr);
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-const mockNeeds: Need[] = [
-  {
-    id: 1,
-    title: 'Bullpen Session',
-    seeking: 'Catcher',
-    level: 'NCAA D1',
-    distance: '1.2 miles away',
-    date: 'Today, Dec 4',
-    time: '6:00 PM – 7:30 PM'
-  },
-  {
-    id: 2,
-    title: 'Pitching Practice',
-    seeking: 'LHP or RHP',
-    level: 'HS Varsity',
-    distance: '2.4 miles away',
-    date: 'Tomorrow, Dec 5',
-    time: '3:00 PM – 4:30 PM'
-  },
-  {
-    id: 3,
-    title: 'Breaking Ball Work',
-    seeking: 'Catcher',
-    level: 'College',
-    distance: '0.8 miles away',
-    date: 'Today, Dec 4',
-    time: '5:00 PM – 6:30 PM'
-  },
-  {
-    id: 4,
-    title: 'Live Batting Practice',
-    seeking: 'Pitcher (RHP)',
-    level: 'NCAA D3',
-    distance: '3.1 miles away',
-    date: 'Saturday, Dec 7',
-    time: '10:00 AM – 12:00 PM'
-  },
-];
+function formatSessionTime(dateStr: string) {
+  const date = new Date(dateStr);
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
 
 export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
+  const { token } = useAuth();
   const [expanded, setExpanded] = useState(false);
+  const [availableSessions, setAvailableSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredNeeds = mockNeeds.filter(need => {
-    if (filters.skillLevel !== 'all' && need.level !== filters.skillLevel) {
-      return false;
-    }
-    return true;
-  });
+  useEffect(() => {
+    if (!token) return;
+    const params: Record<string, string> = {};
+    if (filters.skillLevel && filters.skillLevel !== 'all') params.skillLevel = filters.skillLevel;
+    sessionsApi.getAvailable(token, params)
+      .then((data) => setAvailableSessions(data.sessions || []))
+      .catch(() => setAvailableSessions([]))
+      .finally(() => setLoading(false));
+  }, [token, filters.skillLevel]);
+
+  const needs = availableSessions.map((s) => ({
+    id: s._id,
+    title: s.title || s.sport || 'Session',
+    seeking: s.seekingPosition || s.position || 'Partner',
+    level: s.skillLevel || s.level || '',
+    distance: s.location || 'Nearby',
+    date: s.date ? formatSessionDate(s.date) : '',
+    time: s.date ? formatSessionTime(s.date) : '',
+  }));
 
   return (
-    <div 
+    <div
       className={`absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl transition-all duration-300 z-20 ${
         expanded ? 'h-[70%]' : 'h-[35%]'
       }`}
@@ -87,9 +72,11 @@ export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
       <div className="px-6 pb-3 flex items-center justify-between">
         <div>
           <h3 className="text-slate-900">Available Sessions</h3>
-          <p className="text-sm text-slate-500">{filteredNeeds.length} nearby opportunities</p>
+          <p className="text-sm text-slate-500">
+            {loading ? 'Loading...' : `${needs.length} nearby opportunities`}
+          </p>
         </div>
-        <button 
+        <button
           onClick={() => setExpanded(!expanded)}
           className="p-2 hover:bg-slate-100 rounded-full transition-colors"
         >
@@ -99,9 +86,13 @@ export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
 
       {/* Scrollable Card List */}
       <div className="overflow-y-auto px-6 pb-6 space-y-3" style={{ maxHeight: 'calc(100% - 80px)' }}>
-        {filteredNeeds.map((need) => (
-          <NeedCard key={need.id} need={need} onClick={onCardClick} />
-        ))}
+        {!loading && needs.length === 0 ? (
+          <div className="text-center py-8 text-slate-500 text-sm">No sessions available nearby</div>
+        ) : (
+          needs.map((need) => (
+            <NeedCard key={need.id} need={need} onClick={onCardClick} />
+          ))
+        )}
       </div>
     </div>
   );

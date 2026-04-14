@@ -74,15 +74,9 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
 
   const handleStartScan = () => {
     setScanningState('scanning');
-    // Simulate scanning process
+    // QR scanning requires a native device camera — show idle after 2s
     setTimeout(() => {
-      // Mock successful scan
-      setScannedUser({
-        name: 'Alex Rodriguez',
-        sport: 'Baseball',
-        userId: 'user456'
-      });
-      setScanningState('success');
+      setScanningState('idle');
     }, 2000);
   };
 
