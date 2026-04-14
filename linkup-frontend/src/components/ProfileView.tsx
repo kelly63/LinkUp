@@ -31,12 +31,9 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   }, [user?.avatar]);
 
   // Athlete profile data — initialised from auth context
-  const [athleteSport, setAthleteSport] = useState(user?.sport || 'Baseball');
+  const [athleteSport, setAthleteSport] = useState(user?.sport || '');
   const [athletePosition, setAthletePosition] = useState(user?.position || '');
-  const [athleteSecondarySport, setAthleteSecondarySport] = useState('Basketball');
-  const [athleteSecondaryPosition, setAthleteSecondaryPosition] = useState('Point Guard');
-  const [athleteLevel, setAthleteLevel] = useState(user?.skillLevel || 'NCAA D1');
-  const [athleteSchool, setAthleteSchool] = useState('');
+  const [athleteLevel, setAthleteLevel] = useState(user?.skillLevel || '');
   const [aboutMe, setAboutMe] = useState(user?.bio || '');
 
   // Coach philosophy data
@@ -45,10 +42,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   // Temporary edit states
   const [tempSport, setTempSport] = useState('');
   const [tempPosition, setTempPosition] = useState('');
-  const [tempSecondarySport, setTempSecondarySport] = useState('');
-  const [tempSecondaryPosition, setTempSecondaryPosition] = useState('');
   const [tempLevel, setTempLevel] = useState('');
-  const [tempSchool, setTempSchool] = useState('');
   const [tempAboutMe, setTempAboutMe] = useState('');
   const [tempPhilosophy, setTempPhilosophy] = useState('');
   
@@ -72,20 +66,14 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const handleOpenAthleteEdit = () => {
     setTempSport(athleteSport);
     setTempPosition(athletePosition);
-    setTempSecondarySport(athleteSecondarySport);
-    setTempSecondaryPosition(athleteSecondaryPosition);
     setTempLevel(athleteLevel);
-    setTempSchool(athleteSchool);
     setShowAthleteProfileEdit(true);
   };
   
   const handleSaveAthleteProfile = async () => {
     setAthleteSport(tempSport);
     setAthletePosition(tempPosition);
-    setAthleteSecondarySport(tempSecondarySport);
-    setAthleteSecondaryPosition(tempSecondaryPosition);
     setAthleteLevel(tempLevel);
-    setAthleteSchool(tempSchool);
     setShowAthleteProfileEdit(false);
     if (token) {
       setSavingProfile(true);
@@ -253,23 +241,13 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 </div>
                 
                 <div className="flex items-center justify-between py-2 border-b border-slate-200">
-                  <span className="text-sm text-slate-500">Secondary Sport</span>
-                  <span className="text-slate-900">{athleteSecondarySport}</span>
-                </div>
-                
-                <div className="flex items-center justify-between py-2 border-b border-slate-200">
-                  <span className="text-sm text-slate-500">Secondary Position</span>
-                  <span className="text-slate-900">{athleteSecondaryPosition}</span>
-                </div>
-                
-                <div className="flex items-center justify-between py-2 border-b border-slate-200">
                   <span className="text-sm text-slate-500">Athletic Level</span>
-                  <span className="text-slate-900">{athleteLevel}</span>
+                  <span className="text-slate-900">{athleteLevel || '—'}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-slate-500">School</span>
-                  <span className="text-slate-900">{athleteSchool}</span>
+                  <span className="text-sm text-slate-500">Location</span>
+                  <span className="text-slate-900">{user?.location || '—'}</span>
                 </div>
               </div>
               
@@ -702,9 +680,10 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 <label className="text-sm text-slate-700 mb-2 block">Sport</label>
                 <select
                   value={tempSport}
-                  onChange={(e) => setTempSport(e.target.value)}
+                  onChange={(e) => { setTempSport(e.target.value); setTempPosition(''); }}
                   className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
                 >
+                  <option value="">Select sport</option>
                   {sports.map(sport => (
                     <option key={sport} value={sport}>{sport}</option>
                   ))}
@@ -719,49 +698,11 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   onChange={(e) => setTempPosition(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
                 >
-                  {(sportPositions[tempSport] || sportPositions['Baseball']).map(position => (
+                  <option value="">Select position</option>
+                  {(sportPositions[tempSport] || []).map(position => (
                     <option key={position} value={position}>{position}</option>
                   ))}
                 </select>
-              </div>
-              
-              {/* Secondary Sport Divider */}
-              <div className="pt-2 pb-3 border-b border-slate-200">
-                <h4 className="text-sm font-semibold text-slate-900">Secondary Sport</h4>
-                <p className="text-xs text-slate-500 mt-1">Must be verified on roster for both sports</p>
-              </div>
-              
-              {/* Secondary Sport Selection */}
-              <div>
-                <label className="text-sm text-slate-700 mb-2 block">Sport</label>
-                <select
-                  value={tempSecondarySport}
-                  onChange={(e) => setTempSecondarySport(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
-                >
-                  {sports.map(sport => (
-                    <option key={sport} value={sport}>{sport}</option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Secondary Position Selection */}
-              <div>
-                <label className="text-sm text-slate-700 mb-2 block">Secondary Position</label>
-                <select
-                  value={tempSecondaryPosition}
-                  onChange={(e) => setTempSecondaryPosition(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
-                >
-                  {(sportPositions[tempSecondarySport] || sportPositions['Baseball']).map(position => (
-                    <option key={position} value={position}>{position}</option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Other Fields Divider */}
-              <div className="pt-2 pb-3 border-b border-slate-200">
-                <h4 className="text-sm font-semibold text-slate-900">Additional Info</h4>
               </div>
               
               {/* Level Selection */}
@@ -772,21 +713,11 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   onChange={(e) => setTempLevel(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
                 >
+                  <option value="">Select level</option>
                   {levels.map(level => (
                     <option key={level} value={level}>{level}</option>
                   ))}
                 </select>
-              </div>
-              
-              {/* School Selection */}
-              <div>
-                <label className="text-sm text-slate-700 mb-2 block">School</label>
-                <input
-                  value={tempSchool}
-                  onChange={(e) => setTempSchool(e.target.value)}
-                  placeholder="Enter your school name"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
-                />
               </div>
               
               {/* Action Buttons */}
