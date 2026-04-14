@@ -19,13 +19,13 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [scanningState, setScanningState] = useState<'idle' | 'scanning' | 'success' | 'error'>('idle');
   const [scannedUser, setScannedUser] = useState<{ name: string; sport: string; userId: string } | null>(null);
-  const [searchLocation, setSearchLocation] = useState('Los Angeles, CA');
+  const [searchLocation, setSearchLocation] = useState('');
   const [searchRadius, setSearchRadius] = useState(25);
   const [showLocationSearch, setShowLocationSearch] = useState(false);
 
   const { token } = useAuth();
   const [athletes, setAthletes] = useState<User[]>([]);
-  const [loadingAthletes, setLoadingAthletes] = useState(false);
+  const [loadingAthletes, setLoadingAthletes] = useState(true);
 
   const fetchAthletes = useCallback(async () => {
     if (!token) return;
@@ -34,8 +34,8 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
       const { users } = await usersApi.search(token, {
         search: searchQuery || undefined,
         sport: selectedSport !== 'All Sports' ? selectedSport : undefined,
-        skillLevel: selectedLevels.length === 1 ? selectedLevels[0] : undefined,
-        location: searchLocation !== 'Los Angeles, CA' ? searchLocation : undefined,
+        skillLevel: selectedLevels.length > 0 ? selectedLevels[0] : undefined,
+        location: searchLocation || undefined,
         limit: 20,
       });
       setAthletes(users);
@@ -143,7 +143,7 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
               <MapPin className="w-5 h-5 text-purple-700" />
               <div className="text-left">
                 <p className="text-xs text-purple-600 font-medium">Searching in</p>
-                <p className="text-sm text-purple-900 font-semibold">{searchLocation} • {searchRadius} mi radius</p>
+                <p className="text-sm text-purple-900 font-semibold">{searchLocation || 'Everywhere'} • {searchRadius} mi radius</p>
               </div>
             </div>
             {showLocationSearch ? (

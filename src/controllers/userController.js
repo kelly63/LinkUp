@@ -34,25 +34,21 @@ const getUsers = async (req, res) => {
     // Visibility filtering: only return users whose visibilityMode allows the requesting user
     // "everyone" users are always visible
     // "filtered" users are visible only if the requester's sport/level passes their allowedSports/allowedLevels
+    // If the requester has no sport/level set, treat as matching all (empty array = no restriction)
+    const levelCondition = req.user.skillLevel
+      ? { $or: [{ allowedLevels: { $size: 0 } }, { allowedLevels: req.user.skillLevel }] }
+      : { allowedLevels: { $size: 0 } };
+
+    const sportCondition = req.user.sport
+      ? { $or: [{ allowedSports: { $size: 0 } }, { allowedSports: req.user.sport }] }
+      : { allowedSports: { $size: 0 } };
+
     const visibilityFilter = {
       $or: [
         { visibilityMode: 'everyone' },
         {
           visibilityMode: 'filtered',
-          $and: [
-            {
-              $or: [
-                { allowedLevels: { $size: 0 } },
-                { allowedLevels: req.user.skillLevel || '' },
-              ],
-            },
-            {
-              $or: [
-                { allowedSports: { $size: 0 } },
-                { allowedSports: req.user.sport || '' },
-              ],
-            },
-          ],
+          $and: [levelCondition, sportCondition],
         },
       ],
     };
