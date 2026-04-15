@@ -1,6 +1,6 @@
 import {
   ArrowLeft, Send, Calendar, MapPin, CheckCircle, Edit3,
-  PlusCircle, MessageCircle, User, LayoutDashboard
+  MessageCircle,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useMessages } from '../hooks/useMessages';
@@ -370,39 +370,6 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange }: 
         </div>
       )}
 
-      {/* Bottom Navigation */}
-      <div className="h-20 bg-white border-t border-slate-200 px-2 pb-2">
-        <div className="h-full flex items-center justify-around">
-          <button
-            onClick={() => onTabChange?.('dashboard')}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all text-slate-400 hover:text-slate-600"
-          >
-            <LayoutDashboard className="w-6 h-6" strokeWidth={2} />
-            <span className="text-xs">Locker room</span>
-          </button>
-          <button
-            onClick={() => onTabChange?.('post')}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all text-slate-400 hover:text-slate-600"
-          >
-            <PlusCircle className="w-6 h-6" strokeWidth={2} />
-            <span className="text-xs">LinkUp</span>
-          </button>
-          <button
-            onClick={onBack}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all text-blue-900"
-          >
-            <MessageCircle className="w-6 h-6 fill-blue-900" strokeWidth={2} />
-            <span className="text-xs">Chat</span>
-          </button>
-          <button
-            onClick={() => onTabChange?.('profile')}
-            className="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all text-slate-400 hover:text-slate-600"
-          >
-            <User className="w-6 h-6" strokeWidth={2} />
-            <span className="text-xs">Profile</span>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
