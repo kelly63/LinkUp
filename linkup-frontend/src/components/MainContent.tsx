@@ -18,7 +18,7 @@ import { SessionDetailsView } from './SessionDetailsView';
 import { RosterListView } from './RosterListView';
 import { EditSessionView } from './EditSessionView';
 import { MySessionsView } from './MySessionsView';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, ratings as ratingsApi } from '../lib/api';
 import { toast } from 'sonner';
@@ -53,6 +53,16 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
   const [sessionDetailsData, setSessionDetailsData] = useState<any>(null);
   const [userProfileData, setUserProfileData] = useState<any>(null);
   const [editSessionData, setEditSessionData] = useState<any>(null);
+
+  // When the user taps a bottom tab, dismiss any open sub-view so the tab content shows
+  useEffect(() => {
+    setCurrentView('');
+    setSelectedUserId(null);
+    setUserProfileData(null);
+    setRatingSessionData(null);
+    setSessionDetailsData(null);
+    setEditSessionData(null);
+  }, [activeTab]);
 
   const userProfile = {
     sports: user?.sport ? [user.sport] : ['Baseball'],
