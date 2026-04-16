@@ -38,6 +38,7 @@ export function UserProfileView({
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [connStatus, setConnStatus] = useState<'none' | 'pending' | 'accepted' | 'rejected'>('none');
+  const [connectionId, setConnectionId] = useState<string | null>(null);
   const [sendingRequest, setSendingRequest] = useState(false);
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
 
@@ -48,9 +49,10 @@ export function UserProfileView({
       usersApi.getById(token, userId),
       connectionsApi.getStatus(token, userId),
     ])
-      .then(([{ user }, { status }]) => {
+      .then(([{ user }, statusData]) => {
         setProfileUser(user);
-        setConnStatus(status);
+        setConnStatus(statusData.status);
+        setConnectionId(statusData.connectionId ?? null);
       })
       .catch((err: any) => toast.error(err?.message || 'Could not load profile'))
       .finally(() => setLoading(false));
@@ -68,6 +70,29 @@ export function UserProfileView({
       toast.error(err?.message || 'Failed to send request');
     } finally {
       setSendingRequest(false);
+    }
+  };
+
+  const handleAcceptRoster = async () => {
+    if (!token || !connectionId) return;
+    try {
+      await connectionsApi.accept(token, connectionId);
+      setConnStatus('accepted');
+      toast.success('Connection accepted!');
+      onAcceptRoster?.();
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not accept request');
+    }
+  };
+
+  const handleDeclineRoster = async () => {
+    if (!token || !connectionId) return;
+    try {
+      await connectionsApi.reject(token, connectionId);
+      toast.success('Request declined');
+      onDeclineRoster?.();
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not decline request');
     }
   };
 
@@ -200,26 +225,6 @@ export function UserProfileView({
         </div>
       </div>
 
-      {/* Roster Status Badge */}
-      {!isRosterRequest && (
-        <div className="px-6 mb-4">
-          {isOnRoster ? (
-            <div className="bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 rounded-xl p-3 flex items-center justify-center gap-2">
-              <CheckCircle className="w-5 h-5 text-emerald-600" />
-              <span className="text-sm font-semibold text-emerald-900">On Your Roster</span>
-            </div>
-          ) : (
-            <button
-              onClick={onAddToRoster}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
-            >
-              <UserPlus className="w-5 h-5" />
-              <span className="font-semibold">Add to Roster</span>
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Action Buttons */}
       <div className="px-6 mb-6 space-y-3">
         {isRosterRequest ? (
@@ -235,14 +240,14 @@ export function UserProfileView({
             </div>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={onAcceptRoster}
+                onClick={handleAcceptRoster}
                 className="bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20"
               >
                 <UserPlus className="w-5 h-5" />
                 <span className="font-semibold">Accept</span>
               </button>
               <button
-                onClick={onDeclineRoster}
+                onClick={handleDeclineRoster}
                 className="bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 rounded-xl transition-all flex items-center justify-center gap-2 border-2 border-slate-200"
               >
                 <span className="font-semibold">Decline</span>

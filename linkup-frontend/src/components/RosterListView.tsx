@@ -27,7 +27,7 @@ export function RosterListView({ onBack, onNavigate, onOpenChat }: RosterListVie
 
   useEffect(() => {
     if (!token) return;
-    connectionsApi.getConnections(token)
+    connectionsApi.getAll(token)
       .then((data) => setConnections(data.connections || []))
       .catch(() => setConnections([]))
       .finally(() => setLoading(false));
