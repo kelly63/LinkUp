@@ -251,11 +251,20 @@ export function UserProfileView({
           </div>
         ) : (
           <>
-            {/* Practice Request button — full width, connection-status-aware */}
+            {/* Connection / Message row */}
             {connStatus === 'accepted' ? (
-              <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl py-3 flex items-center justify-center gap-2">
-                <CheckCircle className="w-5 h-5 text-emerald-600" />
-                <span className="text-sm font-semibold text-emerald-900">Connected</span>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl py-3 flex items-center justify-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-emerald-600" />
+                  <span className="text-sm font-semibold text-emerald-900">Connected</span>
+                </div>
+                <button
+                  onClick={onSendMessage}
+                  className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  <span className="font-semibold">Message</span>
+                </button>
               </div>
             ) : connStatus === 'pending' ? (
               <div className="bg-slate-100 border-2 border-slate-200 rounded-xl py-3 flex items-center justify-center gap-2">
@@ -275,23 +284,14 @@ export function UserProfileView({
               </button>
             )}
 
-            {/* Message + Rate row */}
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={onSendMessage}
-                className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
-              >
-                <MessageSquare className="w-5 h-5" />
-                <span className="font-semibold">Message</span>
-              </button>
-              <button
-                onClick={() => setIsRatingModalOpen(true)}
-                className="bg-white hover:bg-slate-50 text-slate-900 py-3 rounded-xl transition-all flex items-center justify-center gap-2 border-2 border-slate-200 shadow-sm"
-              >
-                <Star className="w-5 h-5" />
-                <span className="font-semibold">Rate</span>
-              </button>
-            </div>
+            {/* Rate button */}
+            <button
+              onClick={() => setIsRatingModalOpen(true)}
+              className="w-full bg-white hover:bg-slate-50 text-slate-900 py-3 rounded-xl transition-all flex items-center justify-center gap-2 border-2 border-slate-200 shadow-sm"
+            >
+              <Star className="w-5 h-5" />
+              <span className="font-semibold">Rate</span>
+            </button>
           </>
         )}
       </div>

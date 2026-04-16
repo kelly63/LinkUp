@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getActiveSocket } from '../lib/socket';
+import { toast } from 'sonner';
 
 export interface Message {
   _id: string;
@@ -130,7 +131,7 @@ export function useMessages({
             if (response.error) {
               // Roll back optimistic message
               setMessages((prev) => prev.filter((m) => m._id !== optimistic._id));
-              console.error('[socket] send error:', response.error);
+              toast.error(response.error);
             } else if (response.message) {
               // Replace optimistic with confirmed
               setMessages((prev) =>
@@ -152,8 +153,10 @@ export function useMessages({
           body: JSON.stringify({ text }),
         });
         const data = await res.json();
-        if (data.message) {
+        if (res.ok && data.message) {
           setMessages((prev) => [...prev, data.message]);
+        } else if (!res.ok) {
+          toast.error(data.message || 'Could not send message');
         }
       }
     },
