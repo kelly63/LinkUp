@@ -5,6 +5,12 @@ import { X, Shield, Users, Trash2 } from 'lucide-react';
 import { getActiveSocket } from '../lib/socket';
 import { toast } from 'sonner';
 
+interface RequestInfo {
+  status: 'pending' | 'accepted' | 'declined';
+  isRequester: boolean;
+  requestId: string;
+}
+
 interface Conversation {
   _id: string;
   partner: {
@@ -24,6 +30,7 @@ interface Conversation {
     sender: string;
   };
   unread: number;
+  requestInfo: RequestInfo | null;
 }
 
 interface RosterAthlete {
@@ -41,6 +48,7 @@ interface ActiveChat {
   avatar: string;
   role?: string;
   sessionDetails?: { date: string; time: string; location: string };
+  requestInfo?: RequestInfo | null;
 }
 
 interface ChatViewProps {
@@ -201,7 +209,6 @@ export function ChatView({
   }, [selectedAthlete]);
 
   const handleOpenConversation = (conv: Conversation) => {
-    // Mark as read locally
     setConversations((prev) =>
       prev.map((c) => (c.partner._id === conv.partner._id ? { ...c, unread: 0 } : c))
     );
@@ -210,7 +217,28 @@ export function ChatView({
       name: conv.partner.name,
       avatar: conv.partner.avatar || getInitials(conv.partner.name),
       role: conv.partner.position,
+      requestInfo: conv.requestInfo,
     });
+  };
+
+  const handleRequestAccepted = (partnerId: string) => {
+    setConversations((prev) =>
+      prev.map((c) =>
+        c.partner._id === partnerId
+          ? { ...c, requestInfo: { ...c.requestInfo!, status: 'accepted' } }
+          : c
+      )
+    );
+    setSelectedChat((prev) =>
+      prev && prev.id === partnerId
+        ? { ...prev, requestInfo: { ...prev.requestInfo!, status: 'accepted' } }
+        : prev
+    );
+  };
+
+  const handleRequestDeclined = (partnerId: string) => {
+    setConversations((prev) => prev.filter((c) => c.partner._id !== partnerId));
+    setSelectedChat(null);
   };
 
   const handleStartChatWithRosterAthlete = (athlete: RosterAthlete) => {
@@ -228,11 +256,20 @@ export function ChatView({
     setDeletingPartnerId(null);
   };
 
-  const visibleConversations = conversations.filter(
+  const filtered = conversations.filter(
     (c) =>
       !hiddenPartnerIds.has(c.partner._id) &&
       (searchQuery === '' ||
         c.partner.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  // Pending requests where I am the recipient
+  const pendingRequests = filtered.filter(
+    (c) => c.requestInfo?.status === 'pending' && !c.requestInfo.isRequester
+  );
+  // Everything else (accepted, I-am-requester, no request = roster)
+  const mainConversations = filtered.filter(
+    (c) => !c.requestInfo || c.requestInfo.isRequester || c.requestInfo.status === 'accepted'
   );
 
   if (selectedChat) {
@@ -244,9 +281,11 @@ export function ChatView({
         onBack={() => {
           setSelectedChat(null);
           if (onClearSelectedAthlete) onClearSelectedAthlete();
-          fetchInbox(); // Refresh inbox after closing chat
+          fetchInbox();
         }}
         onTabChange={onTabChange}
+        onRequestAccepted={() => handleRequestAccepted(selectedChat.id)}
+        onRequestDeclined={() => handleRequestDeclined(selectedChat.id)}
       />
     );
   }
@@ -286,7 +325,37 @@ export function ChatView({
           </div>
         )}
 
-        {!loading && visibleConversations.map((conv) => {
+        {/* Message Requests */}
+        {!loading && pendingRequests.length > 0 && (
+          <div>
+            <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 flex items-center gap-2">
+              <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">
+                Message Requests ({pendingRequests.length})
+              </span>
+            </div>
+            {pendingRequests.map((conv) => (
+              <div
+                key={conv.partner._id}
+                onClick={() => handleOpenConversation(conv)}
+                className="px-4 py-4 border-b border-amber-100 bg-amber-50/50 hover:bg-amber-50 transition-colors cursor-pointer flex items-center gap-3"
+              >
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                  {conv.partner.avatar || getInitials(conv.partner.name)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-slate-900 font-semibold text-sm">{conv.partner.name}</h4>
+                  <p className="text-xs text-slate-500 truncate">{conv.lastMessage.text}</p>
+                </div>
+                <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full flex-shrink-0">
+                  Request
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Main Inbox */}
+        {!loading && mainConversations.map((conv) => {
           const isOnline = onlineMap[conv.partner._id] ?? conv.partner.isOnline;
           return (
             <div
@@ -297,7 +366,6 @@ export function ChatView({
                 onClick={() => handleOpenConversation(conv)}
                 className="flex items-center gap-3 cursor-pointer"
               >
-                {/* Avatar + online dot */}
                 <div className="relative flex-shrink-0">
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
                     {conv.partner.avatar || getInitials(conv.partner.name)}
@@ -307,7 +375,6 @@ export function ChatView({
                   )}
                 </div>
 
-                {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <h4 className="text-slate-900 flex items-center gap-2">
@@ -315,6 +382,11 @@ export function ChatView({
                       {conv.unread > 0 && (
                         <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">
                           {conv.unread}
+                        </span>
+                      )}
+                      {conv.requestInfo?.isRequester && conv.requestInfo.status === 'pending' && (
+                        <span className="text-xs bg-slate-400 text-white px-2 py-0.5 rounded-full">
+                          Pending
                         </span>
                       )}
                     </h4>
@@ -328,7 +400,6 @@ export function ChatView({
                   </p>
                 </div>
 
-                {/* Delete */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -343,14 +414,14 @@ export function ChatView({
           );
         })}
 
-        {!loading && visibleConversations.length === 0 && (
+        {!loading && mainConversations.length === 0 && pendingRequests.length === 0 && (
           <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
             <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
               <Search className="w-10 h-10 text-slate-300" />
             </div>
             <h3 className="text-slate-900 font-semibold mb-2">No conversations</h3>
             <p className="text-slate-500 text-sm max-w-xs">
-              Start a new chat with athletes on your roster
+              Find athletes and send them a message to get started
             </p>
           </div>
         )}

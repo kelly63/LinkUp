@@ -1,9 +1,17 @@
 import {
   ArrowLeft, Send, Calendar, MapPin, CheckCircle, Edit3,
-  MessageCircle,
+  MessageCircle, UserCheck, X,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useMessages } from '../hooks/useMessages';
+import { messages as messagesApi } from '../lib/api';
+import { toast } from 'sonner';
+
+interface RequestInfo {
+  status: 'pending' | 'accepted' | 'declined';
+  isRequester: boolean;
+  requestId: string;
+}
 
 interface Chat {
   id: string;
@@ -15,19 +23,20 @@ interface Chat {
     time: string;
     location: string;
   };
+  requestInfo?: RequestInfo | null;
 }
 
 interface ChatScreenProps {
   chat: Chat;
-  /** ID of the logged-in user */
   currentUserId: string;
-  /** JWT token */
   token: string;
   onBack: () => void;
   onTabChange?: (tab: string) => void;
+  onRequestAccepted?: () => void;
+  onRequestDeclined?: () => void;
 }
 
-export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange }: ChatScreenProps) {
+export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, onRequestAccepted, onRequestDeclined }: ChatScreenProps) {
   const [inputText, setInputText] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSessionConfirmed, setIsSessionConfirmed] = useState(false);
@@ -51,6 +60,29 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange }: 
     partnerId: chat.id,
     token,
   });
+
+  const isIncomingRequest =
+    chat.requestInfo?.status === 'pending' && !chat.requestInfo.isRequester;
+
+  const handleAcceptRequest = async () => {
+    try {
+      await messagesApi.acceptRequest(token, chat.id);
+      toast.success('Message request accepted');
+      onRequestAccepted?.();
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not accept request');
+    }
+  };
+
+  const handleDeclineRequest = async () => {
+    try {
+      await messagesApi.declineRequest(token, chat.id);
+      toast.success('Message request declined');
+      onRequestDeclined?.();
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not decline request');
+    }
+  };
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -113,6 +145,33 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange }: 
             )}
           </div>
         </div>
+
+        {/* Message Request Banner */}
+        {isIncomingRequest && (
+          <div className="px-4 pb-3">
+            <div className="bg-amber-50 border border-amber-300 rounded-xl p-3">
+              <p className="text-xs text-amber-800 mb-2 font-medium">
+                {chat.name} sent you a message request
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAcceptRequest}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  Accept
+                </button>
+                <button
+                  onClick={handleDeclineRequest}
+                  className="flex-1 bg-white hover:bg-slate-50 text-slate-700 py-2 rounded-lg text-sm font-semibold transition-colors border border-slate-300 flex items-center justify-center gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  Decline
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Session Details Snippet */}
         {chat.sessionDetails && (

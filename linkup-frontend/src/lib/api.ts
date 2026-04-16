@@ -288,6 +288,16 @@ export const connections = {
     }, token),
 };
 
+// ─── Messages ────────────────────────────────────────────────────────────────
+
+export const messages = {
+  acceptRequest: (token: string, userId: string) =>
+    request<{ message: string }>(`/api/messages/requests/${userId}/accept`, { method: 'PUT' }, token),
+
+  declineRequest: (token: string, userId: string) =>
+    request<{ message: string }>(`/api/messages/requests/${userId}/decline`, { method: 'PUT' }, token),
+};
+
 // ─── Ratings ─────────────────────────────────────────────────────────────────
 
 export const ratings = {

@@ -4,6 +4,7 @@ const webpush = require('web-push');
 const User = require('./models/User');
 const Message = require('./models/Message');
 const Connection = require('./models/Connection');
+const MessageRequest = require('./models/MessageRequest');
 const PushSubscription = require('./models/PushSubscription');
 const Notification = require('./models/Notification');
 
@@ -93,7 +94,19 @@ function getSocketIo(httpServer) {
           return ack?.({ error: 'recipientId and text are required' });
         }
 
-        // Verify they are connected (on roster)
+        // Check for an existing message request
+        const existingReq = await MessageRequest.findOne({
+          $or: [
+            { requester: userId, recipient: recipientId },
+            { requester: recipientId, recipient: userId },
+          ],
+        });
+
+        if (existingReq?.status === 'declined') {
+          return ack?.({ error: 'This user has declined your message request' });
+        }
+
+        // Check roster connection
         const conn = await Connection.findOne({
           $or: [
             { requester: userId, recipient: recipientId },
@@ -102,8 +115,12 @@ function getSocketIo(httpServer) {
           status: 'accepted',
         });
 
-        if (!conn) {
-          return ack?.({ error: 'You can only message your roster connections' });
+        // If not roster-connected and no request yet, create one
+        if (!conn && !existingReq) {
+          await MessageRequest.create({ requester: userId, recipient: recipientId }).catch(() => {});
+          io.notify(recipientId, 'message_request', {
+            from: { _id: userId, name: socket.user.name, avatar: socket.user.avatar },
+          });
         }
 
         const message = await Message.create({
@@ -121,10 +138,8 @@ function getSocketIo(httpServer) {
           createdAt: message.createdAt,
         };
 
-        // Deliver to recipient
+        // Deliver to recipient and echo to sender's other tabs
         io.to(`user:${recipientId}`).emit('message:new', payload);
-
-        // Echo back to sender (other tabs)
         socket.to(`user:${userId}`).emit('message:new', payload);
 
         // Push notification if recipient is offline
@@ -134,7 +149,6 @@ function getSocketIo(httpServer) {
           text: text.trim().slice(0, 100),
         });
 
-        // Acknowledge to the sending socket
         ack?.({ message: payload });
       } catch (err) {
         console.error('[socket] message:send error', err);

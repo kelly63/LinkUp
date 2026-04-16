@@ -256,20 +256,11 @@ export function UserProfileView({
           </div>
         ) : (
           <>
-            {/* Connection / Message row */}
+            {/* Connection status row */}
             {connStatus === 'accepted' ? (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl py-3 flex items-center justify-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-emerald-600" />
-                  <span className="text-sm font-semibold text-emerald-900">Connected</span>
-                </div>
-                <button
-                  onClick={onSendMessage}
-                  className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
-                >
-                  <MessageSquare className="w-5 h-5" />
-                  <span className="font-semibold">Message</span>
-                </button>
+              <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl py-3 flex items-center justify-center gap-2">
+                <CheckCircle className="w-5 h-5 text-emerald-600" />
+                <span className="text-sm font-semibold text-emerald-900">Connected</span>
               </div>
             ) : connStatus === 'pending' ? (
               <div className="bg-slate-100 border-2 border-slate-200 rounded-xl py-3 flex items-center justify-center gap-2">
@@ -288,6 +279,15 @@ export function UserProfileView({
                 <span className="font-semibold">Request Practice Session</span>
               </button>
             )}
+
+            {/* Message button — always available */}
+            <button
+              onClick={onSendMessage}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+            >
+              <MessageSquare className="w-5 h-5" />
+              <span className="font-semibold">Message</span>
+            </button>
 
             {/* Rate button */}
             <button
