@@ -1,5 +1,5 @@
 import { Search, Edit } from 'lucide-react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChatScreen } from './ChatScreen';
 import { X, Shield, Users, Trash2 } from 'lucide-react';
 import { getActiveSocket } from '../lib/socket';
@@ -52,9 +52,7 @@ interface ActiveChat {
 }
 
 interface ChatViewProps {
-  /** Currently logged-in user's ID */
   currentUserId: string;
-  /** JWT token */
   token: string;
   selectedAthlete?: {
     id: string;
@@ -67,6 +65,7 @@ interface ChatViewProps {
   };
   onClearSelectedAthlete?: () => void;
   onTabChange?: (tab: string) => void;
+  onChatOpenChange?: (open: boolean) => void;
   apiUrl?: string;
 }
 
@@ -94,6 +93,7 @@ export function ChatView({
   selectedAthlete,
   onClearSelectedAthlete,
   onTabChange,
+  onChatOpenChange,
   apiUrl = API_URL,
 }: ChatViewProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -101,6 +101,13 @@ export function ChatView({
   const [loading, setLoading] = useState(true);
   const [selectedChat, setSelectedChat] = useState<ActiveChat | null>(null);
   const [showRosterModal, setShowRosterModal] = useState(false);
+
+  // Tell MobileFrame to hide the bottom tab bar while a conversation is open
+  const onChatOpenChangeRef = useRef(onChatOpenChange);
+  onChatOpenChangeRef.current = onChatOpenChange;
+  useEffect(() => {
+    onChatOpenChangeRef.current?.(selectedChat !== null);
+  }, [selectedChat]);
   const [hiddenPartnerIds, setHiddenPartnerIds] = useState<Set<string>>(new Set());
   const [deletingPartnerId, setDeletingPartnerId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');

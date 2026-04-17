@@ -27,9 +27,10 @@ interface MainContentProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onAuthChange: (isAuthenticated: boolean) => void;
+  onChatOpenChange?: (open: boolean) => void;
 }
 
-export function MainContent({ activeTab, onTabChange, onAuthChange }: MainContentProps) {
+export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenChange }: MainContentProps) {
   const { token, user, isAuthenticated, login, logout } = useAuth();
 
   const [userRole, setUserRole] = useState<'athlete' | 'coach'>('athlete');
@@ -307,6 +308,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange }: MainConten
           selectedAthlete={selectedAthleteForChat}
           onClearSelectedAthlete={handleClearSelectedAthlete}
           onTabChange={onTabChange}
+          onChatOpenChange={onChatOpenChange}
         />
       )}
       {activeTab === 'profile' && (

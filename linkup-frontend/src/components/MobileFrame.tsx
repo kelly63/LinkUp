@@ -35,6 +35,7 @@ export function MobileFrame() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [chatUnread, setChatUnread] = useState(0);
   const [liveQueue, setLiveQueue] = useState<StoredNotification[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
 
   // Auth state comes directly from context — survives page refresh automatically
   const { token, isAuthenticated } = useAuth();
@@ -104,9 +105,10 @@ export function MobileFrame() {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onAuthChange={() => {}}
+          onChatOpenChange={setChatOpen}
         />
 
-        {isAuthenticated && (
+        {isAuthenticated && !chatOpen && (
           <BottomTabBar
             activeTab={activeTab}
             onTabChange={handleTabChange}
