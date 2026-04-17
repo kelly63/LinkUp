@@ -34,9 +34,10 @@ interface ChatScreenProps {
   onTabChange?: (tab: string) => void;
   onRequestAccepted?: () => void;
   onRequestDeclined?: () => void;
+  onViewProfile?: (userId: string) => void;
 }
 
-export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, onRequestAccepted, onRequestDeclined }: ChatScreenProps) {
+export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, onRequestAccepted, onRequestDeclined, onViewProfile }: ChatScreenProps) {
   const [inputText, setInputText] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSessionConfirmed, setIsSessionConfirmed] = useState(false);
@@ -134,16 +135,20 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
             <ArrowLeft className="w-5 h-5 text-slate-700" />
           </button>
 
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
-            {chat.avatar}
-          </div>
-
-          <div className="flex-1">
-            <h3 className="text-slate-900">{chat.name}</h3>
-            {chat.role && (
-              <p className="text-xs text-slate-500 capitalize">{chat.role}</p>
-            )}
-          </div>
+          <button
+            onClick={() => onViewProfile?.(chat.id)}
+            className="flex items-center gap-3 flex-1 min-w-0 text-left"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
+              {chat.avatar}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-slate-900 hover:text-blue-600 transition-colors">{chat.name}</h3>
+              {chat.role && (
+                <p className="text-xs text-slate-500 capitalize">{chat.role}</p>
+              )}
+            </div>
+          </button>
         </div>
 
         {/* Message Request Banner */}

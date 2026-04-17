@@ -309,6 +309,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
           onClearSelectedAthlete={handleClearSelectedAthlete}
           onTabChange={onTabChange}
           onChatOpenChange={onChatOpenChange}
+          onViewProfile={(userId) => handleNavigate('userProfile', { _id: userId })}
         />
       )}
       {activeTab === 'profile' && (
