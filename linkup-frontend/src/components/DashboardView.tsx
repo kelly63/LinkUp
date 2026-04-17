@@ -7,18 +7,25 @@ import {
   ChevronRight,
   Search,
   Trophy,
-  MessageSquare,
+  Heart,
+  MessageCircle,
+  PlusCircle,
+  Award,
 } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
 import { useAuth } from '../lib/auth';
-import { sessions as sessionsApi, connections as connectionsApi, ratings as ratingsApi } from '../lib/api';
+import { sessions as sessionsApi, connections as connectionsApi, ratings as ratingsApi, posts as postsApi, Post } from '../lib/api';
 import { toast } from 'sonner';
 
 interface DashboardViewProps {
   onTabChange: (tab: string) => void;
   onNavigate?: (view: string, details?: any) => void;
   scrollTarget?: string | null;
+}
+
+function getInitialsDash(name: string): string {
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
 function timeAgo(iso: string): string {
@@ -32,10 +39,6 @@ function timeAgo(iso: string): string {
   return days === 1 ? 'Yesterday' : `${days} days ago`;
 }
 
-function getInitials(name: string): string {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-}
-
 export function DashboardView({ onTabChange, onNavigate, scrollTarget }: DashboardViewProps) {
   const { token, user } = useAuth();
   const [isCreatePostDialogOpen, setIsCreatePostDialogOpen] = useState(false);
@@ -47,7 +50,13 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
   const [recentRatings, setRecentRatings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch data
+  // Community feed
+  const [feedPosts, setFeedPosts] = useState<Post[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
+  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
+
+  // Fetch dashboard data
   useEffect(() => {
     if (!token) return;
     (async () => {
@@ -67,6 +76,45 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
       }
     })();
   }, [token]);
+
+  // Fetch community feed
+  useEffect(() => {
+    if (!token) return;
+    setFeedLoading(true);
+    postsApi.getFeed(token, { page: 1 })
+      .then(({ posts: fetched }) => {
+        setFeedPosts(fetched);
+        const liked: Record<string, boolean> = {};
+        const counts: Record<string, number> = {};
+        fetched.forEach((p) => {
+          liked[p._id] = user?._id ? p.likes.includes(user._id) : false;
+          counts[p._id] = p.likes.length;
+        });
+        setLikedMap(liked);
+        setLikeCounts(counts);
+      })
+      .catch(() => {})
+      .finally(() => setFeedLoading(false));
+  }, [token, user?._id]);
+
+  const handleLike = useCallback(async (postId: string) => {
+    if (!token) return;
+    const wasLiked = likedMap[postId] ?? false;
+    setLikedMap((prev) => ({ ...prev, [postId]: !wasLiked }));
+    setLikeCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + (wasLiked ? -1 : 1) }));
+    try {
+      await postsApi.toggleLike(token, postId);
+    } catch {
+      setLikedMap((prev) => ({ ...prev, [postId]: wasLiked }));
+      setLikeCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + (wasLiked ? 1 : -1) }));
+    }
+  }, [token, likedMap]);
+
+  const handlePostCreated = useCallback((post: Post) => {
+    setFeedPosts((prev) => [post, ...prev]);
+    setLikedMap((prev) => ({ ...prev, [post._id]: false }));
+    setLikeCounts((prev) => ({ ...prev, [post._id]: 0 }));
+  }, []);
 
   // Scroll to target section when scrollTarget changes
   useEffect(() => {
@@ -88,7 +136,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
       userProfile: {
         _id: req.requester?._id,
         name: req.requester?.name || '',
-        avatar: req.requester?.avatar || getInitials(req.requester?.name || '?'),
+        avatar: req.requester?.avatar || getInitialsDash(req.requester?.name || '?'),
         sport: req.requester?.sport || '',
         position: req.requester?.position || '',
         level: req.requester?.skillLevel || '',
@@ -104,7 +152,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
       time: timeAgo(r.createdAt),
       ratingDetails: {
         from: r.rater?.name || '',
-        avatar: r.rater?.avatar || getInitials(r.rater?.name || '?'),
+        avatar: r.rater?.avatar || getInitialsDash(r.rater?.name || '?'),
         rating: r.overallRating,
         sport: r.sport,
         date: new Date(r.createdAt).toLocaleDateString(),
@@ -170,24 +218,6 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
           </button>
         )}
 
-        {/* Community Feed Button */}
-        {onNavigate && (
-          <button
-            onClick={() => onNavigate('lockerRoom')}
-            className="w-full mt-3 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white p-4 rounded-2xl flex items-center justify-between transition-all border border-white/20 active:scale-[0.98]"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-5 h-5" />
-              </div>
-              <div className="text-left">
-                <h4 className="text-white font-semibold text-sm">Community Feed</h4>
-                <p className="text-xs text-blue-200">Posts, sessions & thoughts</p>
-              </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-white/70" />
-          </button>
-        )}
       </div>
   {/* Upcoming Sessions */}
       <div className="px-6 mb-6" ref={upcomingSessionsRef}>
@@ -382,11 +412,133 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
 
     
 
+      {/* Community Feed */}
+      <div className="px-6 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-slate-900">Community Feed</h3>
+          <button
+            onClick={() => setIsCreatePostDialogOpen(true)}
+            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+          >
+            <PlusCircle className="w-4 h-4" />
+            Post
+          </button>
+        </div>
+
+        {/* Quick post bar */}
+        <button
+          onClick={() => setIsCreatePostDialogOpen(true)}
+          className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 flex items-center gap-3 hover:border-blue-400 transition-all mb-4"
+        >
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
+            {user ? getInitialsDash(user.name) : '?'}
+          </div>
+          <span className="text-slate-400 text-sm">Share thoughts or a session update…</span>
+        </button>
+
+        {feedLoading && (
+          <div className="flex justify-center py-8">
+            <span className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {!feedLoading && feedPosts.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-400 bg-white rounded-2xl border border-slate-200">
+            <Award className="w-8 h-8 opacity-30" />
+            <p className="text-sm">No posts yet — be the first!</p>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {feedPosts.map((post) => {
+            const author = post.author;
+            const initials = author ? getInitialsDash(author.name) : '??';
+            const isLiked = likedMap[post._id] ?? false;
+            const likeCount = likeCounts[post._id] ?? post.likes.length;
+            return (
+              <div key={post._id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                {/* Author */}
+                <div className="px-4 pt-4 pb-2 flex items-center gap-3">
+                  <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden">
+                    {author?.avatar
+                      ? <img src={author.avatar} alt={author.name} className="w-full h-full rounded-full object-cover" />
+                      : initials}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">{author?.name}</p>
+                    <p className="text-xs text-slate-400">
+                      {[author?.position, author?.sport].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="px-4 pb-3">
+                  {post.type === 'thought' && (
+                    <p className="text-sm text-slate-800 leading-relaxed">{post.content}</p>
+                  )}
+                  {post.type === 'session_completion' && (
+                    <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-xl p-3 border border-emerald-200">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Trophy className="w-4 h-4 text-emerald-600" />
+                        <span className="text-xs font-medium text-emerald-700">Session Completed</span>
+                      </div>
+                      <p className="text-sm text-slate-800">
+                        {post.sessionSummary || post.content || 'Completed a session'}
+                      </p>
+                    </div>
+                  )}
+                  {post.type === 'article' && (
+                    <div>
+                      {post.content && <p className="text-sm text-slate-800 mb-2">{post.content}</p>}
+                      {post.sharedUrl && (
+                        <div className="border border-slate-200 rounded-xl px-3 py-2 text-xs text-blue-600 truncate">
+                          {post.articleTitle || post.sharedUrl}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="px-4 py-2 border-t border-slate-100 flex items-center gap-4">
+                  <button
+                    onClick={() => handleLike(post._id)}
+                    className={`flex items-center gap-1.5 text-sm transition-colors ${isLiked ? 'text-red-500' : 'text-slate-500 hover:text-red-400'}`}
+                  >
+                    <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-500' : ''}`} />
+                    {likeCount > 0 && <span>{likeCount}</span>}
+                  </button>
+                  <button
+                    onClick={() => onNavigate?.('lockerRoom')}
+                    className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-500 transition-colors"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    {post.comments.length > 0 && <span>{post.comments.length}</span>}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {feedPosts.length > 0 && (
+          <button
+            onClick={() => onNavigate?.('lockerRoom')}
+            className="w-full mt-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
+          >
+            See all posts in Locker Room
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
+      </div>
+
       <CreatePostDialog
         isOpen={isCreatePostDialogOpen}
         onClose={() => setIsCreatePostDialogOpen(false)}
         token={token}
         user={user}
+        onPostCreated={handlePostCreated}
       />
 
       {/* Bottom Spacing */}
