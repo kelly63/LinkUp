@@ -32,11 +32,7 @@ export function HeaderBar({
         >
           <Bell className={`w-5 h-5 ${panelOpen ? 'text-white' : 'text-gray-300'}`} />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-red-500 rounded-full shadow-lg shadow-red-500/50 flex items-center justify-center px-1">
-              <span className="text-[10px] font-bold text-white leading-none">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
-            </span>
+            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full shadow-md shadow-red-500/60 ring-2 ring-zinc-900" />
           )}
         </button>
       )}
