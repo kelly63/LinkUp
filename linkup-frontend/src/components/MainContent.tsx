@@ -131,6 +131,8 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
       handleNavigate('userProfile', { ...data, id: data._id });
     } else if (view === 'mySessions') {
       handleNavigate('mySessions');
+    } else if (view === 'receivedRatings') {
+      handleNavigate('receivedRatings');
     }
     onExternalNavProcessed?.();
   }, [externalNav]);

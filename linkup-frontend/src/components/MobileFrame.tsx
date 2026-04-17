@@ -33,6 +33,12 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
     title: 'Message Request',
     description: `${d.from?.name || 'Someone'} sent you a message request`,
   }),
+  rating_new: (d) => ({
+    title: 'New Rating',
+    description: d.from?.name
+      ? `${d.from.name} gave you a ${d.overallRating}★ rating`
+      : 'You received a new rating',
+  }),
 };
 
 export function MobileFrame() {
@@ -115,6 +121,9 @@ export function MobileFrame() {
           view: 'openChat',
           data: { id: data.from?._id, name: data.from?.name || 'Unknown', avatar: data.from?.avatar || '', sport: '', position: '', level: '' },
         });
+        break;
+      case 'rating_new':
+        setPendingNav({ view: 'receivedRatings', data: null });
         break;
     }
   }, []);

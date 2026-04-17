@@ -58,6 +58,20 @@ const submitRating = async (req, res) => {
     });
 
     await rating.populate('rater', USER_FIELDS);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.notify(rateeId, 'rating_new', {
+        from: {
+          _id: req.user._id,
+          name: req.user.name,
+          avatar: req.user.avatar,
+        },
+        overallRating: rating.overallRating,
+        sport: rating.sport,
+      });
+    }
+
     res.status(201).json({ rating });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

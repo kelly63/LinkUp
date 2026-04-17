@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck } from 'lucide-react';
+import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star } from 'lucide-react';
 import { notifications as notificationsApi, StoredNotification } from '../lib/api';
 
 interface NotificationPanelProps {
@@ -42,6 +42,12 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color:
     color: 'text-amber-600',
     bg: 'bg-amber-50',
   },
+  rating_new: {
+    label: 'New Rating',
+    Icon: Star,
+    color: 'text-yellow-500',
+    bg: 'bg-yellow-50',
+  },
 };
 
 function notificationBody(n: StoredNotification): string {
@@ -59,6 +65,10 @@ function notificationBody(n: StoredNotification): string {
       return d.senderName ? `New message from ${d.senderName}` : 'You have a new message';
     case 'message_request':
       return `${d.from?.name || 'Someone'} sent you a message request`;
+    case 'rating_new':
+      return d.from?.name
+        ? `${d.from.name} gave you a ${d.overallRating}★ rating`
+        : 'You received a new rating';
     default:
       return 'New notification';
   }
