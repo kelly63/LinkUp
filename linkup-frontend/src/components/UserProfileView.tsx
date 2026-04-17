@@ -271,12 +271,12 @@ export function UserProfileView({
               <button
                 onClick={handleSendPracticeRequest}
                 disabled={sendingRequest}
-                className="w-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:opacity-60 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/20"
+                className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-60 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
               >
                 {sendingRequest
                   ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   : <UserPlus className="w-5 h-5" />}
-                <span className="font-semibold">Request Practice Session</span>
+                <span className="font-semibold">Add to Roster</span>
               </button>
             )}
 
