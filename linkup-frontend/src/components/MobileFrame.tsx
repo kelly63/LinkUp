@@ -75,7 +75,12 @@ export function MobileFrame() {
 
   useSocket({ token, onNotification: handleNotification });
 
-  const handleBellClick = useCallback(() => setPanelOpen((open) => !open), []);
+  const handleBellClick = useCallback(() => {
+    setPanelOpen((open) => {
+      if (!open) setUnreadCount(0);
+      return !open;
+    });
+  }, []);
 
   const handlePanelClose = useCallback(() => {
     setPanelOpen(false);
