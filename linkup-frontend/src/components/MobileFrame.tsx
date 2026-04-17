@@ -10,14 +10,16 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import { StoredNotification } from '../lib/api';
 import { toast } from 'sonner';
 
+type PendingNav = { view: string; data?: any } | null;
+
 const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; description: string }> = {
   roster_request: (d) => ({
     title: 'New Connection Request',
-    description: `${d.requesterName || 'Someone'} wants to connect with you`,
+    description: `${d.from?.name || 'Someone'} wants to connect with you`,
   }),
   roster_accepted: (d) => ({
     title: 'Connection Accepted',
-    description: `${d.accepterName || 'Someone'} accepted your request`,
+    description: `${d.by?.name || 'Someone'} accepted your request`,
   }),
   session_accepted: (d) => ({
     title: 'Session Accepted',
@@ -26,6 +28,10 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
   message_new: (d) => ({
     title: 'New Message',
     description: d.senderName ? `Message from ${d.senderName}` : 'You have a new message',
+  }),
+  message_request: (d) => ({
+    title: 'Message Request',
+    description: `${d.from?.name || 'Someone'} sent you a message request`,
   }),
 };
 
@@ -36,6 +42,7 @@ export function MobileFrame() {
   const [chatUnread, setChatUnread] = useState(0);
   const [liveQueue, setLiveQueue] = useState<StoredNotification[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
+  const [pendingNav, setPendingNav] = useState<PendingNav>(null);
 
   // Auth state comes directly from context — survives page refresh automatically
   const { token, isAuthenticated } = useAuth();
@@ -76,6 +83,42 @@ export function MobileFrame() {
     if (tab === 'chat') setChatUnread(0);
   }, []);
 
+  const handleNotificationNavigate = useCallback((type: string, data: any) => {
+    setPanelOpen(false);
+    setLiveQueue([]);
+    switch (type) {
+      case 'roster_request':
+        setPendingNav({
+          view: 'userProfile',
+          data: { _id: data.from?._id, name: data.from?.name, avatar: data.from?.avatar, isRosterRequest: true },
+        });
+        break;
+      case 'roster_accepted':
+        setPendingNav({
+          view: 'userProfile',
+          data: { _id: data.by?._id, name: data.by?.name, avatar: data.by?.avatar },
+        });
+        break;
+      case 'session_accepted':
+        setPendingNav({ view: 'mySessions', data: null });
+        break;
+      case 'message_new':
+        setActiveTab('chat');
+        setPendingNav({
+          view: 'openChat',
+          data: { id: data.senderId, name: data.senderName || 'Unknown', avatar: data.senderAvatar || '', sport: '', position: '', level: '' },
+        });
+        break;
+      case 'message_request':
+        setActiveTab('chat');
+        setPendingNav({
+          view: 'openChat',
+          data: { id: data.from?._id, name: data.from?.name || 'Unknown', avatar: data.from?.avatar || '', sport: '', position: '', level: '' },
+        });
+        break;
+    }
+  }, []);
+
   return (
     <div className="relative w-full max-w-[393px] h-[852px] bg-zinc-950 rounded-[3rem] shadow-2xl overflow-hidden border-8 border-zinc-900">
       {/* iPhone notch */}
@@ -98,6 +141,7 @@ export function MobileFrame() {
             onClose={handlePanelClose}
             liveQueue={liveQueue}
             onAllRead={handleAllRead}
+            onNavigate={handleNotificationNavigate}
           />
         )}
 
@@ -106,6 +150,8 @@ export function MobileFrame() {
           onTabChange={handleTabChange}
           onAuthChange={() => {}}
           onChatOpenChange={setChatOpen}
+          externalNav={pendingNav}
+          onExternalNavProcessed={() => setPendingNav(null)}
         />
 
         {isAuthenticated && !chatOpen && (

@@ -18,7 +18,7 @@ import { SessionDetailsView } from './SessionDetailsView';
 import { RosterListView } from './RosterListView';
 import { EditSessionView } from './EditSessionView';
 import { MySessionsView } from './MySessionsView';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, ratings as ratingsApi } from '../lib/api';
 import { toast } from 'sonner';
@@ -28,9 +28,11 @@ interface MainContentProps {
   onTabChange: (tab: string) => void;
   onAuthChange: (isAuthenticated: boolean) => void;
   onChatOpenChange?: (open: boolean) => void;
+  externalNav?: { view: string; data?: any } | null;
+  onExternalNavProcessed?: () => void;
 }
 
-export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenChange }: MainContentProps) {
+export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenChange, externalNav, onExternalNavProcessed }: MainContentProps) {
   const { token, user, isAuthenticated, login, logout } = useAuth();
 
   const [userRole, setUserRole] = useState<'athlete' | 'coach'>('athlete');
@@ -115,6 +117,23 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   };
 
   const handleClearSelectedAthlete = () => setSelectedAthleteForChat(undefined);
+
+  const handleOpenChatRef = useRef<typeof handleOpenChat>(handleOpenChat);
+  handleOpenChatRef.current = handleOpenChat;
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!externalNav) return;
+    const { view, data } = externalNav;
+    if (view === 'openChat' && data) {
+      handleOpenChatRef.current(data);
+    } else if (view === 'userProfile' && data?._id) {
+      handleNavigate('userProfile', { ...data, id: data._id });
+    } else if (view === 'mySessions') {
+      handleNavigate('mySessions');
+    }
+    onExternalNavProcessed?.();
+  }, [externalNav]);
 
   const handleViewUserProfile = (userId: string | number, userType: 'athlete' | 'coach' = 'athlete') => {
     setSelectedUserId(String(userId));

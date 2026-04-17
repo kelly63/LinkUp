@@ -6,15 +6,12 @@ interface NotificationPanelProps {
   token: string;
   open: boolean;
   onClose: () => void;
-  /** Live notifications pushed via socket since the panel last opened */
   liveQueue: StoredNotification[];
   onAllRead: () => void;
+  onNavigate?: (type: string, data: any) => void;
 }
 
-const TYPE_META: Record<
-  StoredNotification['type'],
-  { label: string; Icon: React.ElementType; color: string; bg: string }
-> = {
+const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color: string; bg: string }> = {
   roster_request: {
     label: 'Connection Request',
     Icon: UserPlus,
@@ -39,21 +36,29 @@ const TYPE_META: Record<
     color: 'text-orange-600',
     bg: 'bg-orange-50',
   },
+  message_request: {
+    label: 'Message Request',
+    Icon: MessageSquare,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+  },
 };
 
 function notificationBody(n: StoredNotification): string {
   const d = n.data || {};
   switch (n.type) {
     case 'roster_request':
-      return `${d.requesterName || 'Someone'} wants to connect with you`;
+      return `${d.from?.name || 'Someone'} wants to add you to their roster`;
     case 'roster_accepted':
-      return `${d.accepterName || 'Someone'} accepted your connection request`;
+      return `${d.by?.name || 'Someone'} accepted your roster request`;
     case 'session_accepted':
       return d.sessionTitle
         ? `"${d.sessionTitle}" has a new partner`
         : 'Someone accepted your session';
     case 'message_new':
-      return d.senderName ? `Message from ${d.senderName}` : 'You have a new message';
+      return d.senderName ? `New message from ${d.senderName}` : 'You have a new message';
+    case 'message_request':
+      return `${d.from?.name || 'Someone'} sent you a message request`;
     default:
       return 'New notification';
   }
@@ -69,11 +74,10 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead }: NotificationPanelProps) {
+export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, onNavigate }: NotificationPanelProps) {
   const [items, setItems] = useState<StoredNotification[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch persisted notifications when panel opens
   useEffect(() => {
     if (!open || !token) return;
     setLoading(true);
@@ -84,7 +88,6 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead }
       .finally(() => setLoading(false));
   }, [open, token]);
 
-  // Prepend any live socket notifications that arrived while panel was open
   useEffect(() => {
     if (!liveQueue.length) return;
     setItems((prev) => {
@@ -108,11 +111,21 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead }
     [token]
   );
 
+  const handleClick = useCallback(
+    (n: StoredNotification) => {
+      if (!n.read && n._id) handleMarkRead(n._id);
+      if (onNavigate) {
+        onNavigate(n.type, n.data);
+        onClose();
+      }
+    },
+    [handleMarkRead, onNavigate, onClose]
+  );
+
   const unread = items.filter((n) => !n.read).length;
 
   return (
     <>
-      {/* Backdrop */}
       {open && (
         <div
           className="absolute inset-0 z-30 bg-black/20 backdrop-blur-[1px]"
@@ -120,12 +133,10 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead }
         />
       )}
 
-      {/* Panel — slides down from the header */}
       <div
         style={open ? undefined : { display: 'none' }}
         className="absolute top-[88px] left-0 right-0 z-40 bg-white rounded-b-2xl shadow-2xl flex flex-col max-h-[70%] overflow-y-auto"
       >
-        {/* Panel header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-slate-500" />
@@ -155,7 +166,6 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead }
           </div>
         </div>
 
-        {/* Notification list */}
         <div className="overflow-y-auto flex-1">
           {loading ? (
             <div className="flex items-center justify-center py-10 text-slate-400 text-sm">
@@ -173,17 +183,15 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead }
               return (
                 <button
                   key={n._id}
-                  onClick={() => !n.read && n._id && handleMarkRead(n._id)}
+                  onClick={() => handleClick(n)}
                   className={`w-full flex items-start gap-3 px-4 py-3 border-b border-slate-50
                     text-left transition-colors hover:bg-slate-50
                     ${!n.read ? 'bg-blue-50/40' : 'bg-white'}`}
                 >
-                  {/* Icon */}
                   <div className={`mt-0.5 w-8 h-8 rounded-full ${bg} flex items-center justify-center flex-shrink-0`}>
                     <Icon className={`w-4 h-4 ${color}`} />
                   </div>
 
-                  {/* Body */}
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm leading-snug ${!n.read ? 'font-medium text-slate-800' : 'text-slate-600'}`}>
                       {notificationBody(n)}
@@ -191,7 +199,6 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead }
                     <p className="text-xs text-slate-400 mt-0.5">{timeAgo(n.createdAt)}</p>
                   </div>
 
-                  {/* Unread dot */}
                   {!n.read && (
                     <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
                   )}
