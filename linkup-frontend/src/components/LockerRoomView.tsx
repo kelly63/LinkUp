@@ -4,7 +4,6 @@ import {
   Share2,
   MoreVertical,
   Trophy,
-  Link2,
   PlusCircle,
   Award,
   Users,
@@ -39,6 +38,248 @@ function getInitials(name: string) {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
+// ── Content renderers (stable, defined at module level) ────────────────────
+
+function SessionContent({ post }: { post: Post }) {
+  return (
+    <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-2xl p-4 mb-1 border-2 border-emerald-200">
+      <div className="flex items-center gap-2 mb-3">
+        <Trophy className="w-5 h-5 text-emerald-600" />
+        <span className="text-emerald-700 font-medium text-sm">Session Completed</span>
+      </div>
+      <div className="bg-white rounded-xl p-4 space-y-2">
+        {post.sessionPartner && typeof post.sessionPartner === 'object' && (
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Users className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-900 font-medium">
+                {post.sessionSummary || `Session with ${post.sessionPartner.name}`}
+              </p>
+              <p className="text-xs text-slate-500">with {post.sessionPartner.name}</p>
+            </div>
+          </div>
+        )}
+        {post.session && typeof post.session === 'object' && post.session.location && (
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <MapPin className="w-4 h-4 flex-shrink-0" />
+            <span>{post.session.location}</span>
+          </div>
+        )}
+        {post.content && (
+          <p className="text-sm text-slate-700 pt-1 border-t border-slate-100">{post.content}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ArticleContent({ post }: { post: Post }) {
+  return (
+    <div>
+      {post.content && <p className="text-slate-900 text-sm mb-3">{post.content}</p>}
+      {post.sharedUrl && (
+        <a
+          href={post.sharedUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block border-2 border-slate-200 rounded-xl overflow-hidden hover:border-blue-400 transition-colors"
+        >
+          <div className="p-4">
+            <h4 className="text-slate-900 text-sm font-medium mb-1 line-clamp-2">
+              {post.articleTitle || post.sharedUrl}
+            </h4>
+            <div className="flex items-center gap-2 text-xs text-blue-600">
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span className="truncate">{new URL(post.sharedUrl).hostname}</span>
+            </div>
+          </div>
+        </a>
+      )}
+    </div>
+  );
+}
+
+// ── PostCard (stable, defined at module level) ─────────────────────────────
+
+interface PostCardProps {
+  post: Post;
+  isLiked: boolean;
+  likeCount: number;
+  commentCount: number;
+  comments: Post['comments'];
+  isCommentsOpen: boolean;
+  draft: string;
+  isSubmitting: boolean;
+  isMenuOpen: boolean;
+  isOwner: boolean;
+  userInitials: string;
+  userAvatar?: string;
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  onLike: () => void;
+  onToggleComments: () => void;
+  onSubmitComment: () => void;
+  onDelete: () => void;
+  onReport: () => void;
+  onMenuToggle: () => void;
+  onDraftChange: (value: string) => void;
+}
+
+function PostCard({
+  post, isLiked, likeCount, commentCount, comments, isCommentsOpen,
+  draft, isSubmitting, isMenuOpen, isOwner, userInitials, userAvatar,
+  menuRef, onLike, onToggleComments, onSubmitComment, onDelete, onReport,
+  onMenuToggle, onDraftChange,
+}: PostCardProps) {
+  const author = post.author;
+  const initials = author ? getInitials(author.name) : '??';
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      {/* Header */}
+      <div className="px-4 pt-4 pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+              {author?.avatar
+                ? <img src={author.avatar} alt={author.name} className="w-full h-full rounded-full object-cover" />
+                : initials}
+            </div>
+            <div>
+              <h4 className="text-slate-900 text-sm font-medium">{author?.name}</h4>
+              <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                {author?.position && <span>{author.position}</span>}
+                {author?.position && author?.sport && <span>•</span>}
+                {author?.sport && <span>{author.sport}</span>}
+              </div>
+              <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
+                <Clock className="w-3 h-3" />
+                <span>{timeAgo(post.createdAt)}</span>
+              </div>
+            </div>
+          </div>
+          <div className="relative" ref={isMenuOpen ? menuRef : null}>
+            <button
+              onClick={(e) => { e.stopPropagation(); onMenuToggle(); }}
+              className="p-1.5 hover:bg-slate-100 rounded-full transition-colors"
+            >
+              <MoreVertical className="w-4 h-4 text-slate-400" />
+            </button>
+            {isMenuOpen && (
+              <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-slate-200 py-1 min-w-[140px]">
+                {isOwner && (
+                  <button
+                    onClick={onDelete}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete post
+                  </button>
+                )}
+                <button
+                  onClick={onReport}
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <Flag className="w-4 h-4" />
+                  Report post
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="px-4 pb-3">
+        {post.type === 'session_completion' && <SessionContent post={post} />}
+        {post.type === 'thought' && <p className="text-slate-900 leading-relaxed text-sm">{post.content}</p>}
+        {post.type === 'article' && <ArticleContent post={post} />}
+      </div>
+
+      {/* Actions */}
+      <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-around">
+        <button
+          onClick={onLike}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+            isLiked ? 'text-red-600 bg-red-50' : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-600' : ''}`} />
+          <span className="text-sm">{likeCount}</span>
+        </button>
+        <button
+          onClick={onToggleComments}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+            isCommentsOpen ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:bg-slate-50'
+          }`}
+        >
+          <MessageCircle className={`w-4 h-4 ${isCommentsOpen ? 'fill-blue-100' : ''}`} />
+          <span className="text-sm">{commentCount}</span>
+        </button>
+        <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
+          <Share2 className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Comment panel */}
+      {isCommentsOpen && (
+        <div className="border-t border-slate-100 px-4 pb-4 pt-3 space-y-3">
+          {comments.length > 0 ? (
+            <div className="space-y-3">
+              {comments.map((c) => (
+                <div key={c._id} className="flex gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
+                    {c.author?.avatar
+                      ? <img src={c.author.avatar} alt={c.author.name} className="w-full h-full object-cover" />
+                      : getInitials(c.author?.name || '?')}
+                  </div>
+                  <div className="flex-1 bg-slate-50 rounded-xl px-3 py-2">
+                    <span className="text-xs font-medium text-slate-900">{c.author?.name} </span>
+                    <span className="text-xs text-slate-700">{c.text}</span>
+                    <p className="text-xs text-slate-400 mt-0.5">{timeAgo(c.createdAt)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400 text-center py-1">No comments yet — be the first!</p>
+          )}
+
+          <div className="flex gap-2 items-center pt-1">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
+              {userAvatar
+                ? <img src={userAvatar} alt="me" className="w-full h-full object-cover" />
+                : userInitials}
+            </div>
+            <div className="flex-1 flex items-center gap-2 bg-slate-100 rounded-full px-3 py-1.5">
+              <input
+                type="text"
+                value={draft}
+                onChange={(e) => onDraftChange(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmitComment(); } }}
+                placeholder="Add a comment…"
+                className="flex-1 bg-transparent text-sm text-slate-900 placeholder-slate-400 outline-none"
+              />
+              <button
+                onClick={onSubmitComment}
+                disabled={!draft.trim() || isSubmitting}
+                className="text-blue-600 disabled:text-slate-300 transition-colors"
+              >
+                {isSubmitting
+                  ? <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin block" />
+                  : <Send className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── LockerRoomView ─────────────────────────────────────────────────────────
+
 export function LockerRoomView({ onBack }: { onBack?: () => void }) {
   const { token, user } = useAuth();
   const [feedPosts, setFeedPosts] = useState<Post[]>([]);
@@ -48,10 +289,8 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const [activeFilter, setActiveFilter] = useState<Filter>('all');
   const [isCreatePostDialogOpen, setIsCreatePostDialogOpen] = useState(false);
-  // optimistic like tracking: postId → liked by me
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
-  // comment panel state
   const [openCommentPostId, setOpenCommentPostId] = useState<string | null>(null);
   const [postComments, setPostComments] = useState<Record<string, Post['comments']>>({});
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
@@ -60,7 +299,6 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
   const [openMenuPostId, setOpenMenuPostId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
-  // Close the post menu when clicking outside
   useEffect(() => {
     if (!openMenuPostId) return;
     const handleOutside = (e: MouseEvent) => {
@@ -82,7 +320,6 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
       setTotalPages(pages ?? 1);
       setPage(p);
 
-      // Seed like + comment maps from API data
       const myId = user?._id;
       const newLikedMap: Record<string, boolean> = {};
       const newLikeCounts: Record<string, number> = {};
@@ -115,43 +352,36 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
     }
   }, [token, user?._id, activeFilter]);
 
-  useEffect(() => {
-    fetchPage(1, true);
-  }, [activeFilter, token]);
+  useEffect(() => { fetchPage(1, true); }, [activeFilter, token]);
 
-  const handleLike = async (postId: string) => {
+  const handleLike = useCallback(async (postId: string) => {
     if (!token) return;
     const wasLiked = likedMap[postId] ?? false;
-    // optimistic update
     setLikedMap((prev) => ({ ...prev, [postId]: !wasLiked }));
     setLikeCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + (wasLiked ? -1 : 1) }));
     try {
       await postsApi.toggleLike(token, postId);
     } catch {
-      // revert on failure
       setLikedMap((prev) => ({ ...prev, [postId]: wasLiked }));
       setLikeCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + (wasLiked ? 1 : -1) }));
     }
-  };
+  }, [token, likedMap]);
 
-  const handlePostCreated = (post: Post) => {
+  const handlePostCreated = useCallback((post: Post) => {
     setFeedPosts((prev) => [post, ...prev]);
     setLikedMap((prev) => ({ ...prev, [post._id]: false }));
     setLikeCounts((prev) => ({ ...prev, [post._id]: 0 }));
     setCommentCounts((prev) => ({ ...prev, [post._id]: 0 }));
     setPostComments((prev) => ({ ...prev, [post._id]: [] }));
-  };
+  }, []);
 
-  const handleToggleComments = (postId: string) => {
+  const handleToggleComments = useCallback((postId: string) => {
     setOpenCommentPostId((prev) => (prev === postId ? null : postId));
-  };
+  }, []);
 
-  const handleSubmitComment = async (postId: string) => {
-    if (!token) return;
-    const text = (commentDrafts[postId] || '').trim();
-    if (!text) return;
-
-    // Optimistic update
+  const handleSubmitComment = useCallback(async (postId: string, draft: string) => {
+    if (!token || !draft.trim()) return;
+    const text = draft.trim();
     const optimistic: Post['comments'][0] = {
       _id: `temp-${Date.now()}`,
       author: user as any,
@@ -162,17 +392,14 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
     setCommentCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + 1 }));
     setCommentDrafts((prev) => ({ ...prev, [postId]: '' }));
     setSubmittingComment((prev) => ({ ...prev, [postId]: true }));
-
     try {
       const { comment } = await postsApi.addComment(token, postId, text);
-      // Replace optimistic entry with real one
       setPostComments((prev) => ({
         ...prev,
         [postId]: prev[postId].map((c) => (c._id === optimistic._id ? comment : c)),
       }));
     } catch (err: any) {
       toast.error(err?.message || 'Could not post comment');
-      // Revert
       setPostComments((prev) => ({
         ...prev,
         [postId]: (prev[postId] ?? []).filter((c) => c._id !== optimistic._id),
@@ -182,9 +409,9 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
     } finally {
       setSubmittingComment((prev) => ({ ...prev, [postId]: false }));
     }
-  };
+  }, [token, user]);
 
-  const handleDeletePost = async (postId: string) => {
+  const handleDeletePost = useCallback(async (postId: string) => {
     if (!token) return;
     setOpenMenuPostId(null);
     try {
@@ -194,12 +421,12 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
     } catch (err: any) {
       toast.error(err?.message || 'Could not delete post');
     }
-  };
+  }, [token]);
 
-  const handleReportPost = (postId: string) => {
+  const handleReportPost = useCallback((postId: string) => {
     setOpenMenuPostId(null);
     toast.success("Post reported. We'll review it shortly.");
-  };
+  }, []);
 
   const filters: { id: Filter; label: string }[] = [
     { id: 'all', label: 'All' },
@@ -210,232 +437,6 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
 
   const userInitials = user ? getInitials(user.name) : '??';
 
-  // ── Post card components ───────────────────────────────────────────────────
-
-  const renderSessionContent = (post: Post) => (
-    <div className="bg-gradient-to-br from-emerald-50 to-blue-50 rounded-2xl p-4 mb-1 border-2 border-emerald-200">
-      <div className="flex items-center gap-2 mb-3">
-        <Trophy className="w-5 h-5 text-emerald-600" />
-        <span className="text-emerald-700 font-medium text-sm">Session Completed</span>
-      </div>
-      <div className="bg-white rounded-xl p-4 space-y-2">
-        {post.sessionPartner && typeof post.sessionPartner === 'object' && (
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Users className="w-4 h-4 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-900 font-medium">
-                {post.sessionSummary || `Session with ${post.sessionPartner.name}`}
-              </p>
-              <p className="text-xs text-slate-500">with {post.sessionPartner.name}</p>
-            </div>
-          </div>
-        )}
-        {post.session && typeof post.session === 'object' && post.session.location && (
-          <div className="flex items-center gap-2 text-sm text-slate-600">
-            <MapPin className="w-4 h-4 flex-shrink-0" />
-            <span>{post.session.location}</span>
-          </div>
-        )}
-        {post.content && (
-          <p className="text-sm text-slate-700 pt-1 border-t border-slate-100">{post.content}</p>
-        )}
-      </div>
-    </div>
-  );
-
-  const renderThoughtContent = (post: Post) => (
-    <p className="text-slate-900 leading-relaxed text-sm">{post.content}</p>
-  );
-
-  const renderArticleContent = (post: Post) => (
-    <div>
-      {post.content && (
-        <p className="text-slate-900 text-sm mb-3">{post.content}</p>
-      )}
-      {post.sharedUrl && (
-        <a
-          href={post.sharedUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block border-2 border-slate-200 rounded-xl overflow-hidden hover:border-blue-400 transition-colors"
-        >
-          <div className="p-4">
-            <h4 className="text-slate-900 text-sm font-medium mb-1 line-clamp-2">
-              {post.articleTitle || post.sharedUrl}
-            </h4>
-            <div className="flex items-center gap-2 text-xs text-blue-600">
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span className="truncate">{new URL(post.sharedUrl).hostname}</span>
-            </div>
-          </div>
-        </a>
-      )}
-    </div>
-  );
-
-  const PostCard = ({ post }: { post: Post }) => {
-    const author = post.author;
-    const initials = author ? getInitials(author.name) : '??';
-    const isLiked = likedMap[post._id] ?? false;
-    const likeCount = likeCounts[post._id] ?? post.likes.length;
-    const commentCount = commentCounts[post._id] ?? post.comments.length;
-    const comments = postComments[post._id] ?? post.comments;
-    const isCommentsOpen = openCommentPostId === post._id;
-    const draft = commentDrafts[post._id] ?? '';
-    const isSubmitting = submittingComment[post._id] ?? false;
-    const isMenuOpen = openMenuPostId === post._id;
-    const isOwner = user && author && author._id === user._id;
-
-    return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        {/* Header */}
-        <div className="px-4 pt-4 pb-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
-                {author?.avatar
-                  ? <img src={author.avatar} alt={author.name} className="w-full h-full rounded-full object-cover" />
-                  : initials}
-              </div>
-              <div>
-                <h4 className="text-slate-900 text-sm font-medium">{author?.name}</h4>
-                <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                  {author?.position && <span>{author.position}</span>}
-                  {author?.position && author?.sport && <span>•</span>}
-                  {author?.sport && <span>{author.sport}</span>}
-                </div>
-                <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
-                  <Clock className="w-3 h-3" />
-                  <span>{timeAgo(post.createdAt)}</span>
-                </div>
-              </div>
-            </div>
-            <div className="relative" ref={isMenuOpen ? menuRef : null}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setOpenMenuPostId(isMenuOpen ? null : post._id);
-                }}
-                className="p-1.5 hover:bg-slate-100 rounded-full transition-colors"
-              >
-                <MoreVertical className="w-4 h-4 text-slate-400" />
-              </button>
-              {isMenuOpen && (
-                <div className="absolute right-0 top-8 z-20 bg-white rounded-xl shadow-lg border border-slate-200 py-1 min-w-[140px]">
-                  {isOwner && (
-                    <button
-                      onClick={() => handleDeletePost(post._id)}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                      Delete post
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleReportPost(post._id)}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
-                    <Flag className="w-4 h-4" />
-                    Report post
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="px-4 pb-3">
-          {post.type === 'session_completion' && renderSessionContent(post)}
-          {post.type === 'thought' && renderThoughtContent(post)}
-          {post.type === 'article' && renderArticleContent(post)}
-        </div>
-
-        {/* Actions */}
-        <div className="px-4 py-3 border-t border-slate-200 flex items-center justify-around">
-          <button
-            onClick={() => handleLike(post._id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              isLiked ? 'text-red-600 bg-red-50' : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <Heart className={`w-4 h-4 ${isLiked ? 'fill-red-600' : ''}`} />
-            <span className="text-sm">{likeCount}</span>
-          </button>
-          <button
-            onClick={() => handleToggleComments(post._id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              isCommentsOpen ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            <MessageCircle className={`w-4 h-4 ${isCommentsOpen ? 'fill-blue-100' : ''}`} />
-            <span className="text-sm">{commentCount}</span>
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors">
-            <Share2 className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Comment panel */}
-        {isCommentsOpen && (
-          <div className="border-t border-slate-100 px-4 pb-4 pt-3 space-y-3">
-            {/* Existing comments */}
-            {comments.length > 0 ? (
-              <div className="space-y-3">
-                {comments.map((c) => (
-                  <div key={c._id} className="flex gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
-                      {c.author?.avatar
-                        ? <img src={c.author.avatar} alt={c.author.name} className="w-full h-full object-cover" />
-                        : getInitials(c.author?.name || '?')}
-                    </div>
-                    <div className="flex-1 bg-slate-50 rounded-xl px-3 py-2">
-                      <span className="text-xs font-medium text-slate-900">{c.author?.name} </span>
-                      <span className="text-xs text-slate-700">{c.text}</span>
-                      <p className="text-xs text-slate-400 mt-0.5">{timeAgo(c.createdAt)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 text-center py-1">No comments yet — be the first!</p>
-            )}
-
-            {/* New comment input */}
-            <div className="flex gap-2 items-center pt-1">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
-                {user?.avatar
-                  ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
-                  : userInitials}
-              </div>
-              <div className="flex-1 flex items-center gap-2 bg-slate-100 rounded-full px-3 py-1.5">
-                <input
-                  type="text"
-                  value={draft}
-                  onChange={(e) => setCommentDrafts((prev) => ({ ...prev, [post._id]: e.target.value }))}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment(post._id); } }}
-                  placeholder="Add a comment…"
-                  className="flex-1 bg-transparent text-sm text-slate-900 placeholder-slate-400 outline-none"
-                />
-                <button
-                  onClick={() => handleSubmitComment(post._id)}
-                  disabled={!draft.trim() || isSubmitting}
-                  className="text-blue-600 disabled:text-slate-300 transition-colors"
-                >
-                  {isSubmitting
-                    ? <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin block" />
-                    : <Send className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="h-full overflow-y-auto bg-slate-50">
       {/* Header */}
@@ -443,10 +444,7 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             {onBack && (
-              <button
-                onClick={onBack}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors -ml-2"
-              >
+              <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full transition-colors -ml-2">
                 <ArrowLeft className="w-5 h-5 text-slate-700" />
               </button>
             )}
@@ -459,8 +457,6 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
             <PlusCircle className="w-5 h-5 text-white" />
           </button>
         </div>
-
-        {/* Filter chips */}
         <div className="flex gap-2 overflow-x-auto pb-1 -mb-1">
           {filters.map((f) => (
             <button
@@ -506,7 +502,31 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
           </div>
         )}
 
-        {!loading && feedPosts.map((post) => <PostCard key={post._id} post={post} />)}
+        {!loading && feedPosts.map((post) => (
+          <PostCard
+            key={post._id}
+            post={post}
+            isLiked={likedMap[post._id] ?? false}
+            likeCount={likeCounts[post._id] ?? post.likes.length}
+            commentCount={commentCounts[post._id] ?? post.comments.length}
+            comments={postComments[post._id] ?? post.comments}
+            isCommentsOpen={openCommentPostId === post._id}
+            draft={commentDrafts[post._id] ?? ''}
+            isSubmitting={submittingComment[post._id] ?? false}
+            isMenuOpen={openMenuPostId === post._id}
+            isOwner={!!(user && post.author && post.author._id === user._id)}
+            userInitials={userInitials}
+            userAvatar={user?.avatar}
+            menuRef={menuRef}
+            onLike={() => handleLike(post._id)}
+            onToggleComments={() => handleToggleComments(post._id)}
+            onSubmitComment={() => handleSubmitComment(post._id, commentDrafts[post._id] ?? '')}
+            onDelete={() => handleDeletePost(post._id)}
+            onReport={() => handleReportPost(post._id)}
+            onMenuToggle={() => setOpenMenuPostId(openMenuPostId === post._id ? null : post._id)}
+            onDraftChange={(val) => setCommentDrafts((prev) => ({ ...prev, [post._id]: val }))}
+          />
+        ))}
 
         {page < totalPages && !loading && (
           <div className="flex justify-center">
