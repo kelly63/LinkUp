@@ -76,7 +76,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     'Field Hockey': ['Forward', 'Midfielder', 'Defender', 'Goalkeeper', 'Any Position', 'Lifting Partner', 'Conditioning Partner'],
     'Track and Field': ['Sprinter', 'Distance Runner', 'Hurdler', 'Long Jumper', 'High Jumper', 'Triple Jumper', 'Pole Vaulter', 'Shot Putter', 'Discus Thrower', 'Javelin Thrower', 'Decathlete/Heptathlete', 'Any Event', 'Training Partner', 'Conditioning Partner'],
     'Golf': ['Driver', 'Irons', 'Short Game', 'Putting', 'Course Management', 'Any Area', 'Practice Partner', 'Conditioning Partner'],
-    'Tennis': ['Singles', 'Doubles', 'Serve & Volley', 'Baseline', 'Net Play', 'Any Style', 'Practice Partner', 'Conditioning Partner']
+    'Tennis': ['Singles', 'Doubles', 'Serve & Volley', 'Baseline', 'Net Play', 'Any Style', 'Practice Partner', 'Conditioning Partner'],
+    'Conditioning / Lifting': ['Lifting Partner', 'Conditioning Partner', 'Strength & Conditioning', 'Sprint Partner', 'Agility Partner', 'Any'],
   };
 
   const partnerRoles = sportPartnerRoles[selectedSport] || sportPartnerRoles['Baseball'];
@@ -318,18 +319,23 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               <label className="text-sm text-slate-700 mb-2 block">
                 Sport for Session
               </label>
-              <select 
+              <select
                 value={selectedSport}
                 onChange={(e) => {
                   setSelectedSport(e.target.value);
                   setSelectedPartnerRoles([]);
+                  setPosterRole('');
                 }}
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
               >
                 {userSports.length > 0 ? (
-                  userSports.map((sport) => (
-                    <option key={sport} value={sport}>{sport}</option>
-                  ))
+                  <>
+                    {userSports.map((sport) => (
+                      <option key={sport} value={sport}>{sport}</option>
+                    ))}
+                    <option disabled>──────────</option>
+                    <option value="Conditioning / Lifting">Conditioning / Lifting</option>
+                  </>
                 ) : (
                   <>
                     <option>Baseball</option>
@@ -343,28 +349,27 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     <option>Track and Field</option>
                     <option>Golf</option>
                     <option>Tennis</option>
+                    <option disabled>──────────</option>
+                    <option value="Conditioning / Lifting">Conditioning / Lifting</option>
                   </>
                 )}
               </select>
-              {userSports.length > 0 && (
-                <p className="text-xs text-slate-500 mt-1.5 ml-1">
-                  ✓ Only showing sports you're rostered on
-                </p>
-              )}
             </div>
 
-            {/* My Position */}
+            {/* My Position / Role */}
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                My Position
+                {selectedSport === 'Conditioning / Lifting' ? 'My Role' : 'My Position'}
               </label>
               <select
-                value={posterRole || user?.position || ''}
+                value={posterRole || (selectedSport !== 'Conditioning / Lifting' ? user?.position || '' : '')}
                 onChange={(e) => setPosterRole(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
               >
-                <option value="">Select your position…</option>
+                <option value="">
+                  {selectedSport === 'Conditioning / Lifting' ? 'Select your role…' : 'Select your position…'}
+                </option>
                 {(sportPartnerRoles[selectedSport] || []).map((role) => (
                   <option key={role} value={role}>{role}</option>
                 ))}
@@ -375,7 +380,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
             <div>
               <label className="text-sm text-slate-700 mb-3 block flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                Partner Role Needed
+                {selectedSport === 'Conditioning / Lifting' ? 'Training Partner Needed' : 'Partner Role Needed'}
               </label>
               <p className="text-xs text-slate-500 mb-2">Select all that apply</p>
               <div className="flex flex-wrap gap-2">
