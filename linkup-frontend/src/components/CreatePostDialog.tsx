@@ -1,5 +1,5 @@
-import { X, Link2, Type, Trophy } from 'lucide-react';
-import { useState } from 'react';
+import { X, Link2, Type, Trophy, ExternalLink, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 import { posts as postsApi, Post, User } from '../lib/api';
 import { toast } from 'sonner';
 
@@ -11,8 +11,20 @@ interface CreatePostDialogProps {
   onPostCreated?: (post: Post) => void;
 }
 
+interface LinkPreview {
+  title: string | null;
+  description: string | null;
+  image: string | null;
+  favicon: string | null;
+  domain: string;
+}
+
 function getInitials(name: string) {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function isValidUrl(str: string) {
+  try { new URL(str); return true; } catch { return false; }
 }
 
 export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }: CreatePostDialogProps) {
@@ -22,6 +34,35 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
   const [articleTitle, setArticleTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  const [preview, setPreview] = useState<LinkPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Fetch preview whenever the URL changes (debounced)
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setPreview(null);
+    if (!articleUrl.trim() || !isValidUrl(articleUrl.trim())) return;
+
+    debounceRef.current = setTimeout(async () => {
+      setPreviewLoading(true);
+      try {
+        const res = await fetch(`/api/utils/link-preview?url=${encodeURIComponent(articleUrl.trim())}`);
+        if (res.ok) {
+          const data: LinkPreview = await res.json();
+          setPreview(data);
+          if (!articleTitle.trim() && data.title) setArticleTitle(data.title);
+        }
+      } catch {
+        // silently fail — preview is non-critical
+      } finally {
+        setPreviewLoading(false);
+      }
+    }, 800);
+
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [articleUrl]);
+
   if (!isOpen) return null;
 
   const handleClose = () => {
@@ -29,6 +70,7 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
     setContent('');
     setArticleUrl('');
     setArticleTitle('');
+    setPreview(null);
     onClose();
   };
 
@@ -151,8 +193,51 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
                 onChange={(e) => setArticleUrl(e.target.value)}
                 placeholder="https://..."
                 className="w-full p-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-400"
+                autoFocus
               />
             </div>
+
+            {/* Link Preview */}
+            {previewLoading && (
+              <div className="flex items-center gap-2 text-slate-400 text-sm py-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Fetching preview…
+              </div>
+            )}
+
+            {preview && !previewLoading && (
+              <a
+                href={articleUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block border-2 border-slate-200 rounded-2xl overflow-hidden hover:border-blue-400 transition-colors"
+              >
+                {preview.image && (
+                  <img
+                    src={preview.image}
+                    alt=""
+                    className="w-full h-36 object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
+                <div className="p-4">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                    {preview.favicon && (
+                      <img src={preview.favicon} alt="" className="w-3.5 h-3.5" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    )}
+                    <span>{preview.domain}</span>
+                    <ExternalLink className="w-3 h-3 ml-auto flex-shrink-0" />
+                  </div>
+                  {preview.title && (
+                    <p className="text-sm font-medium text-slate-900 line-clamp-2">{preview.title}</p>
+                  )}
+                  {preview.description && (
+                    <p className="text-xs text-slate-500 mt-1 line-clamp-2">{preview.description}</p>
+                  )}
+                </div>
+              </a>
+            )}
+
             <div>
               <label className="block text-sm text-slate-600 mb-2">Article Title (optional)</label>
               <input
@@ -179,7 +264,7 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
         {postType && (
           <div className="px-6 py-4 border-t border-slate-200 flex gap-3 flex-shrink-0">
             <button
-              onClick={() => setPostType(null)}
+              onClick={() => { setPostType(null); setPreview(null); }}
               disabled={submitting}
               className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-60"
             >
