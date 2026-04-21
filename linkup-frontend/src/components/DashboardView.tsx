@@ -288,8 +288,12 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                     <Calendar className="w-3 h-3 text-amber-600" />
                   </div>
                   <span className="text-slate-700">
-                    {session.date ? new Date(session.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'TBD'}
-                    {session.time ? ` at ${session.time}` : ''}
+                    {(() => {
+                      if (!session.date || session.date === 'Flexible') return session.date || 'TBD';
+                      const d = new Date(session.date);
+                      return isNaN(d.getTime()) ? session.date : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                    })()}
+                    {session.time && session.time !== 'Flexible' ? ` at ${session.time}` : session.time === 'Flexible' ? ' · Flexible time' : ''}
                   </span>
                 </div>
                 {session.location && (
