@@ -3,29 +3,48 @@ import { useState } from 'react';
 
 interface EditSessionViewProps {
   session: {
-    id: number;
+    _id?: string;
+    id?: number;
+    title?: string;
     sport: string;
-    role: string;
+    role?: string;
+    posterRole?: string;
     date: string;
     time: string;
+    duration?: string;
     location: string;
+    goals?: string;
+    notes?: string;
     status: string;
   };
   onBack: () => void;
   onSave?: (updatedSession: any) => void;
 }
 
-function formatDate(dateString: string) {
-  const d = new Date(dateString);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+// Convert any stored time string to HH:MM for <input type="time">
+function toTimeInputValue(t: string): string {
+  if (!t || t === 'Flexible') return '';
+  // Already HH:MM
+  if (/^\d{2}:\d{2}$/.test(t)) return t;
+  // Try to parse 12h format like "2:00 PM"
+  const match = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (match) {
+    let h = parseInt(match[1]);
+    const m = match[2];
+    const ampm = match[3].toUpperCase();
+    if (ampm === 'PM' && h !== 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    return `${String(h).padStart(2, '0')}:${m}`;
+  }
+  return '';
 }
 
-function formatTime(timeString: string) {
-  const [hours, minutes] = timeString.split(':');
-  const hour = parseInt(hours);
-  const ampm = hour >= 12 ? 'PM' : 'AM';
-  const displayHour = hour % 12 || 12;
-  return `${displayHour}:${minutes} ${ampm}`;
+// Convert HH:MM → "H:MM AM/PM" for display
+function formatTime(t: string): string {
+  const [hours, minutes] = t.split(':');
+  const h = parseInt(hours);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${minutes} ${ampm}`;
 }
 
 export function EditSessionView({ session, onBack, onSave }: EditSessionViewProps) {
@@ -35,20 +54,16 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
   const [dateFlexible, setDateFlexible] = useState(isFlexibleDate);
   const [timeFlexible, setTimeFlexible] = useState(isFlexibleTime);
   const [dateValue, setDateValue] = useState(isFlexibleDate ? '' : session.date);
-  const [timeValue, setTimeValue] = useState(isFlexibleTime ? '' : session.time);
-  const [location, setLocation] = useState(session.location);
-  const [duration, setDuration] = useState('2 hours');
-  const [notes, setNotes] = useState(
-    session.sport === 'Baseball'
-      ? 'Focus on fastball and changeup mechanics. Bring your own glove and cleats.'
-      : 'Working on shooting form and consistency from 3-point range. Bring basketball shoes.'
-  );
+  const [timeValue, setTimeValue] = useState(isFlexibleTime ? '' : toTimeInputValue(session.time));
+  const [location, setLocation] = useState(session.location || '');
+  const [duration, setDuration] = useState(session.duration || '1 hour');
+  const [notes, setNotes] = useState(session.notes || session.goals || '');
 
   const handleSave = () => {
     const updatedSession = {
       ...session,
       date: dateFlexible ? 'Flexible' : dateValue,
-      time: timeFlexible ? 'Flexible' : timeValue,
+      time: timeFlexible ? 'Flexible' : (timeValue ? formatTime(timeValue) : ''),
       location,
       duration,
       notes,
@@ -56,6 +71,8 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
     if (onSave) onSave(updatedSession);
     onBack();
   };
+
+  const sessionTitle = session.title || session.sport;
 
   return (
     <div className="h-full flex flex-col bg-slate-50">
@@ -70,7 +87,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
           </button>
           <div>
             <h2 className="text-white">Edit Session</h2>
-            <p className="text-blue-200 text-sm">{session.sport} Practice</p>
+            <p className="text-blue-200 text-sm">{sessionTitle}</p>
           </div>
         </div>
       </div>
@@ -174,11 +191,13 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
                 onChange={(e) => setDuration(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
               >
+                <option value="30 minutes">30 minutes</option>
                 <option value="1 hour">1 hour</option>
                 <option value="1.5 hours">1.5 hours</option>
                 <option value="2 hours">2 hours</option>
                 <option value="2.5 hours">2.5 hours</option>
                 <option value="3 hours">3 hours</option>
+                <option value="3+ hours">3+ hours</option>
               </select>
             </div>
 
