@@ -39,6 +39,29 @@ function timeAgo(iso: string): string {
   return days === 1 ? 'Yesterday' : `${days} days ago`;
 }
 
+type ActivityItem = {
+  kind: 'activity';
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  ts: Date;
+  userProfile?: any;
+  ratingDetails?: any;
+  sessionDetails?: any;
+  hasRating?: boolean;
+  rating?: number;
+};
+
+type PostItem = {
+  kind: 'post';
+  id: string;
+  ts: Date;
+  post: Post;
+};
+
+type FeedItem = ActivityItem | PostItem;
+
 export function DashboardView({ onTabChange, onNavigate, scrollTarget }: DashboardViewProps) {
   const { token, user } = useAuth();
   const [isCreatePostDialogOpen, setIsCreatePostDialogOpen] = useState(false);
@@ -50,7 +73,6 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
   const [recentRatings, setRecentRatings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Community feed
   const [feedPosts, setFeedPosts] = useState<Post[]>([]);
   const [feedLoading, setFeedLoading] = useState(true);
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
@@ -116,7 +138,6 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
     setLikeCounts((prev) => ({ ...prev, [post._id]: 0 }));
   }, []);
 
-  // Scroll to target section when scrollTarget changes
   useEffect(() => {
     if (scrollTarget === 'upcoming-sessions' && upcomingSessionsRef.current && containerRef.current) {
       setTimeout(() => {
@@ -125,14 +146,15 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
     }
   }, [scrollTarget]);
 
-  // Build recent activity from pending requests + recent ratings
-  const recentActivity = [
-    ...pendingRequests.slice(0, 2).map((req: any) => ({
+  // Build combined feed: activity items + community posts, sorted newest-first
+  const activityItems: ActivityItem[] = [
+    ...pendingRequests.slice(0, 3).map((req: any): ActivityItem => ({
+      kind: 'activity',
       id: req._id,
       type: 'roster_addition',
       title: 'Roster Request',
       description: `${req.requester?.name || 'Someone'} wants to join your roster`,
-      time: timeAgo(req.createdAt || new Date().toISOString()),
+      ts: new Date(req.createdAt || Date.now()),
       userProfile: {
         _id: req.requester?._id,
         name: req.requester?.name || '',
@@ -144,12 +166,13 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
         isRosterRequest: true,
       },
     })),
-    ...recentRatings.slice(0, 2).map((r: any) => ({
+    ...recentRatings.slice(0, 3).map((r: any): ActivityItem => ({
+      kind: 'activity',
       id: r._id,
       type: 'rating_received',
       title: 'Rating Received',
       description: `${r.overallRating} stars from ${r.rater?.name || 'an athlete'}`,
-      time: timeAgo(r.createdAt),
+      ts: new Date(r.createdAt),
       ratingDetails: {
         from: r.rater?.name || '',
         avatar: r.rater?.avatar || getInitialsDash(r.rater?.name || '?'),
@@ -160,37 +183,32 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
     })),
   ];
 
+  const postItems: PostItem[] = feedPosts.map((p): PostItem => ({
+    kind: 'post',
+    id: p._id,
+    ts: new Date(p.createdAt),
+    post: p,
+  }));
+
+  const combinedFeed: FeedItem[] = [...activityItems, ...postItems]
+    .sort((a, b) => b.ts.getTime() - a.ts.getTime());
+
   const DISPLAYED_SESSIONS_COUNT = 2;
-  const DISPLAYED_ACTIVITY_COUNT = 3;
   const displayedSessions = upcomingSessions.slice(0, DISPLAYED_SESSIONS_COUNT);
-  const displayedActivity = recentActivity.slice(0, DISPLAYED_ACTIVITY_COUNT);
+  const isAnyLoading = loading || feedLoading;
 
-  const handleActivityClick = (activity: any) => {
+  const handleActivityClick = (item: ActivityItem) => {
     if (!onNavigate) return;
-
-    switch (activity.type) {
-      case 'session_completed':
-        // If already rated, show session details; otherwise rating button handles it
-        if (activity.hasRating && activity.sessionDetails) {
-          onNavigate('userProfile', activity.sessionDetails);
-        }
-        break;
-      case 'roster_addition':
-        // Navigate to the user's profile
-        if (activity.userProfile) {
-          onNavigate('userProfile', activity.userProfile);
-        }
-        break;
-      case 'rating_received':
-        // Navigate to reviews to see the rating
-        onNavigate('reviews', activity.ratingDetails);
-        break;
+    if (item.type === 'roster_addition' && item.userProfile) {
+      onNavigate('userProfile', item.userProfile);
+    } else if (item.type === 'rating_received') {
+      onNavigate('reviews', item.ratingDetails);
     }
   };
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50" ref={containerRef}>
-      {/* Header with Search */}
+      {/* Header */}
       <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 px-6 pt-4 pb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -199,7 +217,6 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
           </div>
         </div>
 
-        {/* Search Athletes Button */}
         {onNavigate && (
           <button
             onClick={() => onNavigate('athleteSearch')}
@@ -217,45 +234,36 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
             <ChevronRight className="w-5 h-5 text-white/70" />
           </button>
         )}
-
       </div>
-  {/* Upcoming Sessions */}
-      <div className="px-6 mb-6" ref={upcomingSessionsRef}>
+
+      {/* Upcoming Sessions */}
+      <div className="px-6 mt-6 mb-6" ref={upcomingSessionsRef}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-slate-900">Upcoming Sessions</h3>
           {upcomingSessions.length > DISPLAYED_SESSIONS_COUNT && (
-            <button
-              onClick={() => onNavigate && onNavigate('mySessions')}
-              className="text-sm text-blue-600 hover:text-blue-700"
-            >
+            <button onClick={() => onNavigate?.('mySessions')} className="text-sm text-blue-600 hover:text-blue-700">
               View All
             </button>
           )}
         </div>
-        
+
         {loading && (
           <div className="flex justify-center py-6">
             <span className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
+
         <div className="space-y-3">
           {!loading && displayedSessions.length === 0 && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 text-center">
               <p className="text-slate-500 text-sm">No upcoming sessions.</p>
-              <button
-                onClick={() => onTabChange('post')}
-                className="mt-3 text-blue-600 text-sm hover:underline"
-              >
+              <button onClick={() => onTabChange('post')} className="mt-3 text-blue-600 text-sm hover:underline">
                 Post or find a session →
               </button>
             </div>
           )}
           {displayedSessions.map((session) => (
-            <div
-              key={session._id}
-              className="bg-white rounded-2xl p-4 shadow-xl border border-slate-200 hover:border-blue-300 transition-all"
-            >
-              {/* Session Header */}
+            <div key={session._id} className="bg-white rounded-2xl p-4 shadow-xl border border-slate-200 hover:border-blue-300 transition-all">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
@@ -274,8 +282,6 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                   </div>
                 </div>
               </div>
-
-              {/* Session Details */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -295,134 +301,38 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                   </div>
                 )}
               </div>
-
-              {/* Action Button */}
               <button
-                onClick={() => onNavigate && onNavigate('sessionDetails', session)}
+                onClick={() => onNavigate?.('sessionDetails', session)}
                 className="w-full mt-3 bg-slate-100 hover:bg-slate-200 text-slate-900 py-2 rounded-lg transition-colors text-sm flex items-center justify-center gap-2 border border-slate-200"
               >
-                View Details
-                <ChevronRight className="w-4 h-4" />
+                View Details <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           ))}
         </div>
       </div>
-      {/* Recent Activity */}
+
+      {/* Combined Activity + Community Feed */}
       <div className="px-6 mb-6">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-slate-900">Recent Activity</h3>
-          {recentActivity.length > DISPLAYED_ACTIVITY_COUNT && (
-            <button 
-              onClick={() => onNavigate && onNavigate('reviews')}
-              className="text-sm text-blue-600 hover:text-blue-700"
+          <h3 className="text-slate-900">Locker Room</h3>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsCreatePostDialogOpen(true)}
+              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
             >
-              View All
+              <PlusCircle className="w-4 h-4" />
+              Post
             </button>
-          )}
-        </div>
-        
-        <div className="space-y-3">
-          {!loading && displayedActivity.length === 0 && (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 text-center">
-              <p className="text-slate-500 text-sm">No recent activity yet.</p>
-            </div>
-          )}
-          {displayedActivity.map((activity) => (
-            <div
-              key={activity.id}
-              onClick={() => handleActivityClick(activity)}
-              className={`w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden transition-all ${
-                (activity.type === 'roster_addition' || activity.type === 'rating_received' || (activity.type === 'session_completed' && activity.hasRating))
-                  ? 'hover:border-blue-300 hover:shadow-md active:scale-[0.99] cursor-pointer'
-                  : ''
-              }`}
-            >
-              <div className="px-4 py-4">
-                <div className="flex items-start gap-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    activity.type === 'session_completed' ? 'bg-green-100' :
-                    activity.type === 'roster_addition' ? 'bg-blue-100' :
-                    'bg-amber-100'
-                  }`}>
-                    {activity.type === 'session_completed' && <Trophy className="w-5 h-5 text-green-600" />}
-                    {activity.type === 'roster_addition' && <Users className="w-5 h-5 text-blue-600" />}
-                    {activity.type === 'rating_received' && <Star className="w-5 h-5 text-amber-500" />}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-slate-900 text-sm font-medium">{activity.title}</h4>
-                      {activity.type === 'rating_received' && (
-                        <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" />
-                      )}
-                    </div>
-                    <p className="text-sm text-slate-600">{activity.description}</p>
-                    <p className="text-xs text-slate-400 mt-1">{activity.time}</p>
-                    
-                    {/* Show rating status or button for completed sessions */}
-                    {activity.type === 'session_completed' && (
-                      <div className="mt-3">
-                        {activity.hasRating ? (
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs text-slate-600">Your rating:</span>
-                            {[...Array(activity.rating || 0)].map((_, i) => (
-                              <Star key={i} className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                            ))}
-                          </div>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onNavigate && onNavigate('rating', activity.sessionDetails);
-                            }}
-                            className="w-full py-2.5 bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2"
-                          >
-                            <Star className="w-4 h-4" />
-                            Rate This Session
-                          </button>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Show respond button for roster requests */}
-                    {activity.type === 'roster_addition' && (
-                      <div className="mt-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onNavigate && onNavigate('userProfile', {
-                              ...activity.userProfile,
-                              isRosterRequest: true
-                            });
-                          }}
-                          className="w-full py-2.5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2"
-                        >
-                          <Users className="w-4 h-4" />
-                          View Profile & Respond
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-    
-
-      {/* Community Feed */}
-      <div className="px-6 mb-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-slate-900">Community Feed</h3>
-          <button
-            onClick={() => setIsCreatePostDialogOpen(true)}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-          >
-            <PlusCircle className="w-4 h-4" />
-            Post
-          </button>
+            {combinedFeed.length > 0 && (
+              <button
+                onClick={() => onNavigate?.('lockerRoom')}
+                className="text-sm text-blue-600 hover:text-blue-700"
+              >
+                See All
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Quick post bar */}
@@ -436,27 +346,79 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
           <span className="text-slate-400 text-sm">Share thoughts or a session update…</span>
         </button>
 
-        {feedLoading && (
+        {isAnyLoading && (
           <div className="flex justify-center py-8">
             <span className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
-        {!feedLoading && feedPosts.length === 0 && (
+        {!isAnyLoading && combinedFeed.length === 0 && (
           <div className="flex flex-col items-center justify-center py-10 gap-2 text-slate-400 bg-white rounded-2xl border border-slate-200">
             <Award className="w-8 h-8 opacity-30" />
-            <p className="text-sm">No posts yet — be the first!</p>
+            <p className="text-sm">No activity yet — be the first to post!</p>
           </div>
         )}
 
-        <div className="space-y-4">
-          {feedPosts.map((post) => {
+        <div className="space-y-3">
+          {!isAnyLoading && combinedFeed.map((item) => {
+            if (item.kind === 'activity') {
+              return (
+                <div
+                  key={`activity-${item.id}`}
+                  onClick={() => handleActivityClick(item)}
+                  className="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:border-blue-300 hover:shadow-md active:scale-[0.99] transition-all cursor-pointer"
+                >
+                  <div className="px-4 py-4">
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                        item.type === 'roster_addition' ? 'bg-blue-100' : 'bg-amber-100'
+                      }`}>
+                        {item.type === 'roster_addition'
+                          ? <Users className="w-5 h-5 text-blue-600" />
+                          : <Star className="w-5 h-5 text-amber-500" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-slate-900 text-sm font-medium">{item.title}</h4>
+                          <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0 ml-2" />
+                        </div>
+                        <p className="text-sm text-slate-600">{item.description}</p>
+                        <p className="text-xs text-slate-400 mt-1">{timeAgo(item.ts.toISOString())}</p>
+
+                        {item.type === 'roster_addition' && (
+                          <div className="mt-3">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onNavigate?.('userProfile', { ...item.userProfile, isRosterRequest: true });
+                              }}
+                              className="w-full py-2.5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2"
+                            >
+                              <Users className="w-4 h-4" />
+                              View Profile & Respond
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+
+            // Post item
+            const { post } = item;
             const author = post.author;
             const initials = author ? getInitialsDash(author.name) : '??';
             const isLiked = likedMap[post._id] ?? false;
             const likeCount = likeCounts[post._id] ?? post.likes.length;
+
             return (
-              <div key={post._id} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+              <div
+                key={`post-${item.id}`}
+                onClick={() => onNavigate?.('lockerRoom')}
+                className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:border-blue-300 hover:shadow-md active:scale-[0.99] transition-all cursor-pointer"
+              >
                 {/* Author */}
                 <div className="px-4 pt-4 pb-2 flex items-center gap-3">
                   <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden">
@@ -464,12 +426,13 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                       ? <img src={author.avatar} alt={author.name} className="w-full h-full rounded-full object-cover" />
                       : initials}
                   </div>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-900">{author?.name}</p>
                     <p className="text-xs text-slate-400">
                       {[author?.position, author?.sport].filter(Boolean).join(' · ')}
                     </p>
                   </div>
+                  <p className="text-xs text-slate-400 flex-shrink-0">{timeAgo(post.createdAt)}</p>
                 </div>
 
                 {/* Content */}
@@ -500,8 +463,11 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                   )}
                 </div>
 
-                {/* Actions */}
-                <div className="px-4 py-2 border-t border-slate-100 flex items-center gap-4">
+                {/* Actions — stop propagation so clicks here don't navigate */}
+                <div
+                  className="px-4 py-2 border-t border-slate-100 flex items-center gap-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     onClick={() => handleLike(post._id)}
                     className={`flex items-center gap-1.5 text-sm transition-colors ${isLiked ? 'text-red-500' : 'text-slate-500 hover:text-red-400'}`}
@@ -522,12 +488,12 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
           })}
         </div>
 
-        {feedPosts.length > 0 && (
+        {combinedFeed.length > 0 && !isAnyLoading && (
           <button
             onClick={() => onNavigate?.('lockerRoom')}
             className="w-full mt-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
           >
-            See all posts in Locker Room
+            Open full Locker Room
             <ChevronRight className="w-4 h-4" />
           </button>
         )}
@@ -541,8 +507,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
         onPostCreated={handlePostCreated}
       />
 
-      {/* Bottom Spacing */}
-      <div className="h-6"></div>
+      <div className="h-6" />
     </div>
   );
 }
