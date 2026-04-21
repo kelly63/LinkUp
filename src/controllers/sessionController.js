@@ -151,9 +151,35 @@ const updateSession = async (req, res) => {
       if (req.body[field] !== undefined) session[field] = req.body[field];
     }
 
+    // Detect changes to key scheduling fields before saving
+    const changedFields = [];
+    if (req.body.date !== undefined && req.body.date !== session.date) changedFields.push('date');
+    if (req.body.time !== undefined && req.body.time !== session.time) changedFields.push('time');
+    if (req.body.location !== undefined && req.body.location !== session.location) changedFields.push('location');
+
     await session.save();
     await session.populate('postedBy', USER_FIELDS);
     await session.populate('partner', USER_FIELDS);
+
+    // Notify partner if the session has one and key scheduling details changed
+    if (session.partner && changedFields.length > 0) {
+      const io = req.app.get('io');
+      if (io) {
+        io.notify(session.partner._id.toString(), 'session_updated', {
+          sessionId: session._id,
+          sessionTitle: session.title || session.sport,
+          sport: session.sport,
+          date: session.date,
+          time: session.time,
+          location: session.location,
+          changedFields,
+          updatedBy: {
+            _id: req.user._id,
+            name: req.user.name,
+          },
+        });
+      }
+    }
 
     res.json({ session });
   } catch (error) {
@@ -171,8 +197,30 @@ const cancelSession = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to cancel this session' });
     }
 
+    // Capture partner before cancelling (populate if stored as ObjectId)
+    const partnerId = session.partner ? session.partner.toString() : null;
+    const sessionTitle = session.title || session.sport;
+    const sessionDate = session.date;
+
     session.status = 'cancelled';
     await session.save();
+
+    // Notify partner if there was one
+    if (partnerId) {
+      const io = req.app.get('io');
+      if (io) {
+        io.notify(partnerId, 'session_cancelled', {
+          sessionId: session._id,
+          sessionTitle,
+          sport: session.sport,
+          date: sessionDate,
+          cancelledBy: {
+            _id: req.user._id,
+            name: req.user.name,
+          },
+        });
+      }
+    }
 
     res.json({ message: 'Session cancelled', session });
   } catch (error) {

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star } from 'lucide-react';
+import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star, CalendarClock, CalendarX } from 'lucide-react';
 import { notifications as notificationsApi, StoredNotification } from '../lib/api';
 
 interface NotificationPanelProps {
@@ -48,6 +48,18 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color:
     color: 'text-yellow-500',
     bg: 'bg-yellow-50',
   },
+  session_updated: {
+    label: 'Session Updated',
+    Icon: CalendarClock,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+  },
+  session_cancelled: {
+    label: 'Session Cancelled',
+    Icon: CalendarX,
+    color: 'text-red-600',
+    bg: 'bg-red-50',
+  },
 };
 
 function notificationBody(n: StoredNotification): string {
@@ -69,6 +81,14 @@ function notificationBody(n: StoredNotification): string {
       return d.from?.name
         ? `${d.from.name} gave you a ${d.overallRating}★ rating`
         : 'You received a new rating';
+    case 'session_updated':
+      return d.updatedBy?.name
+        ? `${d.updatedBy.name} updated "${d.sessionTitle || 'your session'}" — ${(d.changedFields || []).join(', ')} changed`
+        : 'A session you joined was updated';
+    case 'session_cancelled':
+      return d.cancelledBy?.name
+        ? `${d.cancelledBy.name} cancelled "${d.sessionTitle || 'your session'}"`
+        : 'A session was cancelled';
     default:
       return 'New notification';
   }

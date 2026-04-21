@@ -39,6 +39,18 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
       ? `${d.from.name} gave you a ${d.overallRating}★ rating`
       : 'You received a new rating',
   }),
+  session_updated: (d) => ({
+    title: 'Session Updated',
+    description: d.updatedBy?.name
+      ? `${d.updatedBy.name} changed ${(d.changedFields || []).join(', ')} for "${d.sessionTitle || 'your session'}"`
+      : 'A session you joined was updated',
+  }),
+  session_cancelled: (d) => ({
+    title: 'Session Cancelled',
+    description: d.cancelledBy?.name
+      ? `${d.cancelledBy.name} cancelled "${d.sessionTitle || 'your session'}"`
+      : 'A session was cancelled',
+  }),
 };
 
 export function MobileFrame() {
@@ -129,6 +141,10 @@ export function MobileFrame() {
         break;
       case 'rating_new':
         setPendingNav({ view: 'receivedRatings', data: null });
+        break;
+      case 'session_updated':
+      case 'session_cancelled':
+        setPendingNav({ view: 'mySessions', data: null });
         break;
     }
   }, []);
