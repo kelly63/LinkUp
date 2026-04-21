@@ -15,13 +15,31 @@ interface EditSessionViewProps {
   onSave?: (updatedSession: any) => void;
 }
 
+function formatDate(dateString: string) {
+  const d = new Date(dateString);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function formatTime(timeString: string) {
+  const [hours, minutes] = timeString.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minutes} ${ampm}`;
+}
+
 export function EditSessionView({ session, onBack, onSave }: EditSessionViewProps) {
-  const [date, setDate] = useState(session.date);
-  const [time, setTime] = useState(session.time);
+  const isFlexibleDate = session.date === 'Flexible';
+  const isFlexibleTime = session.time === 'Flexible';
+
+  const [dateFlexible, setDateFlexible] = useState(isFlexibleDate);
+  const [timeFlexible, setTimeFlexible] = useState(isFlexibleTime);
+  const [dateValue, setDateValue] = useState(isFlexibleDate ? '' : session.date);
+  const [timeValue, setTimeValue] = useState(isFlexibleTime ? '' : session.time);
   const [location, setLocation] = useState(session.location);
   const [duration, setDuration] = useState('2 hours');
   const [notes, setNotes] = useState(
-    session.sport === 'Baseball' 
+    session.sport === 'Baseball'
       ? 'Focus on fastball and changeup mechanics. Bring your own glove and cleats.'
       : 'Working on shooting form and consistency from 3-point range. Bring basketball shoes.'
   );
@@ -29,16 +47,13 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
   const handleSave = () => {
     const updatedSession = {
       ...session,
-      date,
-      time,
+      date: dateFlexible ? 'Flexible' : dateValue,
+      time: timeFlexible ? 'Flexible' : timeValue,
       location,
       duration,
-      notes
+      notes,
     };
-    
-    if (onSave) {
-      onSave(updatedSession);
-    }
+    if (onSave) onSave(updatedSession);
     onBack();
   };
 
@@ -47,7 +62,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 px-6 pt-4 pb-6">
         <div className="flex items-center gap-3 mb-2">
-          <button 
+          <button
             onClick={onBack}
             className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm"
           >
@@ -64,41 +79,93 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
       <div className="flex-1 overflow-y-auto px-6 py-6">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
           <h3 className="text-slate-900 font-medium mb-4">Session Details</h3>
-          
+
           <div className="space-y-4">
             {/* Date */}
             <div>
-              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
+              <label className="text-sm text-slate-700 mb-2 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 Date
               </label>
-              <input
-                type="text"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                placeholder="Mar 15, 2025"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
-              />
+              {!dateFlexible && (
+                <input
+                  type="date"
+                  value={dateValue}
+                  onChange={(e) => setDateValue(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              )}
+              {dateFlexible && (
+                <div className="w-full px-4 py-3 rounded-xl border-2 border-blue-200 bg-blue-50 text-blue-700 text-sm font-medium">
+                  Flexible — will discuss with partner
+                </div>
+              )}
+              <label className="flex items-center gap-2 mt-2 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={dateFlexible}
+                    onChange={() => setDateFlexible((v) => !v)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                    {dateFlexible && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">
+                  Flexible on date
+                </span>
+              </label>
             </div>
 
             {/* Time */}
             <div>
-              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
+              <label className="text-sm text-slate-700 mb-2 flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 Time
               </label>
-              <input
-                type="text"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                placeholder="2:00 PM"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
-              />
+              {!timeFlexible && (
+                <input
+                  type="time"
+                  value={timeValue}
+                  onChange={(e) => setTimeValue(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              )}
+              {timeFlexible && (
+                <div className="w-full px-4 py-3 rounded-xl border-2 border-blue-200 bg-blue-50 text-blue-700 text-sm font-medium">
+                  Flexible — will discuss with partner
+                </div>
+              )}
+              <label className="flex items-center gap-2 mt-2 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={timeFlexible}
+                    onChange={() => setTimeFlexible((v) => !v)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                    {timeFlexible && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">
+                  Flexible on time
+                </span>
+              </label>
             </div>
 
             {/* Duration */}
             <div>
-              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
+              <label className="text-sm text-slate-700 mb-2 flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 Duration
               </label>
@@ -117,7 +184,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
 
             {/* Location */}
             <div>
-              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
+              <label className="text-sm text-slate-700 mb-2 flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 Location
               </label>
@@ -148,15 +215,15 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
 
         {/* Action Buttons */}
         <div className="space-y-3 pb-6">
-          <button 
+          <button
             onClick={handleSave}
             className="w-full py-3.5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <Save className="w-5 h-5" />
             Save Changes
           </button>
-          
-          <button 
+
+          <button
             onClick={onBack}
             className="w-full py-3.5 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 rounded-xl font-medium transition-all"
           >
