@@ -1,49 +1,58 @@
-import { ArrowLeft, Eye, Shield, Users, Bell, Map } from 'lucide-react';
+import { ArrowLeft, Eye, Shield, Users, Map } from 'lucide-react';
 import { useState } from 'react';
+import { useAuth } from '../lib/auth';
+import { users as usersApi } from '../lib/api';
+import { toast } from 'sonner';
 
 interface PreferencesViewProps {
   onBack: () => void;
 }
 
 export function PreferencesView({ onBack }: PreferencesViewProps) {
-  const [visibilityMode, setVisibilityMode] = useState<'everyone' | 'filtered'>('filtered');
-  const [allowedLevels, setAllowedLevels] = useState<string[]>(['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other']);
-  const [allowedSports, setAllowedSports] = useState<string[]>(['Baseball']);
-  const [searchRadius, setSearchRadius] = useState('25');
-  const [allowCoaches, setAllowCoaches] = useState(true);
+  const { token, user } = useAuth();
 
-  const skillLevels = [
-    'NCAA D1',
-    'NCAA D2',
-    'NCAA D3',
-    'College - Other',
-    'Pro',
-  ];
+  const [visibilityMode, setVisibilityMode] = useState<'everyone' | 'filtered'>(
+    (user?.visibilityMode as 'everyone' | 'filtered') || 'everyone'
+  );
+  const [allowedLevels, setAllowedLevels] = useState<string[]>(user?.allowedLevels || []);
+  const [allowedSports, setAllowedSports] = useState<string[]>(user?.allowedSports || []);
+  const [searchRadius, setSearchRadius] = useState(String(user?.searchRadius || 25));
+  const [saving, setSaving] = useState(false);
+
+  const skillLevels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro'];
 
   const sports = [
-    'Baseball',
-    'Softball',
-    'Basketball',
-    'Volleyball',
-    'Football',
-    'Soccer',
-    'Lacrosse',
-    'Field Hockey'
+    'Baseball', 'Softball', 'Basketball', 'Volleyball',
+    'Football', 'Soccer', 'Lacrosse', 'Field Hockey',
   ];
 
   const toggleLevel = (level: string) => {
-    if (allowedLevels.includes(level)) {
-      setAllowedLevels(allowedLevels.filter(l => l !== level));
-    } else {
-      setAllowedLevels([...allowedLevels, level]);
-    }
+    setAllowedLevels((prev) =>
+      prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level]
+    );
   };
 
   const toggleSport = (sport: string) => {
-    if (allowedSports.includes(sport)) {
-      setAllowedSports(allowedSports.filter(s => s !== sport));
-    } else {
-      setAllowedSports([...allowedSports, sport]);
+    setAllowedSports((prev) =>
+      prev.includes(sport) ? prev.filter((s) => s !== sport) : [...prev, sport]
+    );
+  };
+
+  const handleSave = async () => {
+    if (!token) return;
+    setSaving(true);
+    try {
+      await usersApi.updateProfile(token, {
+        visibilityMode,
+        allowedLevels,
+        allowedSports,
+        searchRadius: Number(searchRadius),
+      } as any);
+      toast.success('Preferences saved');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not save preferences');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -52,7 +61,7 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
       {/* Header */}
       <div className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={onBack}
             className="p-2 hover:bg-slate-100 rounded-full transition-colors -ml-2"
           >
@@ -76,7 +85,6 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
               </div>
             </div>
 
-            {/* Visibility Mode Toggle */}
             <div className="space-y-3">
               <label className="flex items-start gap-3 cursor-pointer group">
                 <div className="relative mt-0.5">
@@ -97,9 +105,7 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
                   <span className="text-sm font-medium text-slate-900 group-hover:text-blue-900 transition-colors">
                     Visible to Everyone
                   </span>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    All athletes can search for you
-                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">All athletes can search for you</p>
                 </div>
               </label>
 
@@ -139,7 +145,9 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
                 </div>
                 <div>
                   <h3 className="font-medium text-slate-900">Allowed Skill Levels</h3>
-                  <p className="text-xs text-slate-500">Who can search for you</p>
+                  <p className="text-xs text-slate-500">
+                    Who can search for you — leave all unchecked to allow any level
+                  </p>
                 </div>
               </div>
 
@@ -160,8 +168,8 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
               </div>
 
               {allowedLevels.length === 0 && (
-                <p className="text-xs text-amber-600 mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  ⚠️ No levels selected - your profile won't be visible to anyone
+                <p className="text-xs text-blue-700 mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  No levels selected — any skill level can find you
                 </p>
               )}
             </div>
@@ -176,7 +184,9 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
                 </div>
                 <div>
                   <h3 className="font-medium text-slate-900">Allowed Sports</h3>
-                  <p className="text-xs text-slate-500">Which sports can find you</p>
+                  <p className="text-xs text-slate-500">
+                    Which sports can find you — leave all unchecked to allow any sport
+                  </p>
                 </div>
               </div>
 
@@ -197,14 +207,12 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
               </div>
 
               {allowedSports.length === 0 && (
-                <p className="text-xs text-amber-600 mt-3 bg-amber-50 border border-amber-200 rounded-lg p-3">
-                  ⚠️ No sports selected - your profile won't be visible to anyone
+                <p className="text-xs text-blue-700 mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  No sports selected — any sport can find you
                 </p>
               )}
             </div>
           )}
-
-         
 
           {/* Search Radius */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200">
@@ -241,11 +249,14 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
           </div>
 
           {/* Save Button */}
-          <button className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 hover:shadow-xl active:scale-[0.98]">
-            Save Preferences
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 hover:shadow-xl active:scale-[0.98] disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : 'Save Preferences'}
           </button>
 
-          {/* Info Card */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
             <p className="text-xs text-blue-900 leading-relaxed">
               <strong>Privacy Note:</strong> These settings control who can search for and view your athletic profile. Your posted sessions are always visible to athletes who meet the session criteria.

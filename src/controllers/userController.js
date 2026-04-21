@@ -46,6 +46,7 @@ const getUsers = async (req, res) => {
     const visibilityFilter = {
       $or: [
         { visibilityMode: 'everyone' },
+        { visibilityMode: { $exists: false } }, // legacy accounts created before visibility field
         {
           visibilityMode: 'filtered',
           $and: [levelCondition, sportCondition],

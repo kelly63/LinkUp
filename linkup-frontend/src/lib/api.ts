@@ -26,6 +26,10 @@ export interface User {
   instagramUrl: string;
   twitterUrl: string;
   linkedinUrl: string;
+  visibilityMode: 'everyone' | 'filtered';
+  allowedLevels: string[];
+  allowedSports: string[];
+  searchRadius: number;
 }
 
 export interface Session {
