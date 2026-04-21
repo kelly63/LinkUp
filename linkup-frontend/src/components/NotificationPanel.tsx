@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star, CalendarClock, CalendarX } from 'lucide-react';
+import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star, CalendarClock, CalendarX, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { notifications as notificationsApi, StoredNotification } from '../lib/api';
 
 interface NotificationPanelProps {
@@ -60,6 +60,18 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color:
     color: 'text-red-600',
     bg: 'bg-red-50',
   },
+  change_approved: {
+    label: 'Change Approved',
+    Icon: ThumbsUp,
+    color: 'text-green-600',
+    bg: 'bg-green-50',
+  },
+  change_declined: {
+    label: 'Change Declined',
+    Icon: ThumbsDown,
+    color: 'text-red-600',
+    bg: 'bg-red-50',
+  },
 };
 
 function notificationBody(n: StoredNotification): string {
@@ -89,6 +101,14 @@ function notificationBody(n: StoredNotification): string {
       return d.cancelledBy?.name
         ? `${d.cancelledBy.name} cancelled "${d.sessionTitle || 'your session'}"`
         : 'A session was cancelled';
+    case 'change_approved':
+      return d.approvedBy?.name
+        ? `${d.approvedBy.name} approved your proposed changes to "${d.sessionTitle || 'your session'}"`
+        : 'Your proposed session changes were approved';
+    case 'change_declined':
+      return d.declinedBy?.name
+        ? `${d.declinedBy.name} declined your proposed changes to "${d.sessionTitle || 'your session'}"`
+        : 'Your proposed session changes were declined';
     default:
       return 'New notification';
   }

@@ -1,6 +1,6 @@
 import {
   ChevronLeft, Calendar, MapPin, Clock, Users, Trophy, MessageCircle,
-  Star, Navigation, CheckCircle, AlertCircle, XCircle, Flag,
+  Star, Navigation, CheckCircle, AlertCircle, XCircle, Flag, RefreshCw,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
@@ -30,10 +30,39 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
   const { token, user } = useAuth();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [localStatus, setLocalStatus] = useState(session.status);
+  const [localSession, setLocalSession] = useState(session);
 
   // Determine the "other person" in this session
-  const isPostedByMe = user?._id === (session.postedBy?._id ?? session.postedBy);
-  const partner = isPostedByMe ? session.partner : session.postedBy;
+  const isPostedByMe = user?._id === (localSession.postedBy?._id ?? localSession.postedBy);
+  const partner = isPostedByMe ? localSession.partner : localSession.postedBy;
+
+  const handleApproveChange = async () => {
+    if (!token) return;
+    setActionLoading('approve');
+    try {
+      const { session: updated } = await sessionsApi.approveChange(token, localSession._id);
+      setLocalSession(updated);
+      toast.success('Changes approved');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not approve changes');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeclineChange = async () => {
+    if (!token) return;
+    setActionLoading('decline');
+    try {
+      const { session: updated } = await sessionsApi.declineChange(token, localSession._id);
+      setLocalSession(updated);
+      toast.success('Change request declined');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not decline change');
+    } finally {
+      setActionLoading(null);
+    }
+  };
   const partnerInitials = partner ? getInitials(partner.name) : '??';
 
   const handleAddToCalendar = () => {
@@ -132,7 +161,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
           </button>
           <div>
             <h2 className="text-white">Session Details</h2>
-            <p className="text-blue-200 text-sm">{session.title || `${session.sport} Practice`}</p>
+            <p className="text-blue-200 text-sm">{localSession.title || `${localSession.sport} Practice`}</p>
           </div>
         </div>
         <div className="flex justify-center">
@@ -189,14 +218,14 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                       id: partner._id,
                       name: partner.name,
                       avatar: partner.avatar || partnerInitials,
-                      sport: session.sport,
+                      sport: localSession.sport,
                       position: partner.position,
                       level: partner.skillLevel,
                       sessionContext: {
-                        sessionTitle: session.title || `${session.sport} Practice`,
-                        date: session.date,
-                        time: session.time,
-                        location: session.location,
+                        sessionTitle: localSession.title || `${localSession.sport} Practice`,
+                        date: localSession.date,
+                        time: localSession.time,
+                        location: localSession.location,
                       },
                     });
                   }
@@ -217,6 +246,74 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
           </div>
         )}
 
+        {/* Pending Change Banner */}
+        {localSession.pendingChange && (
+          <div className={`rounded-2xl border p-4 mb-4 ${
+            !isPostedByMe
+              ? 'bg-amber-50 border-amber-200'
+              : 'bg-slate-50 border-slate-200'
+          }`}>
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <RefreshCw className="w-4 h-4 text-amber-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-900 mb-1">
+                  {isPostedByMe ? 'Awaiting partner approval' : 'Proposed changes to this session'}
+                </p>
+                <div className="space-y-1 mb-3">
+                  {localSession.pendingChange.changedFields.includes('date') && (
+                    <p className="text-xs text-slate-600">
+                      <span className="font-medium">Date:</span>{' '}
+                      <span className="line-through text-slate-400">{localSession.date}</span>{' '}
+                      → <span className="text-amber-700 font-medium">{localSession.pendingChange.date}</span>
+                    </p>
+                  )}
+                  {localSession.pendingChange.changedFields.includes('time') && (
+                    <p className="text-xs text-slate-600">
+                      <span className="font-medium">Time:</span>{' '}
+                      <span className="line-through text-slate-400">{localSession.time || '—'}</span>{' '}
+                      → <span className="text-amber-700 font-medium">{localSession.pendingChange.time}</span>
+                    </p>
+                  )}
+                  {localSession.pendingChange.changedFields.includes('location') && (
+                    <p className="text-xs text-slate-600">
+                      <span className="font-medium">Location:</span>{' '}
+                      <span className="line-through text-slate-400">{localSession.location || '—'}</span>{' '}
+                      → <span className="text-amber-700 font-medium">{localSession.pendingChange.location}</span>
+                    </p>
+                  )}
+                  {localSession.pendingChange.changedFields.includes('duration') && (
+                    <p className="text-xs text-slate-600">
+                      <span className="font-medium">Duration:</span>{' '}
+                      <span className="line-through text-slate-400">{localSession.duration || '—'}</span>{' '}
+                      → <span className="text-amber-700 font-medium">{localSession.pendingChange.duration}</span>
+                    </p>
+                  )}
+                </div>
+                {!isPostedByMe && (
+                  <div className="flex gap-2">
+                    <button
+                      disabled={!!actionLoading}
+                      onClick={handleApproveChange}
+                      className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-60"
+                    >
+                      {actionLoading === 'approve' ? 'Approving…' : 'Approve Changes'}
+                    </button>
+                    <button
+                      disabled={!!actionLoading}
+                      onClick={handleDeclineChange}
+                      className="flex-1 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-medium transition-colors disabled:opacity-60"
+                    >
+                      {actionLoading === 'decline' ? 'Declining…' : 'Decline'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Session Info */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
           <h3 className="text-slate-900 font-medium mb-4">Session Information</h3>
@@ -227,7 +324,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
               </div>
               <div>
                 <p className="text-sm text-slate-500 mb-0.5">Date & Time</p>
-                <p className="text-slate-900 font-medium">{session.date}{session.time ? ` at ${session.time}` : ''}</p>
+                <p className="text-slate-900 font-medium">{localSession.date}{localSession.time ? ` at ${localSession.time}` : ''}</p>
               </div>
             </div>
 
@@ -237,9 +334,9 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
               </div>
               <div className="flex-1">
                 <p className="text-sm text-slate-500 mb-0.5">Location</p>
-                <p className="text-slate-900 font-medium mb-2">{session.location}</p>
+                <p className="text-slate-900 font-medium mb-2">{localSession.location}</p>
                 <a
-                  href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(session.location)}`}
+                  href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(localSession.location)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
@@ -250,26 +347,26 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
               </div>
             </div>
 
-            {session.duration && (
+            {localSession.duration && (
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <Clock className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 mb-0.5">Duration</p>
-                  <p className="text-slate-900 font-medium">{session.duration}</p>
+                  <p className="text-slate-900 font-medium">{localSession.duration}</p>
                 </div>
               </div>
             )}
 
-            {session.skillLevelRequired && (
+            {localSession.skillLevelRequired && (
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                   <Flag className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 mb-0.5">Skill Level Required</p>
-                  <p className="text-slate-900 font-medium">{session.skillLevelRequired}</p>
+                  <p className="text-slate-900 font-medium">{localSession.skillLevelRequired}</p>
                 </div>
               </div>
             )}
@@ -277,19 +374,19 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
         </div>
 
         {/* Session Notes */}
-        {(session.notes || session.goals) && (
+        {(localSession.notes || localSession.goals) && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
             <h3 className="text-slate-900 font-medium mb-3">Session Notes</h3>
-            <p className="text-sm text-slate-700 leading-relaxed">{session.notes || session.goals}</p>
+            <p className="text-sm text-slate-700 leading-relaxed">{localSession.notes || localSession.goals}</p>
           </div>
         )}
 
         {/* Equipment */}
-        {session.equipment && session.equipment.length > 0 && (
+        {localSession.equipment && localSession.equipment.length > 0 && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
             <h3 className="text-slate-900 font-medium mb-3">What to Bring</h3>
             <div className="space-y-2">
-              {session.equipment.map((item, i) => (
+              {localSession.equipment.map((item, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                     <CheckCircle className="w-3.5 h-3.5 text-blue-600" />
@@ -331,12 +428,14 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
               Add to Calendar
             </button>
 
-            <button
-              onClick={() => onNavigate && onNavigate('editSession', session)}
-              className="w-full py-3.5 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 rounded-xl font-medium transition-all"
-            >
-              Edit Session
-            </button>
+            {isPostedByMe && (
+              <button
+                onClick={() => onNavigate && onNavigate('editSession', localSession)}
+                className="w-full py-3.5 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 rounded-xl font-medium transition-all"
+              >
+                Edit Session
+              </button>
+            )}
 
             <button
               disabled={!!actionLoading}

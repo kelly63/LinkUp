@@ -51,6 +51,18 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
       ? `${d.cancelledBy.name} cancelled "${d.sessionTitle || 'your session'}"`
       : 'A session was cancelled',
   }),
+  change_approved: (d) => ({
+    title: 'Change Approved',
+    description: d.approvedBy?.name
+      ? `${d.approvedBy.name} approved your changes to "${d.sessionTitle || 'your session'}"`
+      : 'Your proposed session changes were approved',
+  }),
+  change_declined: (d) => ({
+    title: 'Change Declined',
+    description: d.declinedBy?.name
+      ? `${d.declinedBy.name} declined your changes to "${d.sessionTitle || 'your session'}"`
+      : 'Your proposed session changes were declined',
+  }),
 };
 
 export function MobileFrame() {
@@ -144,6 +156,8 @@ export function MobileFrame() {
         break;
       case 'session_updated':
       case 'session_cancelled':
+      case 'change_approved':
+      case 'change_declined':
         setPendingNav({ view: 'mySessions', data: null });
         break;
     }

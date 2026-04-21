@@ -85,6 +85,20 @@ const sessionSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Pending change proposed by the poster, awaiting partner approval
+    pendingChange: {
+      type: {
+        date: String,
+        time: String,
+        location: String,
+        duration: String,
+        changedFields: [String],
+        proposedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        proposedAt: { type: Date, default: Date.now },
+      },
+      default: null,
+    },
+
     // Type of session
     sessionType: {
       type: String,

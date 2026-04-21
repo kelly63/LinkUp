@@ -141,44 +141,132 @@ const updateSession = async (req, res) => {
       return res.status(400).json({ message: 'Cannot edit a completed or cancelled session' });
     }
 
-    const editableFields = [
-      'sport', 'position', 'posterRole', 'partnerRole', 'title',
-      'date', 'time', 'duration', 'location', 'goals', 'notes',
-      'equipment', 'skillLevelRequired',
-    ];
-
-    for (const field of editableFields) {
+    // Non-scheduling fields always apply immediately
+    const freeEditFields = ['sport', 'position', 'posterRole', 'partnerRole', 'title', 'goals', 'notes', 'equipment', 'skillLevelRequired'];
+    for (const field of freeEditFields) {
       if (req.body[field] !== undefined) session[field] = req.body[field];
     }
 
-    // Detect changes to key scheduling fields before saving
-    const changedFields = [];
-    if (req.body.date !== undefined && req.body.date !== session.date) changedFields.push('date');
-    if (req.body.time !== undefined && req.body.time !== session.time) changedFields.push('time');
-    if (req.body.location !== undefined && req.body.location !== session.location) changedFields.push('location');
+    // Scheduling fields require partner approval when session is confirmed with a partner
+    const schedulingFields = ['date', 'time', 'location', 'duration'];
+
+    if (session.partner && session.status === 'confirmed') {
+      const changedFields = schedulingFields.filter(
+        (f) => req.body[f] !== undefined && req.body[f] !== session[f]
+      );
+
+      if (changedFields.length > 0) {
+        session.pendingChange = {
+          date: req.body.date ?? session.date,
+          time: req.body.time ?? session.time,
+          location: req.body.location ?? session.location,
+          duration: req.body.duration ?? session.duration,
+          changedFields,
+          proposedBy: req.user._id,
+          proposedAt: new Date(),
+        };
+
+        await session.save();
+        await session.populate('postedBy', USER_FIELDS);
+        await session.populate('partner', USER_FIELDS);
+
+        const io = req.app.get('io');
+        if (io) {
+          io.notify(session.partner._id.toString(), 'session_updated', {
+            sessionId: session._id,
+            sessionTitle: session.title || session.sport,
+            sport: session.sport,
+            changedFields,
+            proposedDate: session.pendingChange.date,
+            proposedTime: session.pendingChange.time,
+            proposedLocation: session.pendingChange.location,
+            updatedBy: { _id: req.user._id, name: req.user.name },
+          });
+        }
+
+        return res.json({ session, pendingChangeCreated: true });
+      }
+    } else {
+      // No partner or not confirmed — apply scheduling changes directly
+      for (const field of schedulingFields) {
+        if (req.body[field] !== undefined) session[field] = req.body[field];
+      }
+    }
 
     await session.save();
     await session.populate('postedBy', USER_FIELDS);
     await session.populate('partner', USER_FIELDS);
 
-    // Notify partner if the session has one and key scheduling details changed
-    if (session.partner && changedFields.length > 0) {
-      const io = req.app.get('io');
-      if (io) {
-        io.notify(session.partner._id.toString(), 'session_updated', {
-          sessionId: session._id,
-          sessionTitle: session.title || session.sport,
-          sport: session.sport,
-          date: session.date,
-          time: session.time,
-          location: session.location,
-          changedFields,
-          updatedBy: {
-            _id: req.user._id,
-            name: req.user.name,
-          },
-        });
-      }
+    res.json({ session });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// POST /api/sessions/:id/approve-change — partner approves pending scheduling change
+const approveChange = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    if (!session.partner || session.partner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only the session partner can approve changes' });
+    }
+    if (!session.pendingChange) {
+      return res.status(400).json({ message: 'No pending change to approve' });
+    }
+
+    const { date, time, location, duration } = session.pendingChange;
+    session.date = date;
+    session.time = time;
+    session.location = location;
+    session.duration = duration;
+    session.pendingChange = null;
+
+    await session.save();
+    await session.populate('postedBy', USER_FIELDS);
+    await session.populate('partner', USER_FIELDS);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.notify(session.postedBy._id.toString(), 'change_approved', {
+        sessionId: session._id,
+        sessionTitle: session.title || session.sport,
+        approvedBy: { _id: req.user._id, name: req.user.name },
+      });
+    }
+
+    res.json({ session });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// POST /api/sessions/:id/decline-change — partner declines pending scheduling change
+const declineChange = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    if (!session.partner || session.partner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only the session partner can decline changes' });
+    }
+    if (!session.pendingChange) {
+      return res.status(400).json({ message: 'No pending change to decline' });
+    }
+
+    session.pendingChange = null;
+    await session.save();
+    await session.populate('postedBy', USER_FIELDS);
+    await session.populate('partner', USER_FIELDS);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.notify(session.postedBy._id.toString(), 'change_declined', {
+        sessionId: session._id,
+        sessionTitle: session.title || session.sport,
+        declinedBy: { _id: req.user._id, name: req.user.name },
+      });
     }
 
     res.json({ session });
@@ -309,4 +397,6 @@ module.exports = {
   cancelSession,
   acceptSession,
   completeSession,
+  approveChange,
+  declineChange,
 };

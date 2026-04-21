@@ -52,6 +52,15 @@ export interface Session {
   partner: User | null;
   sessionType: 'need' | 'clinic';
   createdAt: string;
+  pendingChange?: {
+    date: string;
+    time: string;
+    location: string;
+    duration: string;
+    changedFields: string[];
+    proposedBy: string;
+    proposedAt: string;
+  } | null;
 }
 
 export interface Connection {
@@ -253,6 +262,12 @@ export const sessions = {
 
   complete: (token: string, id: string) =>
     request<{ session: Session }>(`/api/sessions/${id}/complete`, { method: 'POST' }, token),
+
+  approveChange: (token: string, id: string) =>
+    request<{ session: Session }>(`/api/sessions/${id}/approve-change`, { method: 'POST' }, token),
+
+  declineChange: (token: string, id: string) =>
+    request<{ session: Session }>(`/api/sessions/${id}/decline-change`, { method: 'POST' }, token),
 };
 
 // ─── Connections ──────────────────────────────────────────────────────────────
