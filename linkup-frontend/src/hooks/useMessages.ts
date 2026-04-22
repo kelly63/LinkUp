@@ -8,6 +8,7 @@ export interface Message {
   recipient: string;     // userId
   text: string;
   read: boolean;
+  type?: 'user' | 'system';
   createdAt: string;
 }
 

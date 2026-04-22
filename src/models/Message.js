@@ -21,6 +21,11 @@ const messageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    type: {
+      type: String,
+      enum: ['user', 'system'],
+      default: 'user',
+    },
   },
   { timestamps: true }
 );

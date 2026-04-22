@@ -1,4 +1,50 @@
 const Session = require('../models/Session');
+const Message = require('../models/Message');
+const MessageRequest = require('../models/MessageRequest');
+
+// Send a system message in the thread between two users.
+// Auto-creates/upgrades the MessageRequest so the thread is accessible.
+const postSystemMessage = async (io, fromId, toId, text) => {
+  const fromStr = fromId.toString();
+  const toStr = toId.toString();
+
+  // Ensure the conversation is accessible (accepted request)
+  const existing = await MessageRequest.findOne({
+    $or: [
+      { requester: fromStr, recipient: toStr },
+      { requester: toStr, recipient: fromStr },
+    ],
+  });
+  if (!existing) {
+    await MessageRequest.create({ requester: fromStr, recipient: toStr, status: 'accepted' });
+  } else if (existing.status !== 'accepted') {
+    existing.status = 'accepted';
+    await existing.save();
+  }
+
+  const message = await Message.create({
+    sender: fromStr,
+    recipient: toStr,
+    text,
+    type: 'system',
+  });
+
+  if (io) {
+    const payload = {
+      _id: message._id,
+      sender: fromStr,
+      recipient: toStr,
+      text: message.text,
+      type: 'system',
+      read: false,
+      createdAt: message.createdAt,
+    };
+    io.to(`user:${fromStr}`).emit('message:new', payload);
+    io.to(`user:${toStr}`).emit('message:new', payload);
+  }
+
+  return message;
+};
 
 const USER_FIELDS = 'name avatar role sport position skillLevel sportsCoached averageRating ratingCount location';
 
@@ -173,10 +219,13 @@ const updateSession = async (req, res) => {
         await session.populate('partner', USER_FIELDS);
 
         const io = req.app.get('io');
+        const partnerId = session.partner._id.toString();
+        const sessionLabel = session.title || session.sport;
+
         if (io) {
-          io.notify(session.partner._id.toString(), 'session_updated', {
+          io.notify(partnerId, 'session_updated', {
             sessionId: session._id,
-            sessionTitle: session.title || session.sport,
+            sessionTitle: sessionLabel,
             sport: session.sport,
             changedFields,
             proposedDate: session.pendingChange.date,
@@ -185,6 +234,13 @@ const updateSession = async (req, res) => {
             updatedBy: { _id: req.user._id, name: req.user.name },
           });
         }
+
+        await postSystemMessage(
+          io,
+          req.user._id,
+          partnerId,
+          `${req.user.name} proposed changes to "${sessionLabel}": ${changedFields.join(', ')} updated. Tap to review and approve.`
+        );
 
         return res.json({ session, pendingChangeCreated: true });
       }
@@ -230,13 +286,23 @@ const approveChange = async (req, res) => {
     await session.populate('partner', USER_FIELDS);
 
     const io = req.app.get('io');
+    const posterId = session.postedBy._id.toString();
+    const sessionLabel = session.title || session.sport;
+
     if (io) {
-      io.notify(session.postedBy._id.toString(), 'change_approved', {
+      io.notify(posterId, 'change_approved', {
         sessionId: session._id,
-        sessionTitle: session.title || session.sport,
+        sessionTitle: sessionLabel,
         approvedBy: { _id: req.user._id, name: req.user.name },
       });
     }
+
+    await postSystemMessage(
+      io,
+      req.user._id,
+      posterId,
+      `✓ ${req.user.name} approved your proposed changes to "${sessionLabel}".`
+    );
 
     res.json({ session });
   } catch (error) {
@@ -263,13 +329,23 @@ const declineChange = async (req, res) => {
     await session.populate('partner', USER_FIELDS);
 
     const io = req.app.get('io');
+    const posterId = session.postedBy._id.toString();
+    const sessionLabel = session.title || session.sport;
+
     if (io) {
-      io.notify(session.postedBy._id.toString(), 'change_declined', {
+      io.notify(posterId, 'change_declined', {
         sessionId: session._id,
-        sessionTitle: session.title || session.sport,
+        sessionTitle: sessionLabel,
         declinedBy: { _id: req.user._id, name: req.user.name },
       });
     }
+
+    await postSystemMessage(
+      io,
+      req.user._id,
+      posterId,
+      `${req.user.name} declined your proposed changes to "${sessionLabel}". Original schedule remains.`
+    );
 
     res.json({ session });
   } catch (error) {
@@ -310,6 +386,14 @@ const cancelSession = async (req, res) => {
           },
         });
       }
+
+      const dateLabel = sessionDate && sessionDate !== 'Flexible' ? ` on ${sessionDate}` : '';
+      await postSystemMessage(
+        io,
+        req.user._id,
+        partnerId,
+        `${req.user.name} cancelled the "${sessionTitle}" session${dateLabel}.`
+      );
     }
 
     res.json({ message: 'Session cancelled', session });
@@ -341,12 +425,16 @@ const acceptSession = async (req, res) => {
     await session.populate('postedBy', USER_FIELDS);
     await session.populate('pendingPartner', USER_FIELDS);
 
-    // Notify the session poster of the inquiry
     const io = req.app.get('io');
+    const posterId = session.postedBy._id.toString();
+    const sessionLabel = session.title || session.sport;
+    const dateLabel = session.date && session.date !== 'Flexible' ? ` on ${session.date}` : '';
+
+    // Push notification to poster
     if (io) {
-      io.notify(session.postedBy._id.toString(), 'session_inquiry', {
+      io.notify(posterId, 'session_inquiry', {
         sessionId: session._id,
-        sessionTitle: session.title || session.sport,
+        sessionTitle: sessionLabel,
         sport: session.sport,
         date: session.date,
         time: session.time,
@@ -360,6 +448,14 @@ const acceptSession = async (req, res) => {
         },
       });
     }
+
+    // System message in the thread (requester → poster)
+    await postSystemMessage(
+      io,
+      req.user._id,
+      posterId,
+      `${req.user.name} has requested to join your "${sessionLabel}" session${dateLabel}. Tap to review their request.`
+    );
 
     res.json({ session });
   } catch (error) {
@@ -389,12 +485,15 @@ const approvePartner = async (req, res) => {
     await session.populate('postedBy', USER_FIELDS);
     await session.populate('partner', USER_FIELDS);
 
-    // Notify the requester that they were approved
     const io = req.app.get('io');
+    const sessionLabel = session.title || session.sport;
+    const dateLabel = session.date && session.date !== 'Flexible' ? ` on ${session.date}` : '';
+
+    // Push notification to requester
     if (io) {
       io.notify(pendingPartnerId, 'partner_approved', {
         sessionId: session._id,
-        sessionTitle: session.title || session.sport,
+        sessionTitle: sessionLabel,
         sport: session.sport,
         date: session.date,
         time: session.time,
@@ -402,6 +501,14 @@ const approvePartner = async (req, res) => {
         approvedBy: { _id: req.user._id, name: req.user.name },
       });
     }
+
+    // System message to requester (from poster)
+    await postSystemMessage(
+      io,
+      req.user._id,
+      pendingPartnerId,
+      `✓ ${req.user.name} approved your request — your "${sessionLabel}" session${dateLabel} is confirmed!`
+    );
 
     res.json({ session });
   } catch (error) {
@@ -429,16 +536,26 @@ const declinePartner = async (req, res) => {
     await session.populate('postedBy', USER_FIELDS);
     await session.populate('partner', USER_FIELDS);
 
-    // Notify the requester that they were declined
     const io = req.app.get('io');
+    const sessionLabel = session.title || session.sport;
+
+    // Push notification to requester
     if (io) {
       io.notify(pendingPartnerId, 'partner_declined', {
         sessionId: session._id,
-        sessionTitle: session.title || session.sport,
+        sessionTitle: sessionLabel,
         sport: session.sport,
         declinedBy: { _id: req.user._id, name: req.user.name },
       });
     }
+
+    // System message to requester (from poster)
+    await postSystemMessage(
+      io,
+      req.user._id,
+      pendingPartnerId,
+      `${req.user.name} wasn't able to accept your request to join "${sessionLabel}" this time.`
+    );
 
     res.json({ session });
   } catch (error) {

@@ -235,6 +235,17 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
         )}
 
         {messages.map((msg) => {
+          if (msg.type === 'system') {
+            return (
+              <div key={msg._id} className="flex justify-center my-1">
+                <div className="max-w-[85%] bg-slate-100 border border-slate-200 rounded-2xl px-4 py-2.5 text-center">
+                  <p className="text-xs text-slate-500 leading-snug">{msg.text}</p>
+                  <p className="text-[10px] text-slate-400 mt-1">{formatTime(msg.createdAt)}</p>
+                </div>
+              </div>
+            );
+          }
+
           const isMe = msg.sender === currentUserId;
           return (
             <div key={msg._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
