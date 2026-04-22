@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
 import { ChevronUp } from 'lucide-react';
 import { NeedCard } from './NeedCard';
-import { sessions as sessionsApi } from '../lib/api';
+import { sessions as sessionsApi, connections as connectionsApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
+
+function firstLastInitial(fullName: string): string {
+  if (!fullName) return '';
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
 
 interface FeedOverlayProps {
   filters: {
@@ -32,27 +39,42 @@ export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
   const { token } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [availableSessions, setAvailableSessions] = useState<any[]>([]);
+  const [rosterIds, setRosterIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!token) return;
     const params: Record<string, string> = {};
     if (filters.skillLevel && filters.skillLevel !== 'all') params.skillLevel = filters.skillLevel;
-    sessionsApi.getAvailable(token, params)
-      .then((data) => setAvailableSessions(data.sessions || []))
-      .catch(() => setAvailableSessions([]))
+    Promise.all([
+      sessionsApi.getAvailable(token, params),
+      connectionsApi.getAll(token),
+    ]).then(([sessionData, connData]) => {
+      setAvailableSessions(sessionData.sessions || []);
+      const ids = new Set(
+        (connData.connections || [])
+          .filter((c: any) => c.status === 'accepted')
+          .map((c: any) => c.user._id)
+      );
+      setRosterIds(ids);
+    }).catch(() => setAvailableSessions([]))
       .finally(() => setLoading(false));
   }, [token, filters.skillLevel]);
 
-  const needs = availableSessions.map((s) => ({
-    id: s._id,
-    title: s.title || s.sport || 'Session',
-    seeking: s.seekingPosition || s.position || 'Partner',
-    level: s.skillLevel || s.level || '',
-    distance: s.location || 'Nearby',
-    date: s.date ? formatSessionDate(s.date) : '',
-    time: s.date ? formatSessionTime(s.date) : '',
-  }));
+  const needs = availableSessions.map((s) => {
+    const posterId = s.postedBy?._id ?? '';
+    return {
+      id: s._id,
+      title: s.title || s.sport || 'Session',
+      seeking: s.partnerRole || s.seekingPosition || s.position || 'Partner',
+      level: s.skillLevelRequired || s.skillLevel || s.level || '',
+      distance: s.location || 'Nearby',
+      date: s.date && s.date !== 'Flexible' ? formatSessionDate(s.date) : (s.date || ''),
+      time: s.time && s.time !== 'Flexible' ? s.time : (s.time || ''),
+      posterName: firstLastInitial(s.postedBy?.name || ''),
+      isOnRoster: posterId ? rosterIds.has(posterId) : false,
+    };
+  });
 
   return (
     <div

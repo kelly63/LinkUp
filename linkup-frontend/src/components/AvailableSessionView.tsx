@@ -3,6 +3,13 @@ import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, Session } from '../lib/api';
 
+function firstLastInitial(fullName: string): string {
+  if (!fullName) return '';
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
+
 interface AvailableSessionViewProps {
   session: Session | {
     id: string | number;
@@ -21,6 +28,7 @@ interface AvailableSessionViewProps {
     skillLevelRequired?: string;
     location?: string;
   };
+  isOnRoster?: boolean;
   onBack: () => void;
   onNavigate?: (view: string, data?: any) => void;
   onOpenChat?: (athlete: {
@@ -39,7 +47,7 @@ interface AvailableSessionViewProps {
   }) => void;
 }
 
-export function AvailableSessionView({ session, onBack, onNavigate, onOpenChat }: AvailableSessionViewProps) {
+export function AvailableSessionView({ session, isOnRoster = false, onBack, onNavigate, onOpenChat }: AvailableSessionViewProps) {
   const { token } = useAuth();
   const [showAcceptConfirmation, setShowAcceptConfirmation] = useState(false);
   const [isAccepted, setIsAccepted] = useState(false);
@@ -49,8 +57,9 @@ export function AvailableSessionView({ session, onBack, onNavigate, onOpenChat }
   // Normalise fields — works whether we got a full Session or the minimal shape
   const sessionId = (session as Session)._id || String((session as any).id || '');
   const poster = (session as Session).postedBy;
-  const posterName = poster?.name || 'Unknown Athlete';
-  const posterInitials = posterName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
+  const posterFullName = poster?.name || 'Unknown Athlete';
+  const posterName = firstLastInitial(posterFullName);
+  const posterInitials = posterFullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
   const posterPosition = poster?.position || (session as any).seeking || '';
   const posterLevel = poster?.skillLevel || (session as any).level || '';
   const posterRating = poster?.averageRating ?? null;
@@ -137,7 +146,12 @@ export function AvailableSessionView({ session, onBack, onNavigate, onOpenChat }
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="text-slate-900 font-medium">{posterName}</h3>
-                <Shield className="w-4 h-4 text-green-600 fill-green-100" />
+                {isOnRoster && (
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200">
+                    <Shield className="w-2.5 h-2.5" />
+                    Roster
+                  </span>
+                )}
               </div>
               <p className="text-sm text-slate-600 mb-2">{posterPosition}</p>
               <div className="flex items-center gap-3">

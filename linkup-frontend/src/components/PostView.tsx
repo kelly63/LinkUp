@@ -4,8 +4,15 @@ import { NeedCard } from './NeedCard';
 import { AvailableSessionView } from './AvailableSessionView';
 import { LocationAutocomplete } from './LocationAutocomplete';
 import { useAuth } from '../lib/auth';
-import { sessions as sessionsApi, Session } from '../lib/api';
+import { sessions as sessionsApi, connections as connectionsApi, Session } from '../lib/api';
 import { toast } from 'sonner';
+
+function firstLastInitial(fullName: string): string {
+  if (!fullName) return '';
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+}
 
 interface PostViewProps {
   onNavigateToDashboard?: (target: string) => void;
@@ -59,9 +66,11 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [findPage, setFindPage] = useState(1);
   const [findTotalPages, setFindTotalPages] = useState(1);
   const [loadingMoreSessions, setLoadingMoreSessions] = useState(false);
+  const [rosterIds, setRosterIds] = useState<Set<string>>(new Set());
 
   // Session detail view
   const [selectedSession, setSelectedSession] = useState<any | null>(null);
+  const [selectedSessionIsOnRoster, setSelectedSessionIsOnRoster] = useState(false);
   
   const skillLevels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro', 'Adult Athlete (18-45yo)', 'Adult Athlete (45+yo)'];
   
@@ -182,6 +191,21 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     }).finally(() => setLoadingFind(false));
   }, [viewMode, token, filterSport, filterSkillLevels]);
 
+  // Fetch accepted connections once when entering find mode
+  useEffect(() => {
+    if (viewMode !== 'find' || !token) return;
+    connectionsApi.getAll(token)
+      .then(({ connections }) => {
+        const ids = new Set(
+          connections
+            .filter((c) => c.status === 'accepted')
+            .map((c) => c.user._id)
+        );
+        setRosterIds(ids);
+      })
+      .catch(() => {});
+  }, [viewMode, token]);
+
   const handleLoadMoreSessions = () => {
     if (!token || loadingMoreSessions) return;
     const nextPage = findPage + 1;
@@ -204,16 +228,21 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
              (session.sport || '').toLowerCase().includes(q);
     }
     return true;
-  }).map(session => ({
-    id: session._id,
-    title: session.title || session.sport,
-    seeking: session.partnerRole || session.position,
-    level: session.skillLevelRequired || '',
-    distance: session.location || 'See details',
-    date: session.date || '',
-    time: session.time || '',
-    _session: session,
-  }));
+  }).map(session => {
+    const posterId = (session.postedBy as any)?._id ?? '';
+    return {
+      id: session._id,
+      title: session.title || session.sport,
+      seeking: session.partnerRole || session.position,
+      level: session.skillLevelRequired || '',
+      distance: session.location || 'See details',
+      date: session.date || '',
+      time: session.time || '',
+      posterName: firstLastInitial((session.postedBy as any)?.name || ''),
+      isOnRoster: posterId ? rosterIds.has(posterId) : false,
+      _session: session,
+    };
+  });
   
   // Set default sport filters based on user's sports when switching to find view
   useEffect(() => {
@@ -264,6 +293,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     return (
       <AvailableSessionView
         session={selectedSession}
+        isOnRoster={selectedSessionIsOnRoster}
         onBack={() => setSelectedSession(null)}
         onOpenChat={onOpenChat as any}
       />
@@ -799,7 +829,10 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 <NeedCard
                   key={need.id}
                   need={need}
-                  onClick={() => setSelectedSession(need._session)}
+                  onClick={() => {
+                    setSelectedSession(need._session);
+                    setSelectedSessionIsOnRoster(need.isOnRoster ?? false);
+                  }}
                 />
               ))}
             </div>
