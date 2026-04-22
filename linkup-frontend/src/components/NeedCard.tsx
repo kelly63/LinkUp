@@ -17,26 +17,45 @@ interface NeedCardProps {
   onClick: () => void;
 }
 
+function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 export function NeedCard({ need, onClick }: NeedCardProps) {
   return (
     <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 hover:border-blue-400 transition-all shadow-sm hover:shadow-md">
-      {/* Title + poster */}
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <h4 className="text-slate-900">{need.title}</h4>
-        {need.isOnRoster && (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200 flex-shrink-0 mt-0.5">
-            <Shield className="w-2.5 h-2.5" />
-            Roster
+
+      {/* Poster row */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center flex-shrink-0">
+          <span className="text-white text-xs font-bold">
+            {need.posterName ? getInitials(need.posterName) : '?'}
           </span>
-        )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-sm font-semibold text-slate-900">
+              {need.posterName || 'Unknown'}
+            </span>
+            {need.isOnRoster && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200">
+                <Shield className="w-2.5 h-2.5" />
+                Roster
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500 truncate">{need.title}</p>
+        </div>
       </div>
 
-      {need.posterName && (
-        <p className="text-xs text-slate-500 -mt-2 mb-3">Posted by {need.posterName}</p>
-      )}
-
       {/* Seeking Status */}
-      <div className="flex items-center gap-2 mb-4 bg-blue-50 rounded-xl p-3">
+      <div className="flex items-center gap-2 mb-3 bg-blue-50 rounded-xl p-3">
         <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
         <div>
           <p className="text-xs text-blue-600">Seeking</p>
@@ -46,7 +65,6 @@ export function NeedCard({ need, onClick }: NeedCardProps) {
 
       {/* Info Grid */}
       <div className="grid grid-cols-2 gap-3 mb-4">
-        {/* Level */}
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
             <Award className="w-4 h-4 text-purple-600" />
@@ -57,18 +75,16 @@ export function NeedCard({ need, onClick }: NeedCardProps) {
           </div>
         </div>
 
-        {/* Location */}
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
             <MapPin className="w-4 h-4 text-green-600" />
           </div>
           <div>
             <p className="text-xs text-slate-500">Location</p>
-            <p className="text-sm text-slate-900 truncate">{need.distance}</p>
+            <p className="text-sm text-slate-900 truncate">{need.distance || '—'}</p>
           </div>
         </div>
 
-        {/* Date */}
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
             <Clock className="w-4 h-4 text-amber-600" />
@@ -79,7 +95,6 @@ export function NeedCard({ need, onClick }: NeedCardProps) {
           </div>
         </div>
 
-        {/* Time */}
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
             <Clock className="w-4 h-4 text-indigo-600" />
@@ -91,7 +106,6 @@ export function NeedCard({ need, onClick }: NeedCardProps) {
         </div>
       </div>
 
-      {/* Action Button */}
       <button
         onClick={onClick}
         className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition-colors active:scale-[0.98]"
