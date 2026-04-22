@@ -196,11 +196,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     if (viewMode !== 'find' || !token) return;
     connectionsApi.getAll(token)
       .then(({ connections }) => {
-        const ids = new Set(
-          connections
-            .filter((c) => c.status === 'accepted')
-            .map((c) => c.user._id)
-        );
+        // getAll only returns accepted connections — no status filter needed
+        const ids = new Set(connections.map((c) => c.user._id));
         setRosterIds(ids);
       })
       .catch(() => {});

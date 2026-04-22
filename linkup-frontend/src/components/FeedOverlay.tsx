@@ -51,11 +51,8 @@ export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
       connectionsApi.getAll(token),
     ]).then(([sessionData, connData]) => {
       setAvailableSessions(sessionData.sessions || []);
-      const ids = new Set(
-        (connData.connections || [])
-          .filter((c: any) => c.status === 'accepted')
-          .map((c: any) => c.user._id)
-      );
+      // getAll only returns accepted connections — no status filter needed
+      const ids = new Set((connData.connections || []).map((c: any) => c.user._id));
       setRosterIds(ids);
     }).catch(() => setAvailableSessions([]))
       .finally(() => setLoading(false));
