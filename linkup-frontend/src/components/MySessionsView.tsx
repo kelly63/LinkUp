@@ -1,4 +1,4 @@
-import { ChevronLeft, Calendar, MapPin, ChevronRight, Trophy, Clock } from 'lucide-react';
+import { ChevronLeft, Calendar, MapPin, ChevronRight, Trophy, Clock, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, Session } from '../lib/api';
@@ -14,7 +14,7 @@ type Filter = 'upcoming' | 'past';
 const PAGE_SIZE = 10;
 
 export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [filter, setFilter] = useState<Filter>('upcoming');
   const [items, setItems] = useState<Session[]>([]);
   const [page, setPage] = useState(1);
@@ -104,10 +104,24 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
         ) : (
           <>
             <div className="space-y-3">
-              {items.map((session) => (
+              {items.map((session) => {
+                const isPendingRequester =
+                  session.pendingPartner &&
+                  typeof session.pendingPartner === 'object' &&
+                  (session.pendingPartner as any)._id === user?._id;
+                const hasPendingRequester =
+                  session.pendingPartner &&
+                  typeof session.pendingPartner === 'object' &&
+                  (session.pendingPartner as any)._id !== user?._id;
+
+                return (
                 <div
                   key={session._id}
-                  className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:border-blue-300 transition-all"
+                  className={`bg-white rounded-2xl p-4 shadow-sm border transition-all ${
+                    isPendingRequester || hasPendingRequester
+                      ? 'border-amber-300 hover:border-amber-400'
+                      : 'border-slate-200 hover:border-blue-300'
+                  }`}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
@@ -116,6 +130,18 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
                           {session.title || session.sport}
                         </h4>
                         {statusBadge(session.status)}
+                        {isPendingRequester && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full border border-amber-200">
+                            <AlertCircle className="w-2.5 h-2.5" />
+                            Pending Approval
+                          </span>
+                        )}
+                        {hasPendingRequester && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full border border-blue-200">
+                            <AlertCircle className="w-2.5 h-2.5" />
+                            Approve Changes
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-slate-500">{session.posterRole || session.position}</p>
                     </div>
@@ -174,7 +200,8 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {hasMore && (

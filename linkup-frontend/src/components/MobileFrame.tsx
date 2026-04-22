@@ -63,6 +63,24 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
       ? `${d.declinedBy.name} declined your changes to "${d.sessionTitle || 'your session'}"`
       : 'Your proposed session changes were declined',
   }),
+  session_inquiry: (d) => ({
+    title: 'Join Request',
+    description: d.requester?.name
+      ? `${d.requester.name} wants to join "${d.sessionTitle || 'your session'}"`
+      : 'Someone wants to join your session',
+  }),
+  partner_approved: (d) => ({
+    title: 'Request Approved!',
+    description: d.approvedBy?.name
+      ? `${d.approvedBy.name} approved your request — session confirmed`
+      : 'Your join request was approved — session confirmed',
+  }),
+  partner_declined: (d) => ({
+    title: 'Request Declined',
+    description: d.declinedBy?.name
+      ? `${d.declinedBy.name} declined your join request`
+      : 'Your join request was declined',
+  }),
 };
 
 export function MobileFrame() {
@@ -158,6 +176,9 @@ export function MobileFrame() {
       case 'session_cancelled':
       case 'change_approved':
       case 'change_declined':
+      case 'session_inquiry':
+      case 'partner_approved':
+      case 'partner_declined':
         setPendingNav({ view: 'mySessions', data: null });
         break;
     }

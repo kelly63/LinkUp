@@ -85,6 +85,13 @@ const sessionSchema = new mongoose.Schema(
       default: null,
     },
 
+    // A user who has requested to join but not yet been approved
+    pendingPartner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+
     // Pending change proposed by the poster, awaiting partner approval
     pendingChange: {
       type: {

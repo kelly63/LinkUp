@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star, CalendarClock, CalendarX, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star, CalendarClock, CalendarX, ThumbsUp, ThumbsDown, UserSearch } from 'lucide-react';
 import { notifications as notificationsApi, StoredNotification } from '../lib/api';
 
 interface NotificationPanelProps {
@@ -72,6 +72,24 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color:
     color: 'text-red-600',
     bg: 'bg-red-50',
   },
+  session_inquiry: {
+    label: 'Session Inquiry',
+    Icon: UserSearch,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+  },
+  partner_approved: {
+    label: 'Request Approved',
+    Icon: ThumbsUp,
+    color: 'text-green-600',
+    bg: 'bg-green-50',
+  },
+  partner_declined: {
+    label: 'Request Declined',
+    Icon: ThumbsDown,
+    color: 'text-red-600',
+    bg: 'bg-red-50',
+  },
 };
 
 function notificationBody(n: StoredNotification): string {
@@ -109,6 +127,18 @@ function notificationBody(n: StoredNotification): string {
       return d.declinedBy?.name
         ? `${d.declinedBy.name} declined your proposed changes to "${d.sessionTitle || 'your session'}"`
         : 'Your proposed session changes were declined';
+    case 'session_inquiry':
+      return d.requester?.name
+        ? `${d.requester.name} requested to join "${d.sessionTitle || 'your session'}"`
+        : 'Someone requested to join your session';
+    case 'partner_approved':
+      return d.approvedBy?.name
+        ? `${d.approvedBy.name} approved your request to join "${d.sessionTitle || 'their session'}"`
+        : 'Your join request was approved — session confirmed!';
+    case 'partner_declined':
+      return d.declinedBy?.name
+        ? `${d.declinedBy.name} declined your request to join "${d.sessionTitle || 'their session'}"`
+        : 'Your join request was declined';
     default:
       return 'New notification';
   }

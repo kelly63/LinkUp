@@ -1,6 +1,6 @@
 import {
   ChevronLeft, Calendar, MapPin, Clock, Users, Trophy, MessageCircle,
-  Star, Navigation, CheckCircle, AlertCircle, XCircle, Flag, RefreshCw,
+  Star, Navigation, CheckCircle, AlertCircle, XCircle, Flag, RefreshCw, UserCheck,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
@@ -63,6 +63,35 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
       setActionLoading(null);
     }
   };
+
+  const handleApprovePartner = async () => {
+    if (!token) return;
+    setActionLoading('approvePartner');
+    try {
+      const { session: updated } = await sessionsApi.approvePartner(token, localSession._id);
+      setLocalSession(updated);
+      toast.success('Partner approved — session confirmed!');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not approve partner');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDeclinePartner = async () => {
+    if (!token) return;
+    setActionLoading('declinePartner');
+    try {
+      const { session: updated } = await sessionsApi.declinePartner(token, localSession._id);
+      setLocalSession(updated);
+      toast.success('Request declined');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not decline request');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const partnerInitials = partner ? getInitials(partner.name) : '??';
 
   const handleAddToCalendar = () => {
@@ -242,6 +271,56 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                 <Users className="w-5 h-5 text-slate-600" />
                 <span className="text-xs text-slate-700 font-medium">View Profile</span>
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Pending Partner Banner — shown to the poster when someone requests to join */}
+        {isPostedByMe && localSession.pendingPartner && typeof localSession.pendingPartner === 'object' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <UserCheck className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-900 mb-0.5">Join Request — Pending Your Approval</p>
+                <p className="text-sm text-slate-600 mb-3">
+                  <span className="font-medium">{localSession.pendingPartner.name}</span> has requested to join this session.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    disabled={!!actionLoading}
+                    onClick={handleApprovePartner}
+                    className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-60"
+                  >
+                    {actionLoading === 'approvePartner' ? 'Approving…' : 'Approve'}
+                  </button>
+                  <button
+                    disabled={!!actionLoading}
+                    onClick={handleDeclinePartner}
+                    className="flex-1 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-medium transition-colors disabled:opacity-60"
+                  >
+                    {actionLoading === 'declinePartner' ? 'Declining…' : 'Decline'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pending Partner Status — shown to the requester while awaiting approval */}
+        {!isPostedByMe && localSession.status === 'open' && localSession.pendingPartner &&
+          typeof localSession.pendingPartner === 'object' &&
+          localSession.pendingPartner._id === user?._id && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <AlertCircle className="w-4 h-4 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900 mb-0.5">Pending Approval</p>
+                <p className="text-sm text-amber-700">Your request is awaiting approval from the session poster.</p>
+              </div>
             </div>
           </div>
         )}

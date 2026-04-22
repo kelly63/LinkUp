@@ -90,7 +90,7 @@ const getMySessions = async (req, res) => {
     const { status } = req.query;
 
     const query = {
-      $or: [{ postedBy: req.user._id }, { partner: req.user._id }],
+      $or: [{ postedBy: req.user._id }, { partner: req.user._id }, { pendingPartner: req.user._id }],
     };
 
     if (status) {
@@ -103,6 +103,7 @@ const getMySessions = async (req, res) => {
     const sessions = await Session.find(query)
       .populate('postedBy', USER_FIELDS)
       .populate('partner', USER_FIELDS)
+      .populate('pendingPartner', USER_FIELDS)
       .sort({ createdAt: -1 });
 
     res.json({ sessions });
@@ -117,6 +118,7 @@ const getSessionById = async (req, res) => {
     const session = await Session.findById(req.params.id)
       .populate('postedBy', USER_FIELDS)
       .populate('partner', USER_FIELDS)
+      .populate('pendingPartner', USER_FIELDS)
       .populate('participants', USER_FIELDS);
 
     if (!session) return res.status(404).json({ message: 'Session not found' });
@@ -316,7 +318,7 @@ const cancelSession = async (req, res) => {
   }
 };
 
-// POST /api/sessions/:id/accept — accept an open session need (become partner)
+// POST /api/sessions/:id/accept — request to join an open session (inquiry flow)
 const acceptSession = async (req, res) => {
   try {
     const session = await Session.findById(req.params.id);
@@ -327,31 +329,114 @@ const acceptSession = async (req, res) => {
     }
 
     if (session.postedBy.toString() === req.user._id.toString()) {
-      return res.status(400).json({ message: 'Cannot accept your own session' });
+      return res.status(400).json({ message: 'Cannot join your own session' });
     }
 
-    session.partner = req.user._id;
-    session.status = 'confirmed';
+    if (session.pendingPartner && session.pendingPartner.toString() === req.user._id.toString()) {
+      return res.status(400).json({ message: 'You have already requested to join this session' });
+    }
+
+    session.pendingPartner = req.user._id;
     await session.save();
     await session.populate('postedBy', USER_FIELDS);
-    await session.populate('partner', USER_FIELDS);
+    await session.populate('pendingPartner', USER_FIELDS);
 
-    // Notify the session poster
+    // Notify the session poster of the inquiry
     const io = req.app.get('io');
     if (io) {
-      io.notify(session.postedBy._id.toString(), 'session_accepted', {
+      io.notify(session.postedBy._id.toString(), 'session_inquiry', {
         sessionId: session._id,
+        sessionTitle: session.title || session.sport,
         sport: session.sport,
         date: session.date,
         time: session.time,
         location: session.location,
-        partner: {
+        requester: {
           _id: req.user._id,
           name: req.user.name,
           avatar: req.user.avatar,
           sport: req.user.sport,
           position: req.user.position,
         },
+      });
+    }
+
+    res.json({ session });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// POST /api/sessions/:id/approve-partner — poster approves the pending partner
+const approvePartner = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    if (session.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only the session poster can approve a partner' });
+    }
+
+    if (!session.pendingPartner) {
+      return res.status(400).json({ message: 'No pending partner to approve' });
+    }
+
+    const pendingPartnerId = session.pendingPartner.toString();
+    session.partner = session.pendingPartner;
+    session.pendingPartner = null;
+    session.status = 'confirmed';
+    await session.save();
+    await session.populate('postedBy', USER_FIELDS);
+    await session.populate('partner', USER_FIELDS);
+
+    // Notify the requester that they were approved
+    const io = req.app.get('io');
+    if (io) {
+      io.notify(pendingPartnerId, 'partner_approved', {
+        sessionId: session._id,
+        sessionTitle: session.title || session.sport,
+        sport: session.sport,
+        date: session.date,
+        time: session.time,
+        location: session.location,
+        approvedBy: { _id: req.user._id, name: req.user.name },
+      });
+    }
+
+    res.json({ session });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// POST /api/sessions/:id/decline-partner — poster declines the pending partner
+const declinePartner = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    if (session.postedBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only the session poster can decline a partner' });
+    }
+
+    if (!session.pendingPartner) {
+      return res.status(400).json({ message: 'No pending partner to decline' });
+    }
+
+    const pendingPartnerId = session.pendingPartner.toString();
+    session.pendingPartner = null;
+    await session.save();
+    await session.populate('postedBy', USER_FIELDS);
+    await session.populate('partner', USER_FIELDS);
+
+    // Notify the requester that they were declined
+    const io = req.app.get('io');
+    if (io) {
+      io.notify(pendingPartnerId, 'partner_declined', {
+        sessionId: session._id,
+        sessionTitle: session.title || session.sport,
+        sport: session.sport,
+        declinedBy: { _id: req.user._id, name: req.user.name },
       });
     }
 
@@ -399,4 +484,6 @@ module.exports = {
   completeSession,
   approveChange,
   declineChange,
+  approvePartner,
+  declinePartner,
 };

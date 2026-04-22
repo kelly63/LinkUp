@@ -50,7 +50,7 @@ interface AvailableSessionViewProps {
 export function AvailableSessionView({ session, isOnRoster = false, onBack, onNavigate, onOpenChat }: AvailableSessionViewProps) {
   const { token } = useAuth();
   const [showAcceptConfirmation, setShowAcceptConfirmation] = useState(false);
-  const [isAccepted, setIsAccepted] = useState(false);
+  const [isRequested, setIsRequested] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState('');
 
@@ -78,7 +78,7 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
     setAcceptError('');
     try {
       await sessionsApi.accept(token, sessionId);
-      setIsAccepted(true);
+      setIsRequested(true);
       setShowAcceptConfirmation(false);
     } catch (err: any) {
       setAcceptError(err.message || 'Failed to accept session.');
@@ -280,22 +280,22 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
           </p>
         )}
 
-        {/* Success State */}
-        {isAccepted && (
-          <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-300 rounded-2xl p-5 mb-4">
+        {/* Pending Request State */}
+        {isRequested && (
+          <div className="bg-gradient-to-br from-amber-50 to-amber-100 border-2 border-amber-300 rounded-2xl p-5 mb-4">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <CheckCircle className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="text-green-900 font-medium mb-1">Request Sent!</h3>
-                <p className="text-sm text-green-700 mb-3">
-                  Your request to join this session has been sent to {posterName}. They'll be notified and can accept your request.
+                <h3 className="text-amber-900 font-medium mb-1">Request Sent — Pending Approval</h3>
+                <p className="text-sm text-amber-700 mb-3">
+                  Your request has been sent to {posterName}. They'll review it and let you know.
                 </p>
                 {poster && (
                   <button
                     onClick={openChat}
-                    className="text-sm text-green-700 font-medium underline hover:text-green-800"
+                    className="text-sm text-amber-700 font-medium underline hover:text-amber-800"
                   >
                     Send them a message
                   </button>
@@ -306,14 +306,14 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
         )}
 
         {/* Action Buttons */}
-        {!isAccepted && (
+        {!isRequested && (
           <div className="space-y-3 mb-6">
             <button
               onClick={() => setShowAcceptConfirmation(true)}
               disabled={accepting}
-              className="w-full py-4 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-60 text-white rounded-xl font-medium transition-all shadow-lg shadow-green-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
+              className="w-full py-4 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-60 text-white rounded-xl font-medium transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              {accepting ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'ACCEPT SESSION'}
+              {accepting ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'REQUEST TO JOIN'}
             </button>
 
             {poster && (
@@ -338,9 +338,9 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h3 className="text-slate-900 font-semibold mb-2">Accept Session Request?</h3>
+              <h3 className="text-slate-900 font-semibold mb-2">Request to Join Session?</h3>
               <p className="text-sm text-slate-600">
-                By accepting, you're committing to join this session with {posterName} on {session.date || 'the scheduled date'}.
+                Your request will be sent to {posterName} for approval. The session is confirmed once they approve.
               </p>
             </div>
 
@@ -367,7 +367,7 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
                 disabled={accepting}
                 className="w-full py-3.5 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:opacity-60 text-white rounded-xl font-medium transition-all shadow-sm active:scale-[0.98] flex items-center justify-center gap-2"
               >
-                {accepting ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Confirm & Accept'}
+                {accepting ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'Send Request'}
               </button>
               <button
                 onClick={() => setShowAcceptConfirmation(false)}

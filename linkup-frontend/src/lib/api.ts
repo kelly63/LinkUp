@@ -50,6 +50,7 @@ export interface Session {
   skillLevelRequired: string;
   status: 'open' | 'confirmed' | 'completed' | 'cancelled';
   partner: User | null;
+  pendingPartner?: User | null;
   sessionType: 'need' | 'clinic';
   createdAt: string;
   pendingChange?: {
@@ -268,6 +269,12 @@ export const sessions = {
 
   declineChange: (token: string, id: string) =>
     request<{ session: Session }>(`/api/sessions/${id}/decline-change`, { method: 'POST' }, token),
+
+  approvePartner: (token: string, id: string) =>
+    request<{ session: Session }>(`/api/sessions/${id}/approve-partner`, { method: 'POST' }, token),
+
+  declinePartner: (token: string, id: string) =>
+    request<{ session: Session }>(`/api/sessions/${id}/decline-partner`, { method: 'POST' }, token),
 };
 
 // ─── Connections ──────────────────────────────────────────────────────────────

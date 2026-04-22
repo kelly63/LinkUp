@@ -11,6 +11,8 @@ const {
   completeSession,
   approveChange,
   declineChange,
+  approvePartner,
+  declinePartner,
 } = require('../controllers/sessionController');
 const { protect } = require('../middleware/auth');
 
@@ -26,5 +28,7 @@ router.post('/:id/accept', acceptSession);
 router.post('/:id/complete', completeSession);
 router.post('/:id/approve-change', approveChange);
 router.post('/:id/decline-change', declineChange);
+router.post('/:id/approve-partner', approvePartner);
+router.post('/:id/decline-partner', declinePartner);
 
 module.exports = router;
