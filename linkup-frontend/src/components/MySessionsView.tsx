@@ -1,4 +1,4 @@
-import { ChevronLeft, Calendar, MapPin, ChevronRight, Trophy, Clock, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Calendar, MapPin, ChevronRight, Trophy, Clock, AlertCircle, PenLine } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, Session } from '../lib/api';
@@ -113,12 +113,15 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
                   session.pendingPartner &&
                   typeof session.pendingPartner === 'object' &&
                   (session.pendingPartner as any)._id !== user?._id;
+                const hasPendingChange =
+                  !!session.pendingChange &&
+                  String(session.pendingChange.proposedBy) !== String(user?._id);
 
                 return (
                 <div
                   key={session._id}
                   className={`bg-white rounded-2xl p-4 shadow-sm border transition-all ${
-                    isPendingRequester || hasPendingRequester
+                    isPendingRequester || hasPendingRequester || hasPendingChange
                       ? 'border-amber-300 hover:border-amber-400'
                       : 'border-slate-200 hover:border-blue-300'
                   }`}
@@ -139,7 +142,13 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
                         {hasPendingRequester && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full border border-blue-200">
                             <AlertCircle className="w-2.5 h-2.5" />
-                            Approve Changes
+                            Approve Request
+                          </span>
+                        )}
+                        {hasPendingChange && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-bold rounded-full border border-orange-200">
+                            <PenLine className="w-2.5 h-2.5" />
+                            Review Changes
                           </span>
                         )}
                       </div>
