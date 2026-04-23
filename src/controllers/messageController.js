@@ -1,6 +1,7 @@
 const Message = require('../models/Message');
 const Connection = require('../models/Connection');
 const MessageRequest = require('../models/MessageRequest');
+const Session = require('../models/Session');
 
 // Check if two users have an accepted roster connection
 const areConnected = async (userId1, userId2) => {
@@ -269,10 +270,86 @@ const declineMessageRequest = async (req, res) => {
   }
 };
 
+// POST /api/messages/session-link — post a session-context system message (idempotent)
+const postSessionLink = async (req, res) => {
+  try {
+    const { recipientId, sessionId } = req.body;
+    if (!recipientId || !sessionId) {
+      return res.status(400).json({ message: 'recipientId and sessionId are required' });
+    }
+
+    const session = await Session.findById(sessionId);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    const fromStr = req.user._id.toString();
+    const toStr = recipientId.toString();
+
+    // Idempotent — return existing link message if already posted for this session+conversation
+    const existing = await Message.findOne({
+      sessionId,
+      $or: [
+        { sender: fromStr, recipient: toStr },
+        { sender: toStr, recipient: fromStr },
+      ],
+    });
+    if (existing) return res.json({ message: existing });
+
+    // Ensure MessageRequest is accepted so both users can see the thread
+    const msgReq = await MessageRequest.findOne({
+      $or: [
+        { requester: fromStr, recipient: toStr },
+        { requester: toStr, recipient: fromStr },
+      ],
+    });
+    if (!msgReq) {
+      await MessageRequest.create({ requester: fromStr, recipient: toStr, status: 'accepted' });
+    } else if (msgReq.status !== 'accepted') {
+      msgReq.status = 'accepted';
+      await msgReq.save();
+    }
+
+    const label = session.title || session.sport || 'Session';
+    const parts = [label];
+    if (session.date) parts.push(session.date);
+    if (session.time) parts[parts.length - 1] += ` at ${session.time}`;
+    if (session.location) parts.push(session.location);
+    const text = parts.join(' · ');
+
+    const message = await Message.create({
+      sender: fromStr,
+      recipient: toStr,
+      text,
+      type: 'system',
+      sessionId,
+    });
+
+    const io = req.app.get('io');
+    if (io) {
+      const payload = {
+        _id: message._id,
+        sender: fromStr,
+        recipient: toStr,
+        text: message.text,
+        type: 'system',
+        sessionId: sessionId.toString(),
+        read: false,
+        createdAt: message.createdAt,
+      };
+      io.to(`user:${fromStr}`).emit('message:new', payload);
+      io.to(`user:${toStr}`).emit('message:new', payload);
+    }
+
+    res.status(201).json({ message });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   sendMessage,
   getConversation,
   getInbox,
   acceptMessageRequest,
   declineMessageRequest,
+  postSessionLink,
 };

@@ -78,6 +78,8 @@ export interface Message {
   recipient: string;
   text: string;
   read: boolean;
+  type?: 'user' | 'system';
+  sessionId?: string;
   createdAt: string;
 }
 
@@ -323,6 +325,12 @@ export const messages = {
 
   declineRequest: (token: string, userId: string) =>
     request<{ message: string }>(`/api/messages/requests/${userId}/decline`, { method: 'PUT' }, token),
+
+  postSessionLink: (token: string, data: { recipientId: string; sessionId: string }) =>
+    request<{ message: Message }>('/api/messages/session-link', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }, token),
 };
 
 // ─── Ratings ─────────────────────────────────────────────────────────────────

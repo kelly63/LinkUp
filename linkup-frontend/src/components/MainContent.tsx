@@ -46,7 +46,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
     sport: string;
     position: string;
     level: string;
-    sessionContext?: { sessionTitle: string; date: string; time: string; location: string };
+    sessionContext?: { sessionId?: string; sessionTitle: string; date: string; time: string; location: string };
   } | undefined>(undefined);
 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -130,6 +130,16 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   };
 
   const handleClearSelectedAthlete = () => setSelectedAthleteForChat(undefined);
+
+  const handleViewChatSession = async (sessionId: string) => {
+    if (!token) return;
+    try {
+      const { session } = await sessionsApi.getById(token, sessionId);
+      handleNavigate('sessionDetails', session);
+    } catch {
+      toast.error('Could not load session');
+    }
+  };
 
   const handleOpenChatRef = useRef<typeof handleOpenChat>(handleOpenChat);
   handleOpenChatRef.current = handleOpenChat;
@@ -351,6 +361,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
           onTabChange={onTabChange}
           onChatOpenChange={onChatOpenChange}
           onViewProfile={(userId) => handleNavigate('userProfile', { _id: userId })}
+          onViewSession={handleViewChatSession}
         />
       )}
       {activeTab === 'profile' && (

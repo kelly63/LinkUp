@@ -26,6 +26,11 @@ const messageSchema = new mongoose.Schema(
       enum: ['user', 'system'],
       default: 'user',
     },
+    sessionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Session',
+      default: null,
+    },
   },
   { timestamps: true }
 );

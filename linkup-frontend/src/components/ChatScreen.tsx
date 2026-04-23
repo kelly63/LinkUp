@@ -1,6 +1,6 @@
 import {
   ArrowLeft, Send, Calendar, MapPin, CheckCircle, Edit3,
-  MessageCircle, UserCheck, X,
+  MessageCircle, UserCheck, X, ChevronRight,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useMessages } from '../hooks/useMessages';
@@ -35,9 +35,10 @@ interface ChatScreenProps {
   onRequestAccepted?: () => void;
   onRequestDeclined?: () => void;
   onViewProfile?: (userId: string) => void;
+  onViewSession?: (sessionId: string) => void;
 }
 
-export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, onRequestAccepted, onRequestDeclined, onViewProfile }: ChatScreenProps) {
+export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, onRequestAccepted, onRequestDeclined, onViewProfile, onViewSession }: ChatScreenProps) {
   const [inputText, setInputText] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSessionConfirmed, setIsSessionConfirmed] = useState(false);
@@ -236,6 +237,29 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
 
         {messages.map((msg) => {
           if (msg.type === 'system') {
+            if (msg.sessionId) {
+              return (
+                <div key={msg._id} className="flex justify-center my-2 px-2">
+                  <button
+                    onClick={() => onViewSession?.(msg.sessionId!)}
+                    className="w-full max-w-[92%] bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 text-left hover:bg-blue-100 active:scale-[0.98] transition-all"
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Calendar className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-blue-900 leading-snug mb-0.5">{msg.text}</p>
+                        <p className="text-xs text-blue-600 flex items-center gap-0.5">
+                          Tap to view session <ChevronRight className="w-3 h-3" />
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-2 text-right">{formatTime(msg.createdAt)}</p>
+                  </button>
+                </div>
+              );
+            }
             return (
               <div key={msg._id} className="flex justify-center my-1">
                 <div className="max-w-[85%] bg-slate-100 border border-slate-200 rounded-2xl px-4 py-2.5 text-center">

@@ -99,6 +99,7 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
       position: posterPosition,
       level: posterLevel,
       sessionContext: {
+        sessionId: session._id,
         sessionTitle: session.title,
         date: session.date,
         time: session.time,

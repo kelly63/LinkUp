@@ -259,6 +259,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                       position: partner.position,
                       level: partner.skillLevel,
                       sessionContext: {
+                        sessionId: localSession._id,
                         sessionTitle: localSession.title || `${localSession.sport} Practice`,
                         date: localSession.date,
                         time: localSession.time,

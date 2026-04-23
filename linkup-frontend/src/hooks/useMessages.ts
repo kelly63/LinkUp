@@ -9,6 +9,7 @@ export interface Message {
   text: string;
   read: boolean;
   type?: 'user' | 'system';
+  sessionId?: string;
   createdAt: string;
 }
 

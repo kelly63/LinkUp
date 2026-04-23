@@ -1,5 +1,6 @@
 import { Search, Edit } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { messages as messagesApi } from '../lib/api';
 import { ChatScreen } from './ChatScreen';
 import { X, Shield, Users, Trash2 } from 'lucide-react';
 import { getActiveSocket } from '../lib/socket';
@@ -47,7 +48,7 @@ interface ActiveChat {
   name: string;
   avatar: string;
   role?: string;
-  sessionDetails?: { date: string; time: string; location: string };
+  sessionDetails?: { sessionId?: string; date: string; time: string; location: string };
   requestInfo?: RequestInfo | null;
 }
 
@@ -61,12 +62,13 @@ interface ChatViewProps {
     sport: string;
     position: string;
     level: string;
-    sessionContext?: { sessionTitle: string; date: string; time: string; location: string };
+    sessionContext?: { sessionId?: string; sessionTitle: string; date: string; time: string; location: string };
   };
   onClearSelectedAthlete?: () => void;
   onTabChange?: (tab: string) => void;
   onChatOpenChange?: (open: boolean) => void;
   onViewProfile?: (userId: string) => void;
+  onViewSession?: (sessionId: string) => void;
   apiUrl?: string;
 }
 
@@ -96,6 +98,7 @@ export function ChatView({
   onTabChange,
   onChatOpenChange,
   onViewProfile,
+  onViewSession,
   apiUrl = API_URL,
 }: ChatViewProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -201,19 +204,23 @@ export function ChatView({
   // ── If an athlete was passed in from another screen, open that chat ────────
   useEffect(() => {
     if (selectedAthlete && !selectedChat) {
+      const ctx = selectedAthlete.sessionContext;
       setSelectedChat({
         id: selectedAthlete.id,
         name: selectedAthlete.name,
         avatar: selectedAthlete.avatar || getInitials(selectedAthlete.name),
         role: selectedAthlete.position,
-        sessionDetails: selectedAthlete.sessionContext
-          ? {
-              date: selectedAthlete.sessionContext.date,
-              time: selectedAthlete.sessionContext.time,
-              location: selectedAthlete.sessionContext.location,
-            }
+        sessionDetails: ctx
+          ? { sessionId: ctx.sessionId, date: ctx.date, time: ctx.time, location: ctx.location }
           : undefined,
       });
+      // Post session-link system message so both users have the link in their thread
+      if (ctx?.sessionId && token) {
+        messagesApi.postSessionLink(token, {
+          recipientId: selectedAthlete.id,
+          sessionId: ctx.sessionId,
+        }).catch(() => {}); // fire-and-forget; idempotent on server
+      }
     }
   }, [selectedAthlete]);
 
@@ -296,6 +303,7 @@ export function ChatView({
         onRequestAccepted={() => handleRequestAccepted(selectedChat.id)}
         onRequestDeclined={() => handleRequestDeclined(selectedChat.id)}
         onViewProfile={onViewProfile}
+        onViewSession={onViewSession}
       />
     );
   }

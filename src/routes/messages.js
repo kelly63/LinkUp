@@ -6,13 +6,15 @@ const {
   getInbox,
   acceptMessageRequest,
   declineMessageRequest,
+  postSessionLink,
 } = require('../controllers/messageController');
 const { protect } = require('../middleware/auth');
 
 router.use(protect);
 
 router.get('/', getInbox);
-// Must come before /:userId to avoid route shadowing
+// Static routes must come before /:userId to avoid route shadowing
+router.post('/session-link', postSessionLink);
 router.put('/requests/:userId/accept', acceptMessageRequest);
 router.put('/requests/:userId/decline', declineMessageRequest);
 router.get('/:userId', getConversation);
