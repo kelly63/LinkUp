@@ -31,6 +31,7 @@ interface AvailableSessionViewProps {
   isOnRoster?: boolean;
   onBack: () => void;
   onNavigate?: (view: string, data?: any) => void;
+  onViewProfile?: (userId: string) => void;
   onOpenChat?: (athlete: {
     id: string;
     name: string;
@@ -47,7 +48,7 @@ interface AvailableSessionViewProps {
   }) => void;
 }
 
-export function AvailableSessionView({ session, isOnRoster = false, onBack, onNavigate, onOpenChat }: AvailableSessionViewProps) {
+export function AvailableSessionView({ session, isOnRoster = false, onBack, onNavigate, onViewProfile, onOpenChat }: AvailableSessionViewProps) {
   const { token } = useAuth();
   const [showAcceptConfirmation, setShowAcceptConfirmation] = useState(false);
   const [isRequested, setIsRequested] = useState(false);
@@ -139,13 +140,16 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
         {/* Posted By Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
           <p className="text-xs text-slate-500 mb-3">POSTED BY</p>
-          <div className="flex items-start gap-4 mb-4">
+          <button
+            onClick={() => poster?._id && (onViewProfile?.(poster._id) ?? onNavigate?.('userProfile', { _id: poster._id, ...poster }))}
+            className="flex items-start gap-4 mb-4 w-full text-left group"
+          >
             <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-xl flex-shrink-0">
               {poster?.avatar || posterInitials}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-slate-900 font-medium">{posterName}</h3>
+                <h3 className="text-slate-900 font-medium group-hover:text-blue-600 transition-colors">{posterName}</h3>
                 {isOnRoster && (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200">
                     <Shield className="w-2.5 h-2.5" />
@@ -153,8 +157,9 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
                   </span>
                 )}
               </div>
-              <p className="text-sm text-slate-600 mb-2">{posterPosition}</p>
-              <div className="flex items-center gap-3">
+              <p className="text-sm text-slate-600 mb-1">{posterPosition}</p>
+              <p className="text-xs text-blue-500 group-hover:underline">View profile</p>
+              <div className="flex items-center gap-3 mt-1">
                 {posterRating !== null && (
                   <>
                     <div className="flex items-center gap-1">
@@ -168,22 +173,31 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
               </div>
             </div>
             {posterLevel && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg self-start">
                 <Trophy className="w-3.5 h-3.5 text-blue-600" />
                 <span className="text-xs text-blue-700 font-medium">{posterLevel}</span>
               </div>
             )}
-          </div>
+          </button>
 
-          {/* Message Button */}
+          {/* Message + Profile buttons */}
           {poster && (
-            <button
-              onClick={openChat}
-              className="w-full flex items-center justify-center gap-2 py-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
-            >
-              <MessageCircle className="w-5 h-5 text-blue-600" />
-              <span className="text-sm text-blue-700 font-medium">Message First</span>
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={openChat}
+                className="flex items-center justify-center gap-2 py-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+              >
+                <MessageCircle className="w-4 h-4 text-blue-600" />
+                <span className="text-sm text-blue-700 font-medium">Message</span>
+              </button>
+              <button
+                onClick={() => poster._id && (onViewProfile?.(poster._id) ?? onNavigate?.('userProfile', { _id: poster._id, ...poster }))}
+                className="flex items-center justify-center gap-2 py-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors border border-slate-200"
+              >
+                <Users className="w-4 h-4 text-slate-600" />
+                <span className="text-sm text-slate-700 font-medium">Profile</span>
+              </button>
+            </div>
           )}
         </div>
 

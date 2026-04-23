@@ -15,6 +15,7 @@ interface Need {
 interface NeedCardProps {
   need: Need;
   onClick: () => void;
+  onPosterClick?: () => void;
 }
 
 function getInitials(name: string): string {
@@ -27,12 +28,15 @@ function getInitials(name: string): string {
     .toUpperCase();
 }
 
-export function NeedCard({ need, onClick }: NeedCardProps) {
+export function NeedCard({ need, onClick, onPosterClick }: NeedCardProps) {
   return (
     <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 hover:border-blue-400 transition-all shadow-sm hover:shadow-md">
 
-      {/* Poster row */}
-      <div className="flex items-center gap-3 mb-3">
+      {/* Poster row — tappable to view profile */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onPosterClick?.(); }}
+        className="w-full flex items-center gap-3 mb-3 text-left group"
+      >
         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center flex-shrink-0">
           <span className="text-white text-xs font-bold">
             {need.posterName ? getInitials(need.posterName) : '?'}
@@ -40,7 +44,7 @@ export function NeedCard({ need, onClick }: NeedCardProps) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-sm font-semibold text-slate-900">
+            <span className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
               {need.posterName || 'Unknown'}
             </span>
             {need.isOnRoster && (
@@ -50,9 +54,9 @@ export function NeedCard({ need, onClick }: NeedCardProps) {
               </span>
             )}
           </div>
-          <p className="text-xs text-slate-500 truncate">{need.title}</p>
+          <p className="text-xs text-blue-500 group-hover:underline">View profile</p>
         </div>
-      </div>
+      </button>
 
       {/* Seeking Status */}
       <div className="flex items-center gap-2 mb-3 bg-blue-50 rounded-xl p-3">

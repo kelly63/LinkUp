@@ -2,6 +2,7 @@ import { Calendar, Award, MapPin, Clock, ArrowLeft, Users, X, Search, Filter } f
 import { useState, useEffect, useRef } from 'react';
 import { NeedCard } from './NeedCard';
 import { AvailableSessionView } from './AvailableSessionView';
+import { UserProfileView } from './UserProfileView';
 import { LocationAutocomplete } from './LocationAutocomplete';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, connections as connectionsApi, Session } from '../lib/api';
@@ -71,6 +72,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   // Session detail view
   const [selectedSession, setSelectedSession] = useState<any | null>(null);
   const [selectedSessionIsOnRoster, setSelectedSessionIsOnRoster] = useState(false);
+  // Profile overlay — viewed on top of a session or the list
+  const [viewingPosterId, setViewingPosterId] = useState<string | null>(null);
   
   const skillLevels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro', 'Adult Athlete (18-45yo)', 'Adult Athlete (45+yo)'];
   
@@ -285,6 +288,30 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   
   const availableFilterPositions = getAvailablePositions();
 
+  // Profile overlay — shown on top of a session or the list; back returns to previous context
+  if (viewingPosterId) {
+    return (
+      <UserProfileView
+        userId={viewingPosterId}
+        onBack={() => setViewingPosterId(null)}
+        onSendMessage={() => {
+          const poster = selectedSession?.postedBy as any;
+          if (poster && onOpenChat) {
+            onOpenChat({
+              id: poster._id,
+              name: poster.name,
+              avatar: poster.avatar || '',
+              sport: poster.sport || '',
+              position: poster.position || '',
+              level: poster.skillLevel || '',
+            });
+          }
+          setViewingPosterId(null);
+        }}
+      />
+    );
+  }
+
   // If viewing a specific session, show the detail view
   if (selectedSession) {
     return (
@@ -293,6 +320,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
         isOnRoster={selectedSessionIsOnRoster}
         onBack={() => setSelectedSession(null)}
         onOpenChat={onOpenChat as any}
+        onViewProfile={(userId) => setViewingPosterId(userId)}
       />
     );
   }
@@ -829,6 +857,10 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   onClick={() => {
                     setSelectedSession(need._session);
                     setSelectedSessionIsOnRoster(need.isOnRoster ?? false);
+                  }}
+                  onPosterClick={() => {
+                    const posterId = (need._session?.postedBy as any)?._id;
+                    if (posterId) setViewingPosterId(posterId);
                   }}
                 />
               ))}

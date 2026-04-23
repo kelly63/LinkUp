@@ -56,6 +56,8 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   const [sessionDetailsData, setSessionDetailsData] = useState<any>(null);
   const [userProfileData, setUserProfileData] = useState<any>(null);
   const [editSessionData, setEditSessionData] = useState<any>(null);
+  // When navigating to userProfile from within a session, store where to return
+  const [profileReturnState, setProfileReturnState] = useState<{ view: string; data: any } | null>(null);
 
   // When the user taps a bottom tab, dismiss any open sub-view so the tab content shows
   useEffect(() => {
@@ -65,6 +67,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
     setRatingSessionData(null);
     setSessionDetailsData(null);
     setEditSessionData(null);
+    setProfileReturnState(null);
   }, [activeTab]);
 
   const userProfile = {
@@ -74,14 +77,24 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   };
 
   const handleNavigate = (view: string, data?: any) => {
-    setCurrentView(view);
-    if (view === 'rating' && data) setRatingSessionData(data);
-    if (view === 'sessionDetails' && data) setSessionDetailsData(data);
     if (view === 'userProfile' && data) {
+      // Remember where we came from so back can restore the session view
+      if (currentView === 'sessionDetails' && sessionDetailsData) {
+        setProfileReturnState({ view: 'sessionDetails', data: sessionDetailsData });
+      } else if (currentView === 'mySessions') {
+        setProfileReturnState({ view: 'mySessions', data: null });
+      } else {
+        setProfileReturnState(null);
+      }
       setUserProfileData(data);
       setSelectedUserId(data.id || data._id || null);
       setSelectedUserType(data.type || data.role || 'athlete');
+      setCurrentView('userProfile');
+      return;
     }
+    setCurrentView(view);
+    if (view === 'rating' && data) setRatingSessionData(data);
+    if (view === 'sessionDetails' && data) setSessionDetailsData(data);
     if (view === 'editSession' && data) setEditSessionData(data);
   };
 
@@ -145,7 +158,14 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
 
   const handleBackFromUserProfile = () => {
     setSelectedUserId(null);
-    setCurrentView('');
+    if (profileReturnState) {
+      const { view, data } = profileReturnState;
+      setCurrentView(view);
+      if (view === 'sessionDetails' && data) setSessionDetailsData(data);
+      setProfileReturnState(null);
+    } else {
+      setCurrentView('');
+    }
   };
 
   // ── Auth gate ────────────────────────────────────────────────────────────────

@@ -191,6 +191,14 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
           <div>
             <h2 className="text-white">Session Details</h2>
             <p className="text-blue-200 text-sm">{localSession.title || `${localSession.sport} Practice`}</p>
+            {!isPostedByMe && localSession.postedBy && typeof localSession.postedBy === 'object' && (
+              <button
+                onClick={() => onNavigate && onNavigate('userProfile', { _id: (localSession.postedBy as any)._id, ...(localSession.postedBy as any) })}
+                className="text-blue-300 text-xs mt-0.5 hover:text-white transition-colors hover:underline"
+              >
+                Posted by {(localSession.postedBy as any).name}
+              </button>
+            )}
           </div>
         </div>
         <div className="flex justify-center">
