@@ -11,6 +11,7 @@ import {
   MessageCircle,
   PlusCircle,
   Award,
+  Shield,
 } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
@@ -71,6 +72,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
   const [upcomingSessions, setUpcomingSessions] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [recentRatings, setRecentRatings] = useState<any[]>([]);
+  const [rosterIds, setRosterIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   const [feedPosts, setFeedPosts] = useState<Post[]>([]);
@@ -83,14 +85,17 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
     if (!token) return;
     (async () => {
       try {
-        const [sessData, connData, ratingData] = await Promise.all([
+        const [sessData, connData, rosterData, ratingData] = await Promise.all([
           sessionsApi.getMine(token),
           connectionsApi.getPending(token),
+          connectionsApi.getAll(token),
           ratingsApi.getReceived(token),
         ]);
         setUpcomingSessions(sessData.sessions || []);
         setPendingRequests(connData.requests || []);
         setRecentRatings(ratingData.ratings || []);
+        const ids = new Set((rosterData.connections || []).map((c: any) => c.user._id as string));
+        setRosterIds(ids);
       } catch (err: any) {
         toast.error(err?.message || 'Could not load dashboard data');
       } finally {
@@ -262,11 +267,19 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
               </button>
             </div>
           )}
-          {displayedSessions.map((session) => (
+          {displayedSessions.map((session) => {
+            const isMySession = session.postedBy?._id === user?._id || session.postedBy === user?._id;
+            const otherPerson: any = isMySession
+              ? (session.partner ?? session.pendingPartner ?? null)
+              : session.postedBy ?? null;
+            const otherId: string | null = otherPerson?._id ?? null;
+            const isOnRoster = otherId ? rosterIds.has(otherId) : false;
+
+            return (
             <div key={session._id} className="bg-white rounded-2xl p-4 shadow-xl border border-slate-200 hover:border-blue-300 transition-all">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h4 className="text-slate-900">{session.title || session.sport}</h4>
                     <div className={`px-2 py-0.5 rounded-full text-xs ${
                       session.status === 'confirmed'
@@ -276,6 +289,29 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                       {session.status === 'confirmed' ? 'Confirmed' : 'Open'}
                     </div>
                   </div>
+
+                  {/* Other person's name + roster badge */}
+                  {otherPerson ? (
+                    <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-[8px] font-bold">
+                          {getInitialsDash(otherPerson.name || '?')}
+                        </span>
+                      </div>
+                      <span className="text-xs font-medium text-slate-700">
+                        {isMySession ? 'with ' : 'by '}{otherPerson.name}
+                      </span>
+                      {isOnRoster && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200">
+                          <Shield className="w-2.5 h-2.5" />
+                          Roster
+                        </span>
+                      )}
+                    </div>
+                  ) : isMySession ? (
+                    <p className="text-xs text-slate-400 mb-2 italic">Your session · awaiting partner</p>
+                  ) : null}
+
                   <div className="flex items-center gap-2 text-blue-600 bg-blue-50 rounded-lg px-2 py-1 inline-flex border border-blue-100">
                     <Users className="w-3 h-3" />
                     <span className="text-xs">{session.posterRole || session.position}</span>
@@ -312,7 +348,8 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                 View Details <ChevronRight className="w-4 h-4" />
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
