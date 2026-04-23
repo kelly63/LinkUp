@@ -47,14 +47,16 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
     fetchPage(1, true);
   }, [filter, token]);
 
-  const statusBadge = (s: Session['status']) => {
+  const statusBadge = (session: Session) => {
     const map: Record<string, { label: string; cls: string }> = {
       open: { label: 'Open', cls: 'bg-amber-100 text-amber-700 border-amber-200' },
+      pending: { label: 'Pending', cls: 'bg-orange-100 text-orange-700 border-orange-200' },
       confirmed: { label: 'Confirmed', cls: 'bg-green-100 text-green-700 border-green-200' },
       completed: { label: 'Completed', cls: 'bg-blue-100 text-blue-700 border-blue-200' },
       cancelled: { label: 'Cancelled', cls: 'bg-red-100 text-red-600 border-red-200' },
     };
-    const cfg = map[s] ?? map.open;
+    const effectiveStatus = session.status === 'open' && session.pendingPartner ? 'pending' : session.status;
+    const cfg = map[effectiveStatus] ?? map.open;
     return (
       <span className={`px-2 py-0.5 rounded-full text-xs border ${cfg.cls}`}>{cfg.label}</span>
     );
@@ -132,7 +134,7 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
                         <h4 className="text-slate-900 text-sm font-medium">
                           {session.title || session.sport}
                         </h4>
-                        {statusBadge(session.status)}
+                        {statusBadge(session)}
                         {isPendingRequester && (
                           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full border border-amber-200">
                             <AlertCircle className="w-2.5 h-2.5" />

@@ -281,12 +281,14 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h4 className="text-slate-900">{session.title || session.sport}</h4>
-                    <div className={`px-2 py-0.5 rounded-full text-xs ${
+                    <div className={`px-2 py-0.5 rounded-full text-xs border ${
                       session.status === 'confirmed'
-                        ? 'bg-green-100 text-green-700 border border-green-200'
-                        : 'bg-amber-100 text-amber-700 border border-amber-200'
+                        ? 'bg-green-100 text-green-700 border-green-200'
+                        : session.pendingPartner
+                          ? 'bg-orange-100 text-orange-700 border-orange-200'
+                          : 'bg-amber-100 text-amber-700 border-amber-200'
                     }`}>
-                      {session.status === 'confirmed' ? 'Confirmed' : 'Open'}
+                      {session.status === 'confirmed' ? 'Confirmed' : session.pendingPartner ? 'Pending' : 'Open'}
                     </div>
                   </div>
 

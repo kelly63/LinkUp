@@ -29,7 +29,6 @@ function getInitials(name: string): string {
 export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: SessionDetailsViewProps) {
   const { token, user } = useAuth();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [localStatus, setLocalStatus] = useState(session.status);
   const [localSession, setLocalSession] = useState(session);
 
   // Determine the "other person" in this session
@@ -168,14 +167,18 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     }
   };
 
+  const effectiveStatus = localSession.status === 'open' && localSession.pendingPartner
+    ? 'pending'
+    : localSession.status;
   const statusConfig = {
     open: { label: 'Open – Awaiting Partner', Icon: AlertCircle, color: 'text-amber-200', bg: 'bg-amber-500/20 border-amber-400/30' },
+    pending: { label: 'Inquiry Pending', Icon: AlertCircle, color: 'text-orange-200', bg: 'bg-orange-500/20 border-orange-400/30' },
     confirmed: { label: 'Confirmed Session', Icon: CheckCircle, color: 'text-green-200', bg: 'bg-green-500/20 border-green-400/30' },
     completed: { label: 'Completed', Icon: Trophy, color: 'text-blue-200', bg: 'bg-blue-500/20 border-blue-400/30' },
     cancelled: { label: 'Cancelled', Icon: XCircle, color: 'text-red-200', bg: 'bg-red-500/20 border-red-400/30' },
   };
   const { label: statusLabel, Icon: StatusIcon, color: statusColor, bg: statusBg } =
-    statusConfig[localStatus as keyof typeof statusConfig] ?? statusConfig.open;
+    statusConfig[effectiveStatus as keyof typeof statusConfig] ?? statusConfig.open;
 
   return (
     <div className="h-full flex flex-col bg-slate-50">
