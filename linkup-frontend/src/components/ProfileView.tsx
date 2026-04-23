@@ -1,11 +1,30 @@
 import { Settings, Star, Award, Shield, Bell, LogOut, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { users as usersApi } from '../lib/api';
 import { toast } from 'sonner';
+
+function LinkRow({ icon, bg, label, value, placeholder }: { icon: ReactNode; bg: string; label: string; value: string; placeholder: string }) {
+  if (!value) {
+    return (
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-slate-200 text-slate-400">
+        <div className={`w-10 h-10 ${bg} rounded-full flex items-center justify-center flex-shrink-0 opacity-50`}>{icon}</div>
+        <div className="flex-1"><p className="text-sm text-slate-400">{placeholder}</p></div>
+      </div>
+    );
+  }
+  const href = value.startsWith('http') ? value : `https://${value}`;
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors">
+      <div className={`w-10 h-10 ${bg} rounded-full flex items-center justify-center flex-shrink-0`}>{icon}</div>
+      <div className="flex-1 min-w-0"><p className="text-sm font-medium text-slate-900 truncate">{value}</p></div>
+      <ExternalLink className="w-4 h-4 text-slate-400 flex-shrink-0" />
+    </a>
+  );
+}
 
 interface ProfileViewProps {
   userRole: 'athlete' | 'coach';
@@ -133,6 +152,39 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     }
   };
   
+  // Social / external link state
+  const [hudlUrl, setHudlUrl] = useState(user?.hudlUrl || '');
+  const [instagramUrl, setInstagramUrl] = useState(user?.instagramUrl || '');
+  const [twitterUrl, setTwitterUrl] = useState(user?.twitterUrl || '');
+  const [linkedinUrl, setLinkedinUrl] = useState(user?.linkedinUrl || '');
+  const [showLinksEdit, setShowLinksEdit] = useState(false);
+  const [tempLinks, setTempLinks] = useState({ hudlUrl: '', instagramUrl: '', twitterUrl: '', linkedinUrl: '' });
+  const [savingLinks, setSavingLinks] = useState(false);
+
+  const handleOpenLinksEdit = () => {
+    setTempLinks({ hudlUrl, instagramUrl, twitterUrl, linkedinUrl });
+    setShowLinksEdit(true);
+  };
+
+  const handleSaveLinks = async () => {
+    setHudlUrl(tempLinks.hudlUrl);
+    setInstagramUrl(tempLinks.instagramUrl);
+    setTwitterUrl(tempLinks.twitterUrl);
+    setLinkedinUrl(tempLinks.linkedinUrl);
+    setShowLinksEdit(false);
+    if (!token) return;
+    setSavingLinks(true);
+    try {
+      const { user: updated } = await usersApi.updateProfile(token, tempLinks);
+      updateUser(updated);
+      toast.success('Links saved');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not save links');
+    } finally {
+      setSavingLinks(false);
+    }
+  };
+
   const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !token) return;
@@ -317,57 +369,13 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <div className="bg-white rounded-2xl shadow-lg p-5">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-slate-900">External Profiles & Media</h4>
-                <button className="text-sm text-blue-600 hover:text-blue-700">Add</button>
+                <button onClick={handleOpenLinksEdit} className="text-sm text-blue-600 hover:text-blue-700">Edit</button>
               </div>
-              
               <div className="space-y-3">
-                {/* Hudl Link */}
-                <button className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors rounded-xl border border-slate-200">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <ExternalLink className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h4 className="text-slate-900">Hudl Profile</h4>
-                    <p className="text-sm text-slate-500">Connect your Hudl highlights</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400" />
-                </button>
-
-                {/* Perfect Game / PBR Link */}
-                <button className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors rounded-xl border border-slate-200">
-                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Award className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h4 className="text-slate-900">Recruiting Platform</h4>
-                    <p className="text-sm text-slate-500">Perfect Game, PBR, etc.</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400" />
-                </button>
-
-                {/* Instagram */}
-                <button className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors rounded-xl border border-slate-200">
-                  <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Instagram className="w-5 h-5 text-pink-600" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h4 className="text-slate-900">Instagram</h4>
-                    <p className="text-sm text-slate-500">@MikeP_athlete</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400" />
-                </button>
-
-                {/* School/Club Profile */}
-                <button className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors rounded-xl border border-slate-200">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Link className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h4 className="text-slate-900">School/Club Profile</h4>
-                    <p className="text-sm text-slate-500">Team website or roster page</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400" />
-                </button>
+                <LinkRow icon={<ExternalLink className="w-5 h-5 text-orange-600" />} bg="bg-orange-100" label="Hudl Profile" value={hudlUrl} placeholder="Add your Hudl link" />
+                <LinkRow icon={<Instagram className="w-5 h-5 text-pink-600" />} bg="bg-pink-100" label="Instagram" value={instagramUrl} placeholder="Add your Instagram" />
+                <LinkRow icon={<Link className="w-5 h-5 text-sky-600" />} bg="bg-sky-100" label="Twitter / X" value={twitterUrl} placeholder="Add your Twitter/X" />
+                <LinkRow icon={<Link className="w-5 h-5 text-blue-700" />} bg="bg-blue-100" label="LinkedIn" value={linkedinUrl} placeholder="Add your LinkedIn" />
               </div>
             </div>
           </div>
@@ -498,57 +506,13 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <div className="bg-white rounded-2xl shadow-lg p-5">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-slate-900">External Profiles & Media</h4>
-                <button className="text-sm text-blue-600 hover:text-blue-700">Add</button>
+                <button onClick={handleOpenLinksEdit} className="text-sm text-blue-600 hover:text-blue-700">Edit</button>
               </div>
-              
               <div className="space-y-3">
-                {/* Hudl Link */}
-                <button className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors rounded-xl border border-slate-200">
-                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <ExternalLink className="w-5 h-5 text-orange-600" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h4 className="text-slate-900">Hudl Profile</h4>
-                    <p className="text-sm text-slate-500">Connect your Hudl highlights</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400" />
-                </button>
-
-                {/* Perfect Game / PBR Link */}
-                <button className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors rounded-xl border border-slate-200">
-                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Award className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h4 className="text-slate-900">Recruiting Platform</h4>
-                    <p className="text-sm text-slate-500">Perfect Game, PBR, etc.</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400" />
-                </button>
-
-                {/* Instagram */}
-                <button className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors rounded-xl border border-slate-200">
-                  <div className="w-10 h-10 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Instagram className="w-5 h-5 text-pink-600" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h4 className="text-slate-900">Instagram</h4>
-                    <p className="text-sm text-slate-500">@MikeP_athlete</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400" />
-                </button>
-
-                {/* School/Club Profile */}
-                <button className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition-colors rounded-xl border border-slate-200">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Link className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <h4 className="text-slate-900">School/Club Profile</h4>
-                    <p className="text-sm text-slate-500">Team website or roster page</p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400" />
-                </button>
+                <LinkRow icon={<ExternalLink className="w-5 h-5 text-orange-600" />} bg="bg-orange-100" label="Hudl Profile" value={hudlUrl} placeholder="Add your Hudl link" />
+                <LinkRow icon={<Instagram className="w-5 h-5 text-pink-600" />} bg="bg-pink-100" label="Instagram" value={instagramUrl} placeholder="Add your Instagram" />
+                <LinkRow icon={<Link className="w-5 h-5 text-sky-600" />} bg="bg-sky-100" label="Twitter / X" value={twitterUrl} placeholder="Add your Twitter/X" />
+                <LinkRow icon={<Link className="w-5 h-5 text-blue-700" />} bg="bg-blue-100" label="LinkedIn" value={linkedinUrl} placeholder="Add your LinkedIn" />
               </div>
             </div>
           </div>
@@ -853,6 +817,75 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
         </div>
       )}
       
+      {/* Links Edit Modal */}
+      {showLinksEdit && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-3xl sm:rounded-t-2xl">
+              <h3 className="text-slate-900 font-semibold">Edit External Links</h3>
+              <button onClick={() => setShowLinksEdit(false)} className="text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-sm text-slate-700 mb-1 block">Hudl Profile URL</label>
+                <input
+                  type="url"
+                  value={tempLinks.hudlUrl}
+                  onChange={(e) => setTempLinks(prev => ({ ...prev, hudlUrl: e.target.value }))}
+                  placeholder="https://www.hudl.com/profile/..."
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-slate-700 mb-1 block">Instagram</label>
+                <input
+                  type="url"
+                  value={tempLinks.instagramUrl}
+                  onChange={(e) => setTempLinks(prev => ({ ...prev, instagramUrl: e.target.value }))}
+                  placeholder="https://www.instagram.com/username"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-slate-700 mb-1 block">Twitter / X</label>
+                <input
+                  type="url"
+                  value={tempLinks.twitterUrl}
+                  onChange={(e) => setTempLinks(prev => ({ ...prev, twitterUrl: e.target.value }))}
+                  placeholder="https://x.com/username"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-slate-700 mb-1 block">LinkedIn</label>
+                <input
+                  type="url"
+                  value={tempLinks.linkedinUrl}
+                  onChange={(e) => setTempLinks(prev => ({ ...prev, linkedinUrl: e.target.value }))}
+                  placeholder="https://www.linkedin.com/in/username"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowLinksEdit(false)}
+                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveLinks}
+                  disabled={savingLinks}
+                  className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {savingLinks ? 'Saving…' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* QR Code Modal */}
       {showQRCodeModal && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setShowQRCodeModal(false)}>
