@@ -135,6 +135,7 @@ const userSchema = new mongoose.Schema(
     instagramUrl: { type: String, default: '' },
     twitterUrl: { type: String, default: '' },
     linkedinUrl: { type: String, default: '' },
+    rosterUrl: { type: String, default: '' },
 
     // Rating stats (denormalized for performance)
     averageRating: {

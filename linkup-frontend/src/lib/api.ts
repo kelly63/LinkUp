@@ -26,6 +26,7 @@ export interface User {
   instagramUrl: string;
   twitterUrl: string;
   linkedinUrl: string;
+  rosterUrl: string;
   visibilityMode: 'everyone' | 'filtered';
   allowedLevels: string[];
   allowedSports: string[];

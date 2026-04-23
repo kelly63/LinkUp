@@ -157,12 +157,13 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [instagramUrl, setInstagramUrl] = useState(user?.instagramUrl || '');
   const [twitterUrl, setTwitterUrl] = useState(user?.twitterUrl || '');
   const [linkedinUrl, setLinkedinUrl] = useState(user?.linkedinUrl || '');
+  const [rosterUrl, setRosterUrl] = useState(user?.rosterUrl || '');
   const [showLinksEdit, setShowLinksEdit] = useState(false);
-  const [tempLinks, setTempLinks] = useState({ hudlUrl: '', instagramUrl: '', twitterUrl: '', linkedinUrl: '' });
+  const [tempLinks, setTempLinks] = useState({ hudlUrl: '', instagramUrl: '', twitterUrl: '', linkedinUrl: '', rosterUrl: '' });
   const [savingLinks, setSavingLinks] = useState(false);
 
   const handleOpenLinksEdit = () => {
-    setTempLinks({ hudlUrl, instagramUrl, twitterUrl, linkedinUrl });
+    setTempLinks({ hudlUrl, instagramUrl, twitterUrl, linkedinUrl, rosterUrl });
     setShowLinksEdit(true);
   };
 
@@ -171,6 +172,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     setInstagramUrl(tempLinks.instagramUrl);
     setTwitterUrl(tempLinks.twitterUrl);
     setLinkedinUrl(tempLinks.linkedinUrl);
+    setRosterUrl(tempLinks.rosterUrl);
     setShowLinksEdit(false);
     if (!token) return;
     setSavingLinks(true);
@@ -372,6 +374,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 <button onClick={handleOpenLinksEdit} className="text-sm text-blue-600 hover:text-blue-700">Edit</button>
               </div>
               <div className="space-y-3">
+                <LinkRow icon={<Shield className="w-5 h-5 text-emerald-600" />} bg="bg-emerald-100" label="College Roster Page" value={rosterUrl} placeholder="Add your team roster link" />
                 <LinkRow icon={<ExternalLink className="w-5 h-5 text-orange-600" />} bg="bg-orange-100" label="Hudl Profile" value={hudlUrl} placeholder="Add your Hudl link" />
                 <LinkRow icon={<Instagram className="w-5 h-5 text-pink-600" />} bg="bg-pink-100" label="Instagram" value={instagramUrl} placeholder="Add your Instagram" />
                 <LinkRow icon={<Link className="w-5 h-5 text-sky-600" />} bg="bg-sky-100" label="Twitter / X" value={twitterUrl} placeholder="Add your Twitter/X" />
@@ -826,6 +829,16 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
               <button onClick={() => setShowLinksEdit(false)} className="text-slate-400 hover:text-slate-600">✕</button>
             </div>
             <div className="p-6 space-y-4">
+              <div>
+                <label className="text-sm text-slate-700 mb-1 block">College Roster Page</label>
+                <input
+                  type="url"
+                  value={tempLinks.rosterUrl}
+                  onChange={(e) => setTempLinks(prev => ({ ...prev, rosterUrl: e.target.value }))}
+                  placeholder="https://goterps.com/sports/baseball/roster/..."
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              </div>
               <div>
                 <label className="text-sm text-slate-700 mb-1 block">Hudl Profile URL</label>
                 <input
