@@ -1,4 +1,4 @@
-import { ChevronLeft, Star, Trophy, Calendar, MapPin, Clock, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Star, Trophy, Calendar, MapPin, Clock, AlertCircle, Info } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { ratings as ratingsApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -98,8 +98,29 @@ export function ReceivedRatingsView({ onBack, onNavigate }: ReceivedRatingsViewP
         </div>
       </div>
 
+      {/* Contextual info banners */}
+      {filterTab === 'approved' && pendingCount > 0 && (
+        <div className="mx-6 mt-4 flex items-center gap-2 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+          <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          <p className="text-sm text-amber-800 flex-1">
+            {pendingCount} rating{pendingCount > 1 ? 's' : ''} awaiting admin approval
+          </p>
+          <button onClick={() => setFilterTab('pending')} className="text-xs font-semibold text-amber-700 underline">
+            View
+          </button>
+        </div>
+      )}
+      {filterTab === 'pending' && (
+        <div className="mx-6 mt-4 flex items-start gap-2 px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-xl">
+          <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-blue-800">
+            These ratings are being reviewed by our admin team before appearing on your public profile. This usually takes less than 24 hours.
+          </p>
+        </div>
+      )}
+
       {/* Ratings List */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 overflow-y-auto px-6 py-4">
         {loading ? (
           <div className="text-center py-12 text-slate-500">Loading...</div>
         ) : filteredRatings.length === 0 ? (

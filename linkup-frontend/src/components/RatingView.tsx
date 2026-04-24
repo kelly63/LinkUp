@@ -312,9 +312,10 @@ export function RatingView({ sessionPartner, sessionDetails, onBack, onSubmit }:
               <CheckCircle className="w-10 h-10 text-white" />
             </div>
             <h3 className="text-slate-900 font-semibold text-xl mb-2">Rating Submitted!</h3>
-            <p className="text-slate-600 mb-6">
-              Thank you for your feedback. Your rating helps build a stronger community.
+            <p className="text-slate-600 mb-2">
+              Thank you for your feedback. Your rating is under admin review and will appear on their profile once approved.
             </p>
+            <p className="text-sm text-slate-400 mb-6">This usually takes less than 24 hours.</p>
             <button
               onClick={() => {
                 setShowSuccessModal(false);
