@@ -142,7 +142,8 @@ const getMySessions = async (req, res) => {
     };
 
     if (status) {
-      query.status = status;
+      const statusList = status.split(',').map((s) => s.trim()).filter(Boolean);
+      query.status = statusList.length === 1 ? statusList[0] : { $in: statusList };
     } else {
       // Default: upcoming sessions (open or confirmed)
       query.status = { $in: ['open', 'confirmed'] };
