@@ -45,6 +45,12 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
       ? `${d.updatedBy.name} changed ${(d.changedFields || []).join(', ')} for "${d.sessionTitle || 'your session'}"`
       : 'A session you joined was updated',
   }),
+  change_proposed: (d) => ({
+    title: 'Review Requested',
+    description: d.proposedBy?.name
+      ? `${d.proposedBy.name} proposed schedule changes — your approval needed`
+      : 'Your session partner proposed schedule changes',
+  }),
   session_cancelled: (d) => ({
     title: 'Session Cancelled',
     description: d.cancelledBy?.name
@@ -174,6 +180,7 @@ export function MobileFrame() {
         break;
       case 'session_updated':
       case 'session_cancelled':
+      case 'change_proposed':
       case 'change_approved':
       case 'change_declined':
       case 'session_inquiry':

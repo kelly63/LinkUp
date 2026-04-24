@@ -54,6 +54,12 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color:
     color: 'text-blue-600',
     bg: 'bg-blue-50',
   },
+  change_proposed: {
+    label: 'Review Changes',
+    Icon: CalendarClock,
+    color: 'text-orange-600',
+    bg: 'bg-orange-50',
+  },
   session_cancelled: {
     label: 'Session Cancelled',
     Icon: CalendarX,
@@ -115,6 +121,10 @@ function notificationBody(n: StoredNotification): string {
       return d.updatedBy?.name
         ? `${d.updatedBy.name} updated "${d.sessionTitle || 'your session'}" — ${(d.changedFields || []).join(', ')} changed`
         : 'A session you joined was updated';
+    case 'change_proposed':
+      return d.proposedBy?.name
+        ? `${d.proposedBy.name} proposed changes to "${d.sessionTitle || 'your session'}" — tap to review`
+        : 'Your session partner proposed schedule changes';
     case 'session_cancelled':
       return d.cancelledBy?.name
         ? `${d.cancelledBy.name} cancelled "${d.sessionTitle || 'your session'}"`

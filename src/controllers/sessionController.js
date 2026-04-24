@@ -226,7 +226,7 @@ const updateSession = async (req, res) => {
         const sessionLabel = session.title || session.sport;
 
         if (io) {
-          io.notify(partnerId, 'session_updated', {
+          io.notify(partnerId, 'change_proposed', {
             sessionId: session._id,
             sessionTitle: sessionLabel,
             sport: session.sport,
@@ -234,7 +234,7 @@ const updateSession = async (req, res) => {
             proposedDate: session.pendingChange.date,
             proposedTime: session.pendingChange.time,
             proposedLocation: session.pendingChange.location,
-            updatedBy: { _id: req.user._id, name: req.user.name },
+            proposedBy: { _id: req.user._id, name: req.user.name },
           });
         }
 
