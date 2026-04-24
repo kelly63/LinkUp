@@ -4,7 +4,7 @@ const MessageRequest = require('../models/MessageRequest');
 
 // Send a system message in the thread between two users.
 // Auto-creates/upgrades the MessageRequest so the thread is accessible.
-const postSystemMessage = async (io, fromId, toId, text) => {
+const postSystemMessage = async (io, fromId, toId, text, sessionId = null) => {
   const fromStr = fromId.toString();
   const toStr = toId.toString();
 
@@ -27,6 +27,7 @@ const postSystemMessage = async (io, fromId, toId, text) => {
     recipient: toStr,
     text,
     type: 'system',
+    ...(sessionId ? { sessionId } : {}),
   });
 
   if (io) {
@@ -36,6 +37,7 @@ const postSystemMessage = async (io, fromId, toId, text) => {
       recipient: toStr,
       text: message.text,
       type: 'system',
+      ...(sessionId ? { sessionId: sessionId.toString() } : {}),
       read: false,
       createdAt: message.createdAt,
     };
@@ -239,7 +241,8 @@ const updateSession = async (req, res) => {
           io,
           req.user._id,
           partnerId,
-          `${req.user.name} proposed changes to "${sessionLabel}": ${changedFields.join(', ')} updated. Tap to review and approve.`
+          `${req.user.name} proposed changes to "${sessionLabel}": ${changedFields.join(', ')} updated. Tap to review and approve.`,
+          session._id
         );
 
         return res.json({ session, pendingChangeCreated: true });
@@ -301,7 +304,8 @@ const approveChange = async (req, res) => {
       io,
       req.user._id,
       posterId,
-      `✓ ${req.user.name} approved your proposed changes to "${sessionLabel}".`
+      `✓ ${req.user.name} approved your proposed changes to "${sessionLabel}".`,
+      session._id
     );
 
     res.json({ session });
@@ -344,7 +348,8 @@ const declineChange = async (req, res) => {
       io,
       req.user._id,
       posterId,
-      `${req.user.name} declined your proposed changes to "${sessionLabel}". Original schedule remains.`
+      `${req.user.name} declined your proposed changes to "${sessionLabel}". Original schedule remains.`,
+      session._id
     );
 
     res.json({ session });
@@ -392,7 +397,8 @@ const cancelSession = async (req, res) => {
         io,
         req.user._id,
         partnerId,
-        `${req.user.name} cancelled the "${sessionTitle}" session${dateLabel}.`
+        `${req.user.name} cancelled the "${sessionTitle}" session${dateLabel}.`,
+        session._id
       );
     }
 
@@ -454,7 +460,8 @@ const acceptSession = async (req, res) => {
       io,
       req.user._id,
       posterId,
-      `${req.user.name} has requested to join your "${sessionLabel}" session${dateLabel}. Tap to review their request.`
+      `${req.user.name} has requested to join your "${sessionLabel}" session${dateLabel}. Tap to review their request.`,
+      session._id
     );
 
     res.json({ session });
@@ -507,7 +514,8 @@ const approvePartner = async (req, res) => {
       io,
       req.user._id,
       pendingPartnerId,
-      `✓ ${req.user.name} approved your request — your "${sessionLabel}" session${dateLabel} is confirmed!`
+      `✓ ${req.user.name} approved your request — your "${sessionLabel}" session${dateLabel} is confirmed!`,
+      session._id
     );
 
     res.json({ session });
@@ -554,7 +562,8 @@ const declinePartner = async (req, res) => {
       io,
       req.user._id,
       pendingPartnerId,
-      `${req.user.name} wasn't able to accept your request to join "${sessionLabel}" this time.`
+      `${req.user.name} wasn't able to accept your request to join "${sessionLabel}" this time.`,
+      session._id
     );
 
     res.json({ session });
