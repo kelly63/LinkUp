@@ -245,11 +245,9 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
       <div className="px-6 mt-6 mb-6" ref={upcomingSessionsRef}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-slate-900">Upcoming Sessions</h3>
-          {upcomingSessions.length > DISPLAYED_SESSIONS_COUNT && (
-            <button onClick={() => onNavigate?.('mySessions')} className="text-sm text-blue-600 hover:text-blue-700">
-              View All
-            </button>
-          )}
+          <button onClick={() => onNavigate?.('mySessions')} className="text-sm text-blue-600 hover:text-blue-700">
+            View All
+          </button>
         </div>
 
         {loading && (
