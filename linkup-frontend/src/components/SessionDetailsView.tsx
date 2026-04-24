@@ -26,6 +26,15 @@ function getInitials(name: string): string {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
+function isSessionPast(session: { date?: string; time?: string; status: string }): boolean {
+  if (!session.date || session.date === 'Flexible') return false;
+  if (session.status === 'completed' || session.status === 'cancelled') return false;
+  const dateTime = session.time && session.time !== 'Flexible'
+    ? new Date(`${session.date} ${session.time}`)
+    : (() => { const d = new Date(session.date!); d.setHours(23, 59, 59, 999); return d; })();
+  return !isNaN(dateTime.getTime()) && dateTime < new Date();
+}
+
 export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: SessionDetailsViewProps) {
   const { token, user } = useAuth();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -490,51 +499,86 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
         )}
 
         {/* Action Buttons */}
-        {localStatus !== 'cancelled' && localStatus !== 'completed' && (
+        {localSession.status !== 'cancelled' && localSession.status !== 'completed' && (
           <div className="space-y-3">
-            {localStatus === 'open' && !isPostedByMe && (
-              <button
-                disabled={!!actionLoading}
-                onClick={handleAccept}
-                className="w-full py-3.5 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium transition-all shadow-sm disabled:opacity-60"
-              >
-                {actionLoading === 'accept' ? 'Confirming…' : 'Confirm Session'}
-              </button>
+            {/* Past-session banner — shown when the scheduled time has already passed */}
+            {isSessionPast(localSession) ? (
+              <>
+                <div className="bg-slate-100 border border-slate-200 rounded-2xl p-4 text-center mb-1">
+                  <p className="text-sm text-slate-600 font-medium">This session's time has passed.</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Did it happen? Mark it complete, or reschedule / cancel.</p>
+                </div>
+                <button
+                  disabled={!!actionLoading}
+                  onClick={handleComplete}
+                  className="w-full py-3.5 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium transition-all shadow-sm disabled:opacity-60"
+                >
+                  {actionLoading === 'complete' ? 'Completing…' : 'Session Completed'}
+                </button>
+                {isPostedByMe && (
+                  <button
+                    onClick={() => onNavigate && onNavigate('editSession', localSession)}
+                    className="w-full py-3.5 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Reschedule
+                  </button>
+                )}
+                <button
+                  disabled={!!actionLoading}
+                  onClick={handleCancel}
+                  className="w-full py-3.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-xl font-medium transition-all disabled:opacity-60"
+                >
+                  {actionLoading === 'cancel' ? 'Cancelling…' : 'Cancel Session'}
+                </button>
+              </>
+            ) : (
+              <>
+                {localSession.status === 'open' && !isPostedByMe && (
+                  <button
+                    disabled={!!actionLoading}
+                    onClick={handleAccept}
+                    className="w-full py-3.5 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-xl font-medium transition-all shadow-sm disabled:opacity-60"
+                  >
+                    {actionLoading === 'accept' ? 'Confirming…' : 'Confirm Session'}
+                  </button>
+                )}
+
+                {localSession.status === 'confirmed' && (
+                  <button
+                    disabled={!!actionLoading}
+                    onClick={handleComplete}
+                    className="w-full py-3.5 bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-medium transition-all shadow-sm disabled:opacity-60"
+                  >
+                    {actionLoading === 'complete' ? 'Completing…' : 'Mark as Complete & Rate'}
+                  </button>
+                )}
+
+                <button
+                  onClick={handleAddToCalendar}
+                  className="w-full py-3.5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-medium transition-all shadow-sm"
+                >
+                  Add to Calendar
+                </button>
+
+                {isPostedByMe && (
+                  <button
+                    onClick={() => onNavigate && onNavigate('editSession', localSession)}
+                    className="w-full py-3.5 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 rounded-xl font-medium transition-all"
+                  >
+                    Edit Session
+                  </button>
+                )}
+
+                <button
+                  disabled={!!actionLoading}
+                  onClick={handleCancel}
+                  className="w-full py-3.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-xl font-medium transition-all disabled:opacity-60"
+                >
+                  {actionLoading === 'cancel' ? 'Cancelling…' : 'Cancel Session'}
+                </button>
+              </>
             )}
-
-            {localStatus === 'confirmed' && (
-              <button
-                disabled={!!actionLoading}
-                onClick={handleComplete}
-                className="w-full py-3.5 bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-medium transition-all shadow-sm disabled:opacity-60"
-              >
-                {actionLoading === 'complete' ? 'Completing…' : 'Mark as Complete & Rate'}
-              </button>
-            )}
-
-            <button
-              onClick={handleAddToCalendar}
-              className="w-full py-3.5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-medium transition-all shadow-sm"
-            >
-              Add to Calendar
-            </button>
-
-            {isPostedByMe && (
-              <button
-                onClick={() => onNavigate && onNavigate('editSession', localSession)}
-                className="w-full py-3.5 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 rounded-xl font-medium transition-all"
-              >
-                Edit Session
-              </button>
-            )}
-
-            <button
-              disabled={!!actionLoading}
-              onClick={handleCancel}
-              className="w-full py-3.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-xl font-medium transition-all disabled:opacity-60"
-            >
-              {actionLoading === 'cancel' ? 'Cancelling…' : 'Cancel Session'}
-            </button>
           </div>
         )}
 

@@ -1,8 +1,17 @@
-import { ChevronLeft, Calendar, MapPin, ChevronRight, Trophy, Clock, AlertCircle, PenLine } from 'lucide-react';
+import { ChevronLeft, Calendar, MapPin, ChevronRight, Trophy, Clock, AlertCircle, PenLine, CheckCircle, RefreshCw, XCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, Session } from '../lib/api';
 import { toast } from 'sonner';
+
+function isSessionPast(session: Session): boolean {
+  if (!session.date || session.date === 'Flexible') return false;
+  if (session.status === 'completed' || session.status === 'cancelled') return false;
+  const dateTime = session.time && session.time !== 'Flexible'
+    ? new Date(`${session.date} ${session.time}`)
+    : (() => { const d = new Date(session.date!); d.setHours(23, 59, 59, 999); return d; })();
+  return !isNaN(dateTime.getTime()) && dateTime < new Date();
+}
 
 interface MySessionsViewProps {
   onBack: () => void;
@@ -21,6 +30,8 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const statusParam = filter === 'upcoming' ? 'open,confirmed' : 'completed,cancelled';
 
@@ -46,6 +57,35 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
   useEffect(() => {
     fetchPage(1, true);
   }, [filter, token]);
+
+  const handleComplete = async (sessionId: string) => {
+    if (!token) return;
+    setActionLoading(sessionId);
+    try {
+      await sessionsApi.complete(token, sessionId);
+      setItems((prev) => prev.map((s) => s._id === sessionId ? { ...s, status: 'completed' } : s));
+      toast.success('Session marked as completed');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not complete session');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCancel = async (sessionId: string) => {
+    if (!token) return;
+    setActionLoading(sessionId);
+    try {
+      await sessionsApi.cancel(token, sessionId);
+      setItems((prev) => prev.filter((s) => s._id !== sessionId));
+      toast.success('Session cancelled');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not cancel session');
+    } finally {
+      setActionLoading(null);
+      setCancellingId(null);
+    }
+  };
 
   const statusBadge = (session: Session) => {
     const map: Record<string, { label: string; cls: string }> = {
@@ -177,6 +217,40 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
                     )}
                   </div>
 
+                  {/* Past-session actions */}
+                  {isSessionPast(session) && (
+                    <div className="mb-2 space-y-1.5">
+                      <p className="text-[11px] text-slate-500 text-center">This session's time has passed</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <button
+                          disabled={actionLoading === session._id}
+                          onClick={() => handleComplete(session._id)}
+                          className="py-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white rounded-lg text-xs flex items-center justify-center gap-1 transition-colors"
+                        >
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          {actionLoading === session._id ? 'Saving…' : 'Session Completed'}
+                        </button>
+                        <div className="grid grid-cols-2 gap-1">
+                          <button
+                            onClick={() => onNavigate && onNavigate('editSession', session)}
+                            className="py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs flex items-center justify-center gap-1 border border-blue-200 transition-colors"
+                          >
+                            <RefreshCw className="w-3 h-3" />
+                            Reschedule
+                          </button>
+                          <button
+                            disabled={actionLoading === session._id}
+                            onClick={() => setCancellingId(session._id)}
+                            className="py-2 bg-red-50 hover:bg-red-100 disabled:opacity-60 text-red-600 rounded-lg text-xs flex items-center justify-center gap-1 border border-red-200 transition-colors"
+                          >
+                            <XCircle className="w-3 h-3" />
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex gap-2">
                     <button
                       onClick={() => onNavigate && onNavigate('sessionDetails', session)}
@@ -230,6 +304,36 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
         )}
         <div className="h-4" />
       </div>
+
+      {/* Cancel confirmation modal */}
+      {cancellingId && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl p-6">
+            <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <XCircle className="w-7 h-7 text-red-600" />
+            </div>
+            <h3 className="text-slate-900 font-semibold text-center mb-2">Cancel Session?</h3>
+            <p className="text-slate-600 text-sm text-center mb-6">
+              This will cancel the session and notify anyone involved.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setCancellingId(null)}
+                className="flex-1 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition-colors"
+              >
+                Keep It
+              </button>
+              <button
+                disabled={!!actionLoading}
+                onClick={() => handleCancel(cancellingId)}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white rounded-xl font-medium transition-colors"
+              >
+                {actionLoading ? 'Cancelling…' : 'Cancel Session'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
