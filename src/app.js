@@ -15,6 +15,7 @@ const ratingRoutes = require('./routes/ratings');
 const postRoutes = require('./routes/posts');
 const notificationRoutes = require('./routes/notifications');
 const utilRoutes = require('./routes/utils');
+const adminRoutes = require('./routes/admin');
 
 if (process.env.NODE_ENV !== 'test') connectDB();
 
@@ -42,6 +43,7 @@ app.use('/api/ratings', ratingRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/utils', utilRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));

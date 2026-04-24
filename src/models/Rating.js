@@ -51,11 +51,11 @@ const ratingSchema = new mongoose.Schema(
       default: '',
     },
 
-    // Moderation
+    // Moderation — new ratings start as 'pending' until admin approves
     status: {
       type: String,
-      enum: ['pending', 'approved'],
-      default: 'approved',
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
     },
   },
   { timestamps: true }
