@@ -1,1 +1,8 @@
 test-results/
+
+# Capacitor build artifacts
+ios/App/build/
+ios/App/DerivedData/
+android/app/build/
+android/.gradle/
+*.xcworkspace/xcuserdata/

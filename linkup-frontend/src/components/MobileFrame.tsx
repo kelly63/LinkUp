@@ -8,6 +8,7 @@ import { useAuth } from '../lib/auth';
 import { useSocket, Notification } from '../hooks/useSocket';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { StoredNotification } from '../lib/api';
+import { Capacitor } from '@capacitor/core';
 import { toast } from 'sonner';
 
 type PendingNav = { view: string; data?: any } | null;
@@ -191,49 +192,60 @@ export function MobileFrame() {
     }
   }, []);
 
+  const isNative = Capacitor.isNativePlatform();
+
+  const inner = (
+    <div className="h-full flex flex-col">
+      {/* Fake status bar only shown in web demo frame */}
+      {!isNative && <StatusBar />}
+
+      <HeaderBar
+        onBellClick={handleBellClick}
+        showNotifications={isAuthenticated}
+        unreadCount={unreadCount}
+        panelOpen={panelOpen}
+      />
+
+      {isAuthenticated && token && (
+        <NotificationPanel
+          token={token}
+          open={panelOpen}
+          onClose={handlePanelClose}
+          liveQueue={liveQueue}
+          onAllRead={handleAllRead}
+          onNavigate={handleNotificationNavigate}
+        />
+      )}
+
+      <MainContent
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        onAuthChange={() => {}}
+        onChatOpenChange={setChatOpen}
+        externalNav={pendingNav}
+        onExternalNavProcessed={() => setPendingNav(null)}
+      />
+
+      {isAuthenticated && !chatOpen && (
+        <BottomTabBar
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          badges={{ chat: chatUnread }}
+        />
+      )}
+    </div>
+  );
+
+  if (isNative) {
+    // On a real device: fill the whole screen, no phone-frame chrome
+    return <div className="h-screen w-screen flex flex-col overflow-hidden">{inner}</div>;
+  }
+
   return (
     <div className="relative w-full max-w-[393px] h-[852px] bg-zinc-950 rounded-[3rem] shadow-2xl overflow-hidden border-8 border-zinc-900">
       {/* iPhone notch */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-7 bg-zinc-900 rounded-b-3xl z-50" />
-
-      <div className="h-full flex flex-col">
-        <StatusBar />
-
-        <HeaderBar
-          onBellClick={handleBellClick}
-          showNotifications={isAuthenticated}
-          unreadCount={unreadCount}
-          panelOpen={panelOpen}
-        />
-
-        {isAuthenticated && token && (
-          <NotificationPanel
-            token={token}
-            open={panelOpen}
-            onClose={handlePanelClose}
-            liveQueue={liveQueue}
-            onAllRead={handleAllRead}
-            onNavigate={handleNotificationNavigate}
-          />
-        )}
-
-        <MainContent
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          onAuthChange={() => {}}
-          onChatOpenChange={setChatOpen}
-          externalNav={pendingNav}
-          onExternalNavProcessed={() => setPendingNav(null)}
-        />
-
-        {isAuthenticated && !chatOpen && (
-          <BottomTabBar
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            badges={{ chat: chatUnread }}
-          />
-        )}
-      </div>
+      {inner}
     </div>
   );
 }

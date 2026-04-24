@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LinkUp Athletics</string>
+    <string name="title_activity_main">LinkUp Athletics</string>
+    <string name="package_name">com.linkupathletics.app</string>
+    <string name="custom_url_scheme">com.linkupathletics.app</string>
+</resources>

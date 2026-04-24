@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@capacitor/android": "^8.3.1",
+    "@capacitor/cli": "^8.3.1",
+    "@capacitor/core": "^8.3.1",
+    "@capacitor/ios": "^8.3.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-aspect-ratio": "^1.1.2",
@@ -53,11 +59,17 @@
     "@types/node": "^20.10.0",
     "@vitejs/plugin-react-swc": "^3.10.2",
     "playwright": "^1.48.0",
+    "typescript": "^6.0.3",
     "vite": "6.3.5"
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:ios": "vite build && npx cap sync ios",
+    "build:android": "vite build && npx cap sync android",
+    "cap:sync": "npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android",
     "test": "playwright test",
     "test:ci": "playwright test --reporter=github"
   }
