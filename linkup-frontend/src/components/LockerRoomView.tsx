@@ -141,7 +141,7 @@ function PostCard({
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+            <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
               {author?.avatar
                 ? <img src={author.avatar} alt={author.name} className="w-full h-full rounded-full object-cover" />
                 : initials}
