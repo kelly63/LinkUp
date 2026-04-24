@@ -17,7 +17,8 @@ export function HeaderBar({
     <div className="h-14 bg-zinc-900/50 border-b border-zinc-800/50 px-6 flex items-center justify-between backdrop-blur-sm">
       {/* App Logo/Name */}
       <div className="flex items-center gap-2">
-        <span className="font-semibold text-gray-100 font-[Magra]">LinkUp Athletics MVP </span>
+        <img src="https://i.imgur.com/LnXJJ04.png" alt="LinkUp Athletics" className="w-6 h-6 object-contain" />
+        <span className="font-semibold text-gray-100 font-[Magra]">LinkUp Athletics</span>
       </div>
 
       {/* Notification Bell */}

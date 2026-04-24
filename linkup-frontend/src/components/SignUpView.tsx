@@ -230,8 +230,17 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         {/* Hero Section */}
         <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 px-6 pt-8 pb-12">
           <div className="text-center">
-            <h1 className="text-white text-2xl mb-3">Welcome to LinkUp Athletics</h1>
-            <p className="text-blue-200 text-sm">LinkUp. Train. Level Up.</p>
+            <div className="relative w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+              <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-white/40"></div>
+              <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-white/40"></div>
+              <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-white/40"></div>
+              <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-white/40"></div>
+              <div className="w-14 h-14 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
+                <img src="https://i.imgur.com/LnXJJ04.png" alt="LinkUp Athletics Logo" className="w-10 h-10 object-contain" />
+              </div>
+            </div>
+            <h1 className="text-white text-2xl mb-2 font-[Magra]">LinkUp Athletics</h1>
+            <p className="text-blue-200 text-sm">LinkUp. Level Up.</p>
           </div>
         </div>
 
