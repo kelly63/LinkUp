@@ -14,7 +14,8 @@ export function HeaderBar({
   panelOpen = false,
 }: HeaderBarProps) {
   return (
-    <div className="h-14 bg-zinc-900/50 border-b border-zinc-800/50 px-6 flex items-center justify-between backdrop-blur-sm">
+    <div className="safe-area-top bg-zinc-900/50 border-b border-zinc-800/50 backdrop-blur-sm">
+    <div className="h-14 px-6 flex items-center justify-between">
       {/* App Logo/Name */}
       <div className="flex items-center gap-2">
         <img src="https://i.imgur.com/LnXJJ04.png" alt="LinkUp Athletics" className="w-6 h-6 object-contain" />
@@ -37,6 +38,7 @@ export function HeaderBar({
           )}
         </button>
       )}
+    </div>
     </div>
   );
 }
