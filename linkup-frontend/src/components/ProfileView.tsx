@@ -64,6 +64,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [tempSport, setTempSport] = useState('');
   const [tempPosition, setTempPosition] = useState('');
   const [tempLevel, setTempLevel] = useState('');
+  const [tempLocation, setTempLocation] = useState('');
   const [tempAboutMe, setTempAboutMe] = useState('');
   const [tempPhilosophy, setTempPhilosophy] = useState('');
   
@@ -88,6 +89,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     setTempSport(athleteSport);
     setTempPosition(athletePosition);
     setTempLevel(athleteLevel);
+    setTempLocation(user?.location || '');
     setShowAthleteProfileEdit(true);
   };
   
@@ -103,6 +105,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           sport: tempSport,
           position: tempPosition,
           skillLevel: tempLevel,
+          location: tempLocation,
         });
         updateUser(updated);
         toast.success('Profile updated');
@@ -705,7 +708,19 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   ))}
                 </select>
               </div>
-              
+
+              {/* Location */}
+              <div>
+                <label className="text-sm text-slate-700 mb-2 block">Location</label>
+                <input
+                  type="text"
+                  value={tempLocation}
+                  onChange={(e) => setTempLocation(e.target.value)}
+                  placeholder="e.g. Boston, MA"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                />
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-3 pt-2">
                 <button
