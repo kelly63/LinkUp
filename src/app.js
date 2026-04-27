@@ -26,7 +26,22 @@ const httpServer = http.createServer(app);
 const io = getSocketIo(httpServer);
 app.set('io', io);
 
-app.use(cors({ origin: process.env.CLIENT_URL || '*', credentials: true }));
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'capacitor://localhost',  // iOS Capacitor
+  'http://localhost',       // Android Capacitor
+  'http://localhost:3000',
+  'http://localhost:5173',
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (native mobile, curl, Postman)
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
