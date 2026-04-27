@@ -237,8 +237,9 @@ export function MobileFrame() {
   );
 
   if (isNative) {
-    // On a real device: fill the whole screen, no phone-frame chrome
-    return <div className="h-screen w-screen flex flex-col overflow-hidden">{inner}</div>;
+    // fixed inset-0 pins all four edges to the viewport — prevents the whole
+    // page from scrolling and keeps the header and tab bar always visible
+    return <div className="fixed inset-0 flex flex-col overflow-hidden">{inner}</div>;
   }
 
   return (
