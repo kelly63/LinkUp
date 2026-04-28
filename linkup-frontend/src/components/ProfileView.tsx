@@ -1,11 +1,13 @@
 import { Settings, Star, Award, Shield, Bell, LogOut, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera } from 'lucide-react';
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { users as usersApi } from '../lib/api';
 import { toast } from 'sonner';
+import { Capacitor } from '@capacitor/core';
+import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 function LinkRow({ icon, bg, label, value, placeholder }: { icon: ReactNode; bg: string; label: string; value: string; placeholder: string }) {
   if (!value) {
@@ -190,21 +192,10 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     }
   };
 
-  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !token) return;
-    event.target.value = '';
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be smaller than 5 MB');
-      return;
-    }
-
-    // Optimistic preview
+  const uploadFile = async (file: File) => {
+    if (!token) return;
     const previewUrl = URL.createObjectURL(file);
     setProfileImage(previewUrl);
     setUploadingAvatar(true);
@@ -219,6 +210,48 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     } finally {
       setUploadingAvatar(false);
     }
+  };
+
+  const handleCameraButtonClick = async () => {
+    if (uploadingAvatar) return;
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const photo = await CapCamera.getPhoto({
+          quality: 90,
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Prompt,
+          width: 800,
+          height: 800,
+          correctOrientation: true,
+        });
+        if (!photo.dataUrl) return;
+        const res = await fetch(photo.dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+        await uploadFile(file);
+      } catch (err: any) {
+        if (err?.message !== 'User cancelled photos app') {
+          toast.error('Could not access camera');
+        }
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !token) return;
+    event.target.value = '';
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be smaller than 5 MB');
+      return;
+    }
+    await uploadFile(file);
   };
   
   return (
@@ -242,16 +275,17 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
               )}
             </div>
             {/* Upload Button */}
-            <label
-              htmlFor="profile-upload"
-              className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-colors border-2 border-white"
+            <button
+              onClick={handleCameraButtonClick}
+              disabled={uploadingAvatar}
+              className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-colors border-2 border-white disabled:opacity-60"
             >
               {uploadingAvatar
                 ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 : <Camera className="w-4 h-4 text-white" />}
-            </label>
+            </button>
             <input
-              id="profile-upload"
+              ref={fileInputRef}
               type="file"
               accept="image/*"
               disabled={uploadingAvatar}
@@ -556,7 +590,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             {/* Small QR Code */}
             <div className="flex-shrink-0">
               <QRCodeSVG 
-                value={`linkupathletics://profile/{user?._id || 'unknown'}`}
+                value={`https://linkupathletics.app/profile/${user?._id || 'unknown'}`}
                 size={80}
                 level="H"
                 includeMargin={false}
@@ -932,7 +966,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <div className="bg-slate-50 rounded-2xl p-6 flex flex-col items-center">
               <div className="bg-white p-4 rounded-xl shadow-lg">
                 <QRCodeSVG 
-                  value={`linkupathletics://profile/{user?._id || 'unknown'}`}
+                  value={`https://linkupathletics.app/profile/${user?._id || 'unknown'}`}
                   size={220}
                   level="H"
                   includeMargin={true}
