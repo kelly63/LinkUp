@@ -217,11 +217,11 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     if (Capacitor.isNativePlatform()) {
       try {
         const photo = await CapCamera.getPhoto({
-          quality: 90,
+          quality: 70,
           resultType: CameraResultType.DataUrl,
           source: CameraSource.Prompt,
-          width: 800,
-          height: 800,
+          width: 600,
+          height: 600,
           correctOrientation: true,
         });
         if (!photo.dataUrl) return;
