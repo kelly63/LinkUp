@@ -9,7 +9,32 @@ import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 
-function LinkRow({ icon, bg, label, value, placeholder }: { icon: ReactNode; bg: string; label: string; value: string; placeholder: string }) {
+function compressImage(file: File, maxDim = 800, quality = 0.75): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) { height = Math.round((height * maxDim) / width); width = maxDim; }
+        else { width = Math.round((width * maxDim) / height); height = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => resolve(new File([blob!], 'avatar.jpg', { type: 'image/jpeg' })),
+        'image/jpeg',
+        quality,
+      );
+    };
+    img.src = url;
+  });
+}
+
+({ icon, bg, label, value, placeholder }: { icon: ReactNode; bg: string; label: string; value: string; placeholder: string }) {
   if (!value) {
     return (
       <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-slate-200 text-slate-400">
@@ -196,6 +221,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
 
   const uploadFile = async (file: File) => {
     if (!token) return;
+    file = await compressImage(file);
     const previewUrl = URL.createObjectURL(file);
     setProfileImage(previewUrl);
     setUploadingAvatar(true);
@@ -245,10 +271,6 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     event.target.value = '';
     if (!file.type.startsWith('image/')) {
       toast.error('Please select an image file');
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be smaller than 5 MB');
       return;
     }
     await uploadFile(file);
