@@ -3,12 +3,13 @@ import { HeaderBar } from './HeaderBar';
 import { BottomTabBar } from './BottomTabBar';
 import { MainContent } from './MainContent';
 import { NotificationPanel } from './NotificationPanel';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { useSocket, Notification } from '../hooks/useSocket';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { StoredNotification } from '../lib/api';
 import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
 import { toast } from 'sonner';
 
 type PendingNav = { view: string; data?: any } | null;
@@ -123,6 +124,19 @@ export function MobileFrame() {
   }, []);
 
   useSocket({ token, onNotification: handleNotification });
+
+  // Handle deep links — e.g. linkupathletics://profile/<userId> from QR code scans
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const listener = CapApp.addListener('appUrlOpen', (event) => {
+      const match = event.url.match(/linkupathletics:\/\/profile\/([^/?]+)/);
+      if (match) {
+        setActiveTab('dashboard');
+        setPendingNav({ view: 'userProfile', data: { _id: match[1] } });
+      }
+    });
+    return () => { listener.then((l) => l.remove()); };
+  }, []);
 
   const handleBellClick = useCallback(() => {
     setPanelOpen((open) => {
