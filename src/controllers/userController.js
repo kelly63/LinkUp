@@ -99,7 +99,9 @@ const updateProfile = async (req, res) => {
       // Privacy
       'visibilityMode', 'allowedLevels', 'allowedSports', 'allowCoaches', 'searchRadius',
       // Social links
-      'hudlUrl', 'instagramUrl', 'twitterUrl', 'linkedinUrl',
+      'hudlUrl', 'instagramUrl', 'twitterUrl', 'linkedinUrl', 'rosterUrl',
+      // Legal agreement (for Google sign-up flow)
+      'agreedToTerms', 'agreedToPrivacyPolicy', 'ageVerified', 'signature',
     ];
 
     const updates = {};

@@ -1,5 +1,8 @@
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -136,4 +139,58 @@ const getMe = async (req, res) => {
   res.json({ user: req.user.toPublicJSON() });
 };
 
-module.exports = { register, login, logout, getMe };
+// POST /api/auth/google
+const googleAuth = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) return res.status(400).json({ message: 'idToken is required' });
+
+    // Verify the token with Google — accepts both web and iOS client IDs
+    const clientIds = [
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_IOS_CLIENT_ID,
+    ].filter(Boolean);
+
+    let payload;
+    for (const audience of clientIds) {
+      try {
+        const ticket = await googleClient.verifyIdToken({ idToken, audience });
+        payload = ticket.getPayload();
+        break;
+      } catch (_) {}
+    }
+    if (!payload) return res.status(401).json({ message: 'Invalid Google token' });
+
+    const { sub: googleId, email, name, picture } = payload;
+
+    // Find existing user by googleId or email
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    if (user) {
+      // Link googleId if they previously signed up with email
+      if (!user.googleId) {
+        user.googleId = googleId;
+        if (!user.avatar && picture) user.avatar = picture;
+        await user.save({ validateBeforeSave: false });
+      }
+    } else {
+      // New user — create with Google info, no password
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        avatar: picture || '',
+        agreedToTerms: false,
+        role: 'athlete',
+      });
+    }
+
+    const token = generateToken(user._id);
+    res.json({ token, user: user.toPublicJSON(), isNewUser: !user.agreedToTerms });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(500).json({ message: 'Google sign-in failed' });
+  }
+};
+
+module.exports = { register, login, logout, getMe, googleAuth };

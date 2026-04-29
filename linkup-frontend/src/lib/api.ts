@@ -167,6 +167,12 @@ export const auth = {
 
   logout: (token: string) =>
     request<void>('/api/auth/logout', { method: 'POST' }, token),
+
+  googleLogin: (idToken: string) =>
+    request<{ token: string; user: User; isNewUser: boolean }>('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ idToken }),
+    }),
 };
 
 // ─── Users ────────────────────────────────────────────────────────────────────
