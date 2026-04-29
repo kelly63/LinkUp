@@ -125,6 +125,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    agreedToPrivacyPolicy: {
+      type: Boolean,
+      default: false,
+    },
+    ageVerified: {
+      type: Boolean,
+      default: false,
+    },
     agreedAt: {
       type: Date,
       default: null,

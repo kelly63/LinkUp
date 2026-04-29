@@ -20,8 +20,10 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
   
   // User Agreement state (Step 3)
   const [signature, setSignature] = useState('');
-  const [acknowledged, setAcknowledged] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToPrivacyPolicy, setAgreedToPrivacyPolicy] = useState(false);
+  const [ageVerified, setAgeVerified] = useState(false);
+  const [agreementTab, setAgreementTab] = useState<'terms' | 'privacy'>('terms');
   
   // Form state
   const [formData, setFormData] = useState({
@@ -194,6 +196,8 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         // Terms
         signature,
         agreedToTerms,
+        agreedToPrivacyPolicy,
+        ageVerified,
       };
       const { token, user } = await authApi.register(body);
       onComplete(token, user);
@@ -426,205 +430,228 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
 
   // Step 3: User Agreement
   if (step === 3) {
+    const canContinue = agreedToTerms && agreedToPrivacyPolicy && ageVerified && signature.trim().length > 0;
     return (
       <div className="h-full overflow-y-auto bg-slate-50">
         {/* Header */}
         <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-3">
-          <button 
-            onClick={handleBack}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors -ml-2"
-          >
+          <button onClick={handleBack} className="p-2 hover:bg-slate-100 rounded-full transition-colors -ml-2">
             <ArrowLeft className="w-5 h-5 text-slate-700" />
           </button>
-          <h2 className="text-slate-900">User Agreement</h2>
+          <h2 className="text-slate-900">Legal Agreements</h2>
         </div>
 
-        {/* Progress Indicator */}
+        {/* Progress */}
         <div className="bg-white px-6 py-3 border-b border-slate-200">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-            <div className="w-12 h-1 bg-blue-600 rounded"></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-            <div className="w-12 h-1 bg-blue-600 rounded"></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-            <div className="w-12 h-1 bg-slate-300 rounded"></div>
-            <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full" />
+            <div className="w-12 h-1 bg-blue-600 rounded" />
+            <div className="w-2 h-2 bg-blue-600 rounded-full" />
+            <div className="w-12 h-1 bg-blue-600 rounded" />
+            <div className="w-2 h-2 bg-blue-600 rounded-full" />
+            <div className="w-12 h-1 bg-slate-300 rounded" />
+            <div className="w-2 h-2 bg-slate-300 rounded-full" />
           </div>
           <p className="text-center text-xs text-slate-600 mt-2">Step 3 of 4</p>
         </div>
 
         <div className="p-6">
-          <div className="max-w-md mx-auto">
-            {/* Info Section */}
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-4 mb-6">
-              <div className="flex gap-3">
-                <div className="flex-shrink-0">
-                  <Shield className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="text-slate-900 font-semibold mb-1">LinkUp Athletics User Agreement</h4>
-                  <p className="text-sm text-slate-600 leading-relaxed">
-                    Please read and acknowledge the following terms before continuing.
-                  </p>
-                </div>
-              </div>
+          <div className="max-w-md mx-auto space-y-4">
+
+            {/* Tab switcher */}
+            <div className="bg-slate-200 rounded-xl p-1 flex">
+              <button
+                onClick={() => setAgreementTab('terms')}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${agreementTab === 'terms' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+              >
+                Terms of Service {agreedToTerms && <span className="text-emerald-600 ml-1">✓</span>}
+              </button>
+              <button
+                onClick={() => setAgreementTab('privacy')}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${agreementTab === 'privacy' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}
+              >
+                Privacy Policy {agreedToPrivacyPolicy && <span className="text-emerald-600 ml-1">✓</span>}
+              </button>
             </div>
 
-            {/* Agreement Content */}
-            <div className="bg-white rounded-2xl border-2 border-slate-200 mb-6 overflow-hidden">
-              <div className="bg-slate-100 px-4 py-3 border-b border-slate-200">
-                <h3 className="text-slate-900 font-semibold">Terms & Conditions</h3>
-              </div>
-              
-              <div className="p-4 max-h-80 overflow-y-auto space-y-4 text-sm text-slate-700 leading-relaxed">
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-2">1. Purpose of Service</h4>
-                  <p>
-                    LinkUp Athletics is a platform designed to roster athletes with practice partners and coaches. 
-                    The service facilitates team building for training purposes only and does not process any monetary transactions.
-                  </p>
+            {/* Terms of Service */}
+            {agreementTab === 'terms' && (
+              <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden">
+                <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-slate-700" />
+                  <h3 className="text-slate-900 font-semibold text-sm">Terms of Service</h3>
                 </div>
-
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-2">2. User Conduct</h4>
-                  <p className="mb-2">By using LinkUp Athletics, you agree to:</p>
-                  <ul className="list-disc list-inside space-y-1 ml-2">
-                    <li>Provide accurate and truthful information about yourself</li>
-                    <li>Maintain respectful communication with all users</li>
-                    <li>Honor commitments made through the platform</li>
-                    <li>Report any inappropriate behavior or safety concerns</li>
-                    <li>Not use the platform for unauthorized commercial purposes</li>
-                  </ul>
+                <div className="p-4 max-h-64 overflow-y-auto space-y-3 text-sm text-slate-700 leading-relaxed">
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">1. Acceptance</h4>
+                    <p>By creating an account, you agree to these Terms. If you do not agree, do not use LinkUp Athletics.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">2. Eligibility</h4>
+                    <p>You must be at least 18 years old to use this platform. By registering, you confirm you meet this requirement.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">3. Accurate Information</h4>
+                    <p>You agree to provide truthful, accurate information about yourself, including your athletic background, identity, and credentials. Misrepresentation may result in immediate account termination.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">4. Prohibited Conduct</h4>
+                    <p className="mb-1">You agree NOT to:</p>
+                    <ul className="list-disc list-inside space-y-1 ml-2 text-slate-600">
+                      <li>Harass, threaten, or harm other users</li>
+                      <li>Send unsolicited sexual or offensive content</li>
+                      <li>Impersonate another person or create false profiles</li>
+                      <li>Use the platform for solicitation, spam, or scams</li>
+                      <li>Attempt to circumvent safety or privacy features</li>
+                      <li>Share another user's personal information without consent</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">5. In-Person Meetings</h4>
+                    <p>LinkUp Athletics facilitates introductions only. We do not verify user identities, conduct background checks, or supervise in-person sessions. You are solely responsible for your safety when meeting other users. Always meet in public locations and inform someone of your plans.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">6. No Background Checks</h4>
+                    <p>LinkUp Athletics does not perform criminal background checks on users. You acknowledge this and accept full responsibility for exercising personal judgment and caution.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">7. Limitation of Liability</h4>
+                    <p>LinkUp Athletics is not liable for any injuries, losses, or damages resulting from use of the platform or meetings arranged through it. Your use of this platform is at your own risk.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">8. Payments</h4>
+                    <p>All financial arrangements between users occur outside the platform. LinkUp Athletics does not process payments and bears no responsibility for payment disputes.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">9. Termination</h4>
+                    <p>We reserve the right to suspend or terminate any account that violates these Terms, endangers other users, or engages in fraudulent activity, at our sole discretion.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">10. Governing Law</h4>
+                    <p>These Terms are governed by the laws of the State of Maryland. Any disputes will be resolved in the courts of Maryland.</p>
+                  </div>
                 </div>
-
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-2">3. Safety & Liability</h4>
-                  <p>
-                    Users acknowledge that all athletic activities carry inherent risks. LinkUp Athletics is not responsible 
-                    for any injuries, damages, or losses that may occur during practice sessions or meetings arranged through 
-                    the platform. Users are solely responsible for their own safety and should take appropriate precautions.
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-2">4. Privacy & Data</h4>
-                  <p>
-                    Your personal information will be protected according to our Privacy Policy. We will never share 
-                    your contact information or personal details with third parties without your consent. Profile information 
-                    you choose to share will be visible to other users based on your privacy settings.
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-2">5. Payment Arrangements</h4>
-                  <p>
-                    While coaches may advertise their services and rates, all payment arrangements must be made directly 
-                    between users outside of the LinkUp Athletics platform. We do not process, facilitate, or take 
-                    responsibility for any financial transactions.
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-2">6. Account Termination</h4>
-                  <p>
-                    LinkUp Athletics reserves the right to suspend or terminate accounts that violate these terms, 
-                    engage in fraudulent activity, or pose safety concerns to other users.
-                  </p>
-                </div>
-
-                <div>
-                  <h4 className="font-semibold text-slate-900 mb-2">7. Age Requirement</h4>
-                  <p>
-                    Users must be at least 13 years old to use LinkUp Athletics. Users under 18 should have parental 
-                    consent and supervision when arranging and attending practice sessions.
-                  </p>
+                <div className="px-4 py-3 border-t border-slate-200">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)}
+                      className="w-5 h-5 mt-0.5 flex-shrink-0 accent-blue-600 cursor-pointer" />
+                    <p className="text-sm text-slate-900">I have read and agree to the Terms of Service</p>
+                  </label>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Acknowledgment Checkbox */}
-            <div className="bg-white rounded-2xl border-2 border-slate-200 p-4 mb-4">
+            {/* Privacy Policy */}
+            {agreementTab === 'privacy' && (
+              <div className="bg-white rounded-2xl border-2 border-slate-200 overflow-hidden">
+                <div className="bg-slate-100 px-4 py-3 border-b border-slate-200 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-slate-700" />
+                  <h3 className="text-slate-900 font-semibold text-sm">Privacy Policy</h3>
+                </div>
+                <div className="p-4 max-h-64 overflow-y-auto space-y-3 text-sm text-slate-700 leading-relaxed">
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">Information We Collect</h4>
+                    <p>We collect information you provide directly: name, email, phone number, location, profile photo, athletic background, and messages sent through the platform.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">How We Use Your Information</h4>
+                    <ul className="list-disc list-inside space-y-1 ml-2 text-slate-600">
+                      <li>To display your profile to other users based on your privacy settings</li>
+                      <li>To facilitate connections and messaging between users</li>
+                      <li>To send notifications about activity on your account</li>
+                      <li>To improve the platform and fix issues</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">What We Do NOT Do</h4>
+                    <ul className="list-disc list-inside space-y-1 ml-2 text-slate-600">
+                      <li>We do not sell your personal information to third parties</li>
+                      <li>We do not share your contact information without your consent</li>
+                      <li>We do not use your data for advertising purposes</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">Profile Visibility</h4>
+                    <p>Information on your profile (name, sport, position, photo, bio) is visible to other users according to the privacy settings you choose. You can update these settings at any time.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">Messages</h4>
+                    <p>Messages you send through the platform are stored on our servers. We may review messages if needed to investigate reports of abuse or violations.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">Data Retention</h4>
+                    <p>Your data is retained as long as your account is active. You may request account deletion by contacting us at kelly@linkupathlethics.com. Upon deletion, your personal data will be removed within 30 days.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">Security</h4>
+                    <p>We use industry-standard security practices including encrypted passwords and secure connections. However, no platform is 100% secure and we cannot guarantee absolute security.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">Contact</h4>
+                    <p>Questions about your privacy? Email kelly@linkupathlethics.com.</p>
+                  </div>
+                </div>
+                <div className="px-4 py-3 border-t border-slate-200">
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" checked={agreedToPrivacyPolicy} onChange={(e) => setAgreedToPrivacyPolicy(e.target.checked)}
+                      className="w-5 h-5 mt-0.5 flex-shrink-0 accent-blue-600 cursor-pointer" />
+                    <p className="text-sm text-slate-900">I have read and agree to the Privacy Policy</p>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Age verification */}
+            <div className={`bg-white rounded-2xl border-2 p-4 transition-colors ${ageVerified ? 'border-emerald-400' : 'border-slate-200'}`}>
               <label className="flex items-start gap-3 cursor-pointer">
-                <div className="relative flex-shrink-0 mt-1">
-                  <input
-                    type="checkbox"
-                    checked={acknowledged}
-                    onChange={(e) => setAcknowledged(e.target.checked)}
-                    className="w-5 h-5 border-2 border-slate-300 rounded bg-white checked:bg-blue-600 checked:border-blue-600 cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-900">
-                    I have read and understand the User Agreement, including all terms regarding safety, liability, and proper use of the platform.
-                  </p>
-                </div>
+                <input type="checkbox" checked={ageVerified} onChange={(e) => setAgeVerified(e.target.checked)}
+                  className="w-5 h-5 mt-0.5 flex-shrink-0 accent-emerald-600 cursor-pointer" />
+                <p className="text-sm text-slate-900 font-medium">I confirm that I am 18 years of age or older</p>
               </label>
             </div>
 
-            {/* Terms Agreement Checkbox */}
-            <div className="bg-white rounded-2xl border-2 border-slate-200 p-4 mb-6">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <div className="relative flex-shrink-0 mt-1">
-                  <input
-                    type="checkbox"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="w-5 h-5 border-2 border-slate-300 rounded bg-white checked:bg-blue-600 checked:border-blue-600 cursor-pointer"
-                  />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-900">
-                    I agree to abide by these terms and conditions while using LinkUp Athletics.
-                  </p>
-                </div>
-              </label>
-            </div>
-
-            {/* Signature Section */}
-            <div className="bg-white rounded-2xl border-2 border-slate-200 p-4 mb-6">
-              <label className="text-sm text-slate-700 mb-3 block font-semibold flex items-center gap-2">
+            {/* Electronic signature */}
+            <div className="bg-white rounded-2xl border-2 border-slate-200 p-4">
+              <label className="text-sm text-slate-700 mb-2 block font-semibold flex items-center gap-2">
                 <FileCheck className="w-4 h-4" />
                 Electronic Signature
               </label>
-              <p className="text-xs text-slate-600 mb-3">
-                By typing your full name below, you are providing your electronic signature to this agreement.
-              </p>
+              <p className="text-xs text-slate-500 mb-3">Type your full legal name to sign all agreements above.</p>
               <input
                 type="text"
                 value={signature}
                 onChange={(e) => setSignature(e.target.value)}
-                placeholder="Type your full name"
+                placeholder="Your full legal name"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors font-serif text-lg"
               />
               {signature && (
-                <div className="mt-3 pt-3 border-t border-slate-200">
-                  <p className="text-xs text-slate-500">
-                    Signed on: {new Date().toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
-                    })}
-                  </p>
-                </div>
+                <p className="text-xs text-slate-400 mt-2">
+                  Signed: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
               )}
             </div>
 
-            {/* Legal Note */}
-            <div className="bg-slate-100 rounded-xl p-4 mb-6">
-              <p className="text-xs text-slate-600 leading-relaxed">
-                <strong className="text-slate-900">Legal Notice:</strong> This electronic signature has the same legal effect as a handwritten signature. 
-                By continuing, you acknowledge that you have read, understood, and agreed to all terms outlined in this User Agreement.
-              </p>
+            {/* Completion checklist */}
+            <div className="bg-slate-50 rounded-xl border border-slate-200 p-3 space-y-1.5">
+              {[
+                { done: agreedToTerms, label: 'Agreed to Terms of Service' },
+                { done: agreedToPrivacyPolicy, label: 'Agreed to Privacy Policy' },
+                { done: ageVerified, label: 'Age confirmed (18+)' },
+                { done: signature.trim().length > 0, label: 'Electronic signature provided' },
+              ].map(({ done, label }) => (
+                <div key={label} className="flex items-center gap-2">
+                  <span className={`text-sm ${done ? 'text-emerald-600' : 'text-slate-400'}`}>{done ? '✓' : '○'}</span>
+                  <span className={`text-xs ${done ? 'text-slate-700' : 'text-slate-400'}`}>{label}</span>
+                </div>
+              ))}
             </div>
 
-            {/* Continue Button */}
-            <button 
+            <button
               onClick={handleNext}
-              disabled={!acknowledged || !agreedToTerms || !signature.trim()}
+              disabled={!canContinue}
               className={`w-full py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] ${
-                acknowledged && agreedToTerms && signature.trim()
-                  ? 'bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-blue-600/20 hover:shadow-xl'
+                canContinue
+                  ? 'bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-blue-600/20'
                   : 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
               }`}
             >

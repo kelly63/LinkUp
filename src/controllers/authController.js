@@ -41,6 +41,8 @@ const register = async (req, res) => {
       // Agreement
       signature,
       agreedToTerms,
+      agreedToPrivacyPolicy,
+      ageVerified,
     } = req.body;
 
     const displayName = fullName || name;
@@ -78,10 +80,10 @@ const register = async (req, res) => {
     if (allowCoaches != null) userData.allowCoaches = allowCoaches;
     if (searchRadius) userData.searchRadius = Number(searchRadius);
     if (signature) userData.signature = signature;
-    if (agreedToTerms) {
-      userData.agreedToTerms = true;
-      userData.agreedAt = new Date();
-    }
+    if (agreedToTerms) userData.agreedToTerms = true;
+    if (agreedToPrivacyPolicy) userData.agreedToPrivacyPolicy = true;
+    if (ageVerified) userData.ageVerified = true;
+    if (agreedToTerms || agreedToPrivacyPolicy) userData.agreedAt = new Date();
 
     const user = await User.create(userData);
     const token = generateToken(user._id);
