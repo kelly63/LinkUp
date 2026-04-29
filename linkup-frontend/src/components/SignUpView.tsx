@@ -528,7 +528,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                   </div>
                   <div>
                     <h4 className="font-semibold text-slate-900 mb-1">10. Governing Law</h4>
-                    <p>These Terms are governed by the laws of the State of Maryland. Any disputes will be resolved in the courts of Maryland.</p>
+                    <p>These Terms are governed by the laws of the State of New York. Any disputes will be resolved in the courts of New York.</p>
                   </div>
                 </div>
                 <div className="px-4 py-3 border-t border-slate-200">
