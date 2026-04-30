@@ -219,9 +219,9 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadFile = async (file: File, skipCompress = false) => {
+  const uploadFile = async (file: File) => {
     if (!token) return;
-    if (!skipCompress) file = await compressImage(file);
+    file = await compressImage(file);
     const previewUrl = URL.createObjectURL(file);
     setProfileImage(previewUrl);
     setUploadingAvatar(true);
@@ -243,18 +243,18 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     if (Capacitor.isNativePlatform()) {
       try {
         const photo = await CapCamera.getPhoto({
-          quality: 70,
+          quality: 40,
           resultType: CameraResultType.DataUrl,
           source: CameraSource.Prompt,
-          width: 600,
-          height: 600,
+          width: 400,
+          height: 400,
           correctOrientation: true,
         });
         if (!photo.dataUrl) return;
         const res = await fetch(photo.dataUrl);
         const blob = await res.blob();
         const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
-        await uploadFile(file, true); // Capacitor already compressed it
+        await uploadFile(file);
       } catch (err: any) {
         if (err?.message !== 'User cancelled photos app') {
           toast.error('Could not access camera');
