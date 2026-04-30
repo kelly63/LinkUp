@@ -34,7 +34,7 @@ function compressImage(file: File, maxDim = 800, quality = 0.75): Promise<File> 
   });
 }
 
-({ icon, bg, label, value, placeholder }: { icon: ReactNode; bg: string; label: string; value: string; placeholder: string }) {
+function LinkRow({ icon, bg, label, value, placeholder }: { icon: ReactNode; bg: string; label: string; value: string; placeholder: string }) {
   if (!value) {
     return (
       <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-dashed border-slate-200 text-slate-400">
