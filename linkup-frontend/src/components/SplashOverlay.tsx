@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
-import { SplashScreen } from '@capacitor/splash-screen';
 
 interface SplashOverlayProps {
   onDone: () => void;
@@ -11,11 +10,6 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
-    // Hide the native splash now that our web overlay is rendered
-    if (Capacitor.isNativePlatform()) {
-      SplashScreen.hide({ fadeOutDuration: 200 });
-    }
-
     const showTimer = setTimeout(() => {
       setFading(true);
     }, 1800);
