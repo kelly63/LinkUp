@@ -142,6 +142,16 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Identity verification
+    verificationStatus: {
+      type: String,
+      enum: ['unsubmitted', 'pending', 'approved', 'rejected'],
+      default: 'unsubmitted',
+    },
+    verificationRosterUrl: { type: String, default: '' },
+    verificationNote: { type: String, default: '' },
+    verifiedAt: { type: Date, default: null },
+
     // Social links
     hudlUrl: { type: String, default: '' },
     instagramUrl: { type: String, default: '' },

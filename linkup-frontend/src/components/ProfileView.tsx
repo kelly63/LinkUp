@@ -366,12 +366,28 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 </div>
               </div>
               
-              {/* Roster Verification Note */}
-              <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-                <p className="text-xs text-emerald-800">
-                  <span className="font-semibold">✓ Verified:</span> Confirmed roster member for both sports
-                </p>
-              </div>
+              {/* Verification Badge — driven by user.verificationStatus */}
+              {user?.verificationStatus === 'approved' && (
+                <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                  <p className="text-xs text-emerald-800">
+                    <span className="font-semibold">✓ Verified Athlete:</span> Identity confirmed by LinkUp Athletics
+                  </p>
+                </div>
+              )}
+              {user?.verificationStatus === 'pending' && (
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                  <p className="text-xs text-amber-800">
+                    <span className="font-semibold">⏳ Verification Pending:</span> We're reviewing your credentials
+                  </p>
+                </div>
+              )}
+              {user?.verificationStatus === 'rejected' && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-xs text-red-800">
+                    <span className="font-semibold">Verification Not Approved.</span> Contact kelly@linkupathlethics.com for help.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
