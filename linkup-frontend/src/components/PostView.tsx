@@ -36,7 +36,7 @@ interface PostViewProps {
 
 export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }: PostViewProps) {
   const { token, user } = useAuth();
-  const [viewMode, setViewMode] = useState<'post' | 'find'>('post');
+  const [viewMode, setViewMode] = useState<'post' | 'find'>('find');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSkillLevels, setSelectedSkillLevels] = useState<string[]>([]);
   const [selectedSport, setSelectedSport] = useState(userSports.length > 0 ? userSports[0] : 'Baseball');
