@@ -24,6 +24,11 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
   const [agreedToPrivacyPolicy, setAgreedToPrivacyPolicy] = useState(false);
   const [ageVerified, setAgeVerified] = useState(false);
   const [agreementTab, setAgreementTab] = useState<'terms' | 'privacy'>('terms');
+
+  // Verification state (Step 5)
+  const [verificationOption, setVerificationOption] = useState<'roster' | 'other' | null>(null);
+  const [verificationRosterUrl, setVerificationRosterUrl] = useState('');
+  const [verificationNote, setVerificationNote] = useState('');
   
   // Form state
   const [formData, setFormData] = useState({
@@ -198,6 +203,9 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         agreedToTerms,
         agreedToPrivacyPolicy,
         ageVerified,
+        // Verification
+        verificationRosterUrl: verificationRosterUrl.trim(),
+        verificationNote: verificationNote.trim(),
       };
       const { token, user } = await authApi.register(body);
       onComplete(token, user);
@@ -320,7 +328,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div className="w-12 h-1 bg-slate-300 rounded"></div>
             <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
           </div>
-          <p className="text-center text-xs text-slate-600 mt-2">Step 2 of 4</p>
+          <p className="text-center text-xs text-slate-600 mt-2">Step 2 of 6</p>
         </div>
 
         <div className="p-6">
@@ -452,7 +460,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div className="w-12 h-1 bg-slate-300 rounded" />
             <div className="w-2 h-2 bg-slate-300 rounded-full" />
           </div>
-          <p className="text-center text-xs text-slate-600 mt-2">Step 3 of 4</p>
+          <p className="text-center text-xs text-slate-600 mt-2">Step 3 of 6</p>
         </div>
 
         <div className="p-6">
@@ -687,7 +695,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div className="w-16 h-1 bg-blue-600 rounded"></div>
             <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
           </div>
-          <p className="text-center text-xs text-slate-600 mt-2">Step 4 of 5</p>
+          <p className="text-center text-xs text-slate-600 mt-2">Step 4 of 6</p>
         </div>
 
         <div className="p-6">
@@ -830,8 +838,140 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     );
   }
 
-  // Step 5: Privacy & Visibility Settings
+  // Step 5: Identity Verification
   if (step === 5) {
+    const canContinue =
+      verificationOption === 'roster'
+        ? verificationRosterUrl.trim().length > 0
+        : verificationOption === 'other'
+        ? verificationNote.trim().length > 0
+        : false;
+
+    return (
+      <div className="h-full overflow-y-auto bg-slate-50">
+        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-3">
+          <button onClick={handleBack} className="p-2 hover:bg-slate-100 rounded-full transition-colors -ml-2">
+            <ArrowLeft className="w-5 h-5 text-slate-700" />
+          </button>
+          <h2 className="text-slate-900">Verify Your Identity</h2>
+        </div>
+
+        <div className="bg-white px-6 py-3 border-b border-slate-200">
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-2 h-2 bg-blue-600 rounded-full" />
+            <div className="w-10 h-1 bg-blue-600 rounded" />
+            <div className="w-2 h-2 bg-blue-600 rounded-full" />
+            <div className="w-10 h-1 bg-blue-600 rounded" />
+            <div className="w-2 h-2 bg-blue-600 rounded-full" />
+            <div className="w-10 h-1 bg-blue-600 rounded" />
+            <div className="w-2 h-2 bg-blue-600 rounded-full" />
+            <div className="w-10 h-1 bg-slate-300 rounded" />
+            <div className="w-2 h-2 bg-slate-300 rounded-full" />
+          </div>
+          <p className="text-center text-xs text-slate-600 mt-2">Step 5 of 6</p>
+        </div>
+
+        <div className="p-6">
+          <div className="max-w-md mx-auto space-y-4">
+            <div className="text-center mb-2">
+              <div className="w-16 h-16 bg-emerald-100 rounded-full mx-auto flex items-center justify-center mb-3">
+                <Shield className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h3 className="text-slate-900 font-semibold mb-1">Prove You're an Athlete</h3>
+              <p className="text-sm text-slate-600">
+                Verified athletes earn a badge on their profile. An admin will review your submission within a few days.
+              </p>
+            </div>
+
+            {/* Option 1: Roster URL */}
+            <div
+              onClick={() => setVerificationOption('roster')}
+              className={`bg-white rounded-2xl border-2 p-4 cursor-pointer transition-all ${
+                verificationOption === 'roster' ? 'border-blue-500 bg-blue-50' : 'border-slate-200'
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-1">
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  verificationOption === 'roster' ? 'border-blue-600' : 'border-slate-300'
+                }`}>
+                  {verificationOption === 'roster' && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />}
+                </div>
+                <span className="text-sm font-semibold text-slate-900">I have a college or team roster page</span>
+              </div>
+              {verificationOption === 'roster' && (
+                <div className="mt-3 ml-8">
+                  <input
+                    type="url"
+                    value={verificationRosterUrl}
+                    onChange={(e) => setVerificationRosterUrl(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    placeholder="https://goterps.com/roster/player123"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors text-sm"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Option 2: Free text */}
+            <div
+              onClick={() => setVerificationOption('other')}
+              className={`bg-white rounded-2xl border-2 p-4 cursor-pointer transition-all ${
+                verificationOption === 'other' ? 'border-blue-500 bg-blue-50' : 'border-slate-200'
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-1">
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                  verificationOption === 'other' ? 'border-blue-600' : 'border-slate-300'
+                }`}>
+                  {verificationOption === 'other' && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />}
+                </div>
+                <span className="text-sm font-semibold text-slate-900">Other — describe your credentials</span>
+              </div>
+              {verificationOption === 'other' && (
+                <div className="mt-3 ml-8">
+                  <textarea
+                    value={verificationNote}
+                    onChange={(e) => setVerificationNote(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                    placeholder="e.g., I played D1 soccer at University of Maryland (2019–2023). You can verify at goterps.com/soccer."
+                    rows={4}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors text-sm resize-none"
+                  />
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleNext}
+              disabled={!canContinue}
+              className={`w-full py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] ${
+                canContinue
+                  ? 'bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-blue-600/20'
+                  : 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+              }`}
+            >
+              Submit for Review &amp; Continue
+            </button>
+
+            <button
+              onClick={() => {
+                setVerificationRosterUrl('');
+                setVerificationNote('');
+                setVerificationOption(null);
+                handleNext();
+              }}
+              className="w-full text-center text-sm text-slate-500 hover:text-slate-700 py-2"
+            >
+              Skip for now — I'll verify later
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 6: Privacy & Visibility Settings
+  if (step === 6) {
     return (
       <div className="h-full overflow-y-auto bg-slate-50">
         {/* Header */}

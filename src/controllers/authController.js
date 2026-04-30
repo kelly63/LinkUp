@@ -1,8 +1,11 @@
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
+const { sendVerificationEmail } = require('../utils/email');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'linkup-admin-secret';
+const APP_URL = process.env.APP_URL || 'http://localhost:5000';
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -46,6 +49,9 @@ const register = async (req, res) => {
       agreedToTerms,
       agreedToPrivacyPolicy,
       ageVerified,
+      // Verification
+      verificationRosterUrl,
+      verificationNote,
     } = req.body;
 
     const displayName = fullName || name;
@@ -87,9 +93,23 @@ const register = async (req, res) => {
     if (agreedToPrivacyPolicy) userData.agreedToPrivacyPolicy = true;
     if (ageVerified) userData.ageVerified = true;
     if (agreedToTerms || agreedToPrivacyPolicy) userData.agreedAt = new Date();
+    if (verificationRosterUrl) userData.verificationRosterUrl = verificationRosterUrl;
+    if (verificationNote) userData.verificationNote = verificationNote;
+    if (verificationRosterUrl || verificationNote) userData.verificationStatus = 'pending';
 
     const user = await User.create(userData);
     const token = generateToken(user._id);
+
+    if (verificationRosterUrl || verificationNote) {
+      const userIdStr = user._id.toString();
+      const approveToken = jwt.sign({ userId: userIdStr, action: 'approve' }, ADMIN_SECRET, { expiresIn: '7d' });
+      const rejectToken  = jwt.sign({ userId: userIdStr, action: 'reject'  }, ADMIN_SECRET, { expiresIn: '7d' });
+      const approveUrl = `${APP_URL}/api/admin/verify/${userIdStr}/approve?token=${approveToken}`;
+      const rejectUrl  = `${APP_URL}/api/admin/verify/${userIdStr}/reject?token=${rejectToken}`;
+      sendVerificationEmail({ user, approveUrl, rejectUrl }).catch((err) =>
+        console.error('[verification email]', err.message)
+      );
+    }
 
     res.status(201).json({ token, user: user.toPublicJSON() });
   } catch (error) {
