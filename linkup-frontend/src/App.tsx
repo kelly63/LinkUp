@@ -1,13 +1,17 @@
 import { MobileFrame } from './components/MobileFrame';
+import { SplashOverlay } from './components/SplashOverlay';
 import { AuthProvider } from './lib/auth';
 import { Toaster } from './components/ui/sonner';
 import { Capacitor } from '@capacitor/core';
+import { useState } from 'react';
 
 export default function App() {
   const isNative = Capacitor.isNativePlatform();
+  const [splashDone, setSplashDone] = useState(false);
 
   return (
     <AuthProvider>
+      {!splashDone && <SplashOverlay onDone={() => setSplashDone(true)} />}
       {isNative ? (
         <MobileFrame />
       ) : (
