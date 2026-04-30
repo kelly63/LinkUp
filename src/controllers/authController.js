@@ -44,6 +44,7 @@ const register = async (req, res) => {
       allowedSports,
       allowCoaches,
       searchRadius,
+      searchNorthAmerica,
       // Agreement
       signature,
       agreedToTerms,
@@ -88,6 +89,7 @@ const register = async (req, res) => {
     if (allowedSports) userData.allowedSports = allowedSports;
     if (allowCoaches != null) userData.allowCoaches = allowCoaches;
     if (searchRadius) userData.searchRadius = Number(searchRadius);
+    if (searchNorthAmerica != null) userData.searchNorthAmerica = searchNorthAmerica;
     if (signature) userData.signature = signature;
     if (agreedToTerms) userData.agreedToTerms = true;
     if (agreedToPrivacyPolicy) userData.agreedToPrivacyPolicy = true;

@@ -97,7 +97,7 @@ const updateProfile = async (req, res) => {
       // Coach fields
       'sportsCoached', 'yearsExperience', 'certifications', 'coachingPhilosophy', 'hourlyRate',
       // Privacy
-      'visibilityMode', 'allowedLevels', 'allowedSports', 'allowCoaches', 'searchRadius',
+      'visibilityMode', 'allowedLevels', 'allowedSports', 'allowCoaches', 'searchRadius', 'searchNorthAmerica',
       // Social links
       'hudlUrl', 'instagramUrl', 'twitterUrl', 'linkedinUrl', 'rosterUrl',
       // Legal agreement (for Google sign-up flow)

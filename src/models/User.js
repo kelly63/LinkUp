@@ -119,6 +119,10 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 25,
     },
+    searchNorthAmerica: {
+      type: Boolean,
+      default: true,
+    },
 
     // Agreement
     signature: {

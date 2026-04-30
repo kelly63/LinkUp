@@ -54,6 +54,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     allowedSports: [] as string[],
     allowCoaches: true,
     searchRadius: '25',
+    searchNorthAmerica: true,
   });
 
   const availableSports = [
@@ -197,6 +198,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         allowedLevels: formData.allowedLevels,
         allowedSports: formData.allowedSports,
         allowCoaches: formData.allowCoaches,
+        searchNorthAmerica: formData.searchNorthAmerica,
         searchRadius: Number(formData.searchRadius),
         // Terms
         signature,
@@ -1131,30 +1133,48 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               </>
             )}
 
-            {/* Search Radius */}
+            {/* Search Area */}
             <div className="bg-white rounded-2xl p-4 border-2 border-slate-200">
               <div className="flex items-center gap-2 mb-3">
                 <Map className="w-4 h-4 text-slate-700" />
-                <label className="text-sm text-slate-700 font-semibold">Search Radius</label>
+                <label className="text-sm text-slate-700 font-semibold">Search Area</label>
               </div>
-              <div className="flex items-center gap-3">
+
+              {/* North America toggle */}
+              <label className="flex items-start gap-3 cursor-pointer mb-3">
                 <input
-                  type="range"
-                  min="5"
-                  max="100"
-                  step="5"
-                  value={formData.searchRadius}
-                  onChange={(e) => setFormData({ ...formData, searchRadius: e.target.value })}
-                  className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  type="checkbox"
+                  checked={formData.searchNorthAmerica}
+                  onChange={(e) => setFormData({ ...formData, searchNorthAmerica: e.target.checked })}
+                  className="w-5 h-5 mt-0.5 flex-shrink-0 accent-blue-600 cursor-pointer"
                 />
-                <div className="w-14 text-right">
-                  <span className="text-lg font-semibold text-slate-900">{formData.searchRadius}</span>
-                  <span className="text-sm text-slate-500 ml-0.5">mi</span>
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Search throughout all of North America</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Athletes anywhere in North America can find your profile</p>
                 </div>
-              </div>
-              <p className="text-xs text-slate-600 mt-2">
-                Maximum distance for profile visibility
-              </p>
+              </label>
+
+              {/* Radius slider — only when North America is off */}
+              {!formData.searchNorthAmerica && (
+                <div className="pt-3 border-t border-slate-100 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min="5"
+                      max="100"
+                      step="5"
+                      value={formData.searchRadius}
+                      onChange={(e) => setFormData({ ...formData, searchRadius: e.target.value })}
+                      className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    />
+                    <div className="w-14 text-right">
+                      <span className="text-lg font-semibold text-slate-900">{formData.searchRadius}</span>
+                      <span className="text-sm text-slate-500 ml-0.5">mi</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-600">Maximum distance for profile visibility</p>
+                </div>
+              )}
             </div>
 
             {/* Info Note */}

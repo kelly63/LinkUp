@@ -17,6 +17,9 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
   const [allowedLevels, setAllowedLevels] = useState<string[]>(user?.allowedLevels || []);
   const [allowedSports, setAllowedSports] = useState<string[]>(user?.allowedSports || []);
   const [searchRadius, setSearchRadius] = useState(String(user?.searchRadius || 25));
+  const [searchNorthAmerica, setSearchNorthAmerica] = useState<boolean>(
+    (user as any)?.searchNorthAmerica ?? true
+  );
   const [saving, setSaving] = useState(false);
 
   const skillLevels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro'];
@@ -46,6 +49,7 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
         visibilityMode,
         allowedLevels,
         allowedSports,
+        searchNorthAmerica,
         searchRadius: Number(searchRadius),
       } as any);
       toast.success('Preferences saved');
@@ -214,38 +218,57 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
             </div>
           )}
 
-          {/* Search Radius */}
+          {/* Search Area */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-teal-100 rounded-xl flex items-center justify-center">
                 <Map className="w-5 h-5 text-teal-900" />
               </div>
               <div className="flex-1">
-                <h3 className="font-medium text-slate-900">Search Radius</h3>
-                <p className="text-xs text-slate-500">Maximum distance for visibility</p>
+                <h3 className="font-medium text-slate-900">Search Area</h3>
+                <p className="text-xs text-slate-500">Where athletes can find you</p>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min="5"
-                  max="100"
-                  step="5"
-                  value={searchRadius}
-                  onChange={(e) => setSearchRadius(e.target.value)}
-                  className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600"
-                />
-                <div className="w-16 text-right">
-                  <span className="text-lg font-semibold text-slate-900">{searchRadius}</span>
-                  <span className="text-sm text-slate-500 ml-0.5">mi</span>
-                </div>
+            {/* North America toggle */}
+            <label className="flex items-start gap-3 cursor-pointer mb-4">
+              <input
+                type="checkbox"
+                checked={searchNorthAmerica}
+                onChange={(e) => setSearchNorthAmerica(e.target.checked)}
+                className="w-5 h-5 mt-0.5 flex-shrink-0 accent-teal-600 cursor-pointer"
+              />
+              <div>
+                <p className="text-sm font-medium text-slate-900">Search throughout all of North America</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Athletes anywhere in North America can find your profile
+                </p>
               </div>
-              <p className="text-xs text-slate-600">
-                Only athletes within {searchRadius} miles can see your profile
-              </p>
-            </div>
+            </label>
+
+            {/* Radius slider — only shown when North America is off */}
+            {!searchNorthAmerica && (
+              <div className="space-y-3 pt-3 border-t border-slate-100">
+                <div className="flex items-center gap-3">
+                  <input
+                    type="range"
+                    min="5"
+                    max="100"
+                    step="5"
+                    value={searchRadius}
+                    onChange={(e) => setSearchRadius(e.target.value)}
+                    className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-600"
+                  />
+                  <div className="w-16 text-right">
+                    <span className="text-lg font-semibold text-slate-900">{searchRadius}</span>
+                    <span className="text-sm text-slate-500 ml-0.5">mi</span>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-600">
+                  Only athletes within {searchRadius} miles can see your profile
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Save Button */}
