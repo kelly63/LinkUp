@@ -21,6 +21,7 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
   const [scannedUser, setScannedUser] = useState<{ name: string; sport: string; userId: string } | null>(null);
   const [searchLocation, setSearchLocation] = useState('');
   const [searchRadius, setSearchRadius] = useState(25);
+  const [searchNorthAmerica, setSearchNorthAmerica] = useState(true);
   const [showLocationSearch, setShowLocationSearch] = useState(false);
 
   const { token } = useAuth();
@@ -35,7 +36,7 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
         search: searchQuery || undefined,
         sport: selectedSport !== 'All Sports' ? selectedSport : undefined,
         skillLevel: selectedLevels.length > 0 ? selectedLevels[0] : undefined,
-        location: searchLocation || undefined,
+        location: (!searchNorthAmerica && searchLocation) ? searchLocation : undefined,
         limit: 20,
       });
       setAthletes(users);
@@ -44,7 +45,7 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
     } finally {
       setLoadingAthletes(false);
     }
-  }, [token, searchQuery, selectedSport, selectedLevels, searchLocation]);
+  }, [token, searchQuery, selectedSport, selectedLevels, searchLocation, searchNorthAmerica]);
 
   useEffect(() => {
     const t = setTimeout(fetchAthletes, 300);
@@ -143,7 +144,11 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
               <MapPin className="w-5 h-5 text-purple-700" />
               <div className="text-left">
                 <p className="text-xs text-purple-600 font-medium">Searching in</p>
-                <p className="text-sm text-purple-900 font-semibold">{searchLocation || 'Everywhere'} • {searchRadius} mi radius</p>
+                <p className="text-sm text-purple-900 font-semibold">
+                  {searchNorthAmerica
+                    ? 'All of North America'
+                    : `${searchLocation || 'Everywhere'} • ${searchRadius} mi radius`}
+                </p>
               </div>
             </div>
             {showLocationSearch ? (
@@ -156,41 +161,60 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
           {/* Expanded Location Search */}
           {showLocationSearch && (
             <div className="mt-2 p-4 bg-white border-2 border-purple-200 rounded-xl space-y-3">
-              <div>
-                <label className="text-xs text-slate-600 font-medium mb-1.5 block">Search Location</label>
-                <LocationAutocomplete
-                  value={searchLocation}
-                  onChange={setSearchLocation}
-                  placeholder="Enter city or address (e.g., Naples, FL)"
-                  className="text-sm py-2.5"
+              {/* North America toggle */}
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={searchNorthAmerica}
+                  onChange={(e) => setSearchNorthAmerica(e.target.checked)}
+                  className="w-5 h-5 mt-0.5 flex-shrink-0 accent-purple-600 cursor-pointer"
                 />
-                <p className="text-xs text-slate-500 mt-1.5">Perfect for finding partners when you travel</p>
-              </div>
-
-              <div>
-                <label className="text-xs text-slate-600 font-medium mb-1.5 block">Search Radius</label>
-                <div className="flex gap-2 flex-wrap">
-                  {[5, 10, 25, 50, 100].map((radius) => (
-                    <button
-                      key={radius}
-                      onClick={() => setSearchRadius(radius)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        searchRadius === radius
-                          ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-md border-2 border-purple-600'
-                          : 'bg-white text-slate-700 border-2 border-slate-300 hover:border-slate-400'
-                      }`}
-                    >
-                      {radius} mi
-                    </button>
-                  ))}
+                <div>
+                  <p className="text-sm font-medium text-slate-900">Search throughout all of North America</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Find athletes anywhere in North America</p>
                 </div>
-              </div>
+              </label>
+
+              {/* Location + radius — only when North America is off */}
+              {!searchNorthAmerica && (
+                <>
+                  <div className="pt-3 border-t border-slate-100">
+                    <label className="text-xs text-slate-600 font-medium mb-1.5 block">Search Location</label>
+                    <LocationAutocomplete
+                      value={searchLocation}
+                      onChange={setSearchLocation}
+                      placeholder="Enter city or address (e.g., Naples, FL)"
+                      className="text-sm py-2.5"
+                    />
+                    <p className="text-xs text-slate-500 mt-1.5">Perfect for finding partners when you travel</p>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-slate-600 font-medium mb-1.5 block">Search Radius</label>
+                    <div className="flex gap-2 flex-wrap">
+                      {[5, 10, 25, 50, 100].map((radius) => (
+                        <button
+                          key={radius}
+                          onClick={() => setSearchRadius(radius)}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            searchRadius === radius
+                              ? 'bg-gradient-to-br from-purple-600 to-purple-700 text-white shadow-md border-2 border-purple-600'
+                              : 'bg-white text-slate-700 border-2 border-slate-300 hover:border-slate-400'
+                          }`}
+                        >
+                          {radius} mi
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
 
               <button
                 onClick={() => setShowLocationSearch(false)}
                 className="w-full py-2.5 bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-lg font-medium transition-all shadow-sm"
               >
-                Apply Location
+                Apply
               </button>
             </div>
           )}
