@@ -72,4 +72,28 @@ router.get('/verify/:userId/reject', async (req, res) => {
   }
 });
 
+// POST /api/admin/reset-password
+// Body: { email, newPassword, adminSecret }
+router.post('/reset-password', async (req, res) => {
+  const { email, newPassword, adminSecret } = req.body;
+  if (!adminSecret || adminSecret !== ADMIN_SECRET) {
+    return res.status(401).json({ message: 'Invalid admin secret' });
+  }
+  if (!email || !newPassword) {
+    return res.status(400).json({ message: 'email and newPassword are required' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters' });
+  }
+  try {
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) return res.status(404).json({ message: `No user found with email: ${email}` });
+    user.password = newPassword;
+    await user.save();
+    res.json({ message: `Password reset for ${user.name} (${user.email})` });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 module.exports = router;
