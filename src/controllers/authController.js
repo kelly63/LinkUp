@@ -215,4 +215,30 @@ const googleAuth = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout, getMe, googleAuth };
+// POST /api/auth/change-password
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'currentPassword and newPassword are required' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    }
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user.password) {
+      return res.status(400).json({ message: 'This account uses Google sign-in — no password to change' });
+    }
+    const match = await user.comparePassword(currentPassword);
+    if (!match) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+    user.password = newPassword;
+    await user.save();
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = { register, login, logout, getMe, googleAuth, changePassword };

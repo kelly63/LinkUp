@@ -1,10 +1,10 @@
-import { Settings, Star, Award, Shield, Bell, LogOut, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera } from 'lucide-react';
+import { Settings, Star, Award, Shield, Bell, LogOut, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera, KeyRound, Eye, EyeOff } from 'lucide-react';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { usePushNotifications } from '../hooks/usePushNotifications';
-import { users as usersApi } from '../lib/api';
+import { users as usersApi, auth as authApi } from '../lib/api';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -65,6 +65,41 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const { supported: pushSupported, permission, subscribed, loading: pushLoading, enable: enablePush, disable: disablePush } = usePushNotifications(token);
 
   // Edit modal states
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [cpCurrentPw, setCpCurrentPw] = useState('');
+  const [cpNewPw, setCpNewPw] = useState('');
+  const [cpConfirmPw, setCpConfirmPw] = useState('');
+  const [cpShowCurrent, setCpShowCurrent] = useState(false);
+  const [cpShowNew, setCpShowNew] = useState(false);
+  const [cpSaving, setCpSaving] = useState(false);
+
+  const handleChangePassword = async () => {
+    if (!cpCurrentPw || !cpNewPw || !cpConfirmPw) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    if (cpNewPw !== cpConfirmPw) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (cpNewPw.length < 6) {
+      toast.error('New password must be at least 6 characters');
+      return;
+    }
+    if (!token) return;
+    setCpSaving(true);
+    try {
+      await authApi.changePassword(token, cpCurrentPw, cpNewPw);
+      toast.success('Password updated');
+      setShowChangePassword(false);
+      setCpCurrentPw(''); setCpNewPw(''); setCpConfirmPw('');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not update password');
+    } finally {
+      setCpSaving(false);
+    }
+  };
+
   const [showAthleteProfileEdit, setShowAthleteProfileEdit] = useState(false);
   const [showAboutMeEdit, setShowAboutMeEdit] = useState(false);
   const [showPhilosophyEdit, setShowPhilosophyEdit] = useState(false);
@@ -705,6 +740,21 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             )}
           </div>
 
+          {/* Change Password */}
+          <button
+            onClick={() => setShowChangePassword(true)}
+            className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors border-b border-slate-100"
+          >
+            <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <KeyRound className="w-5 h-5 text-amber-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <h4 className="text-slate-900">Change Password</h4>
+              <p className="text-sm text-slate-500">Update your account password</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-slate-400" />
+          </button>
+
           {/* Log Out */}
           <button className="w-full px-5 py-4 flex items-center gap-4 hover:bg-red-50 transition-colors" onClick={onLogout}>
             <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -720,7 +770,71 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
       </div>
 
       <div className="h-6"></div>
-      
+
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900">Change Password</h3>
+              <button onClick={() => { setShowChangePassword(false); setCpCurrentPw(''); setCpNewPw(''); setCpConfirmPw(''); }} className="text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              {/* Current password */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Current Password</label>
+                <div className="relative">
+                  <input
+                    type={cpShowCurrent ? 'text' : 'password'}
+                    value={cpCurrentPw}
+                    onChange={(e) => setCpCurrentPw(e.target.value)}
+                    placeholder="Enter current password"
+                    className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button type="button" onClick={() => setCpShowCurrent((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                    {cpShowCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              {/* New password */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
+                <div className="relative">
+                  <input
+                    type={cpShowNew ? 'text' : 'password'}
+                    value={cpNewPw}
+                    onChange={(e) => setCpNewPw(e.target.value)}
+                    placeholder="At least 6 characters"
+                    className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button type="button" onClick={() => setCpShowNew((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                    {cpShowNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              {/* Confirm new password */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  value={cpConfirmPw}
+                  onChange={(e) => setCpConfirmPw(e.target.value)}
+                  placeholder="Re-enter new password"
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+              <button
+                onClick={handleChangePassword}
+                disabled={cpSaving}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors disabled:opacity-60"
+              >
+                {cpSaving ? 'Updating…' : 'Update Password'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Athlete Profile Edit Modal */}
       {showAthleteProfileEdit && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">

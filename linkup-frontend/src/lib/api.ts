@@ -173,6 +173,12 @@ export const auth = {
       method: 'POST',
       body: JSON.stringify({ idToken }),
     }),
+
+  changePassword: (token: string, currentPassword: string, newPassword: string) =>
+    request<{ message: string }>('/api/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }, token),
 };
 
 // ─── Users ────────────────────────────────────────────────────────────────────
