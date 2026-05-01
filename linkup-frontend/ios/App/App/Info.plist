@@ -47,5 +47,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>LinkUp Athletics needs camera access to update your profile photo.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>LinkUp Athletics needs photo library access to update your profile photo.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>LinkUp Athletics needs permission to save photos.</string>
 </dict>
 </plist>
