@@ -242,6 +242,11 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     if (uploadingAvatar) return;
     if (Capacitor.isNativePlatform()) {
       try {
+        const perms = await CapCamera.requestPermissions({ permissions: ['camera', 'photos'] });
+        if (perms.camera === 'denied' && perms.photos === 'denied') {
+          toast.error('Please allow camera or photo access in iPhone Settings → LinkUp Athletics');
+          return;
+        }
         const photo = await CapCamera.getPhoto({
           quality: 40,
           resultType: CameraResultType.DataUrl,
