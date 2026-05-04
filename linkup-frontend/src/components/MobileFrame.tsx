@@ -8,6 +8,7 @@ import { useAuth } from '../lib/auth';
 import { useSocket, Notification } from '../hooks/useSocket';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { StoredNotification } from '../lib/api';
+import { ExpiredSessionsModal } from './ExpiredSessionsModal';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { toast } from 'sonner';
@@ -219,6 +220,8 @@ export function MobileFrame() {
         unreadCount={unreadCount}
         panelOpen={panelOpen}
       />
+
+      {isAuthenticated && <ExpiredSessionsModal />}
 
       {isAuthenticated && token && (
         <NotificationPanel

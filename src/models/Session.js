@@ -106,6 +106,13 @@ const sessionSchema = new mongoose.Schema(
       default: null,
     },
 
+    // Flexible date window (used when date === 'Flexible')
+    dateWindowStart: { type: Date, default: null },
+    dateWindowEnd: { type: Date, default: null },
+
+    // Computed expiry — when date is past and session should prompt repost/remove
+    expiresAt: { type: Date, default: null },
+
     // Type of session
     sessionType: {
       type: String,

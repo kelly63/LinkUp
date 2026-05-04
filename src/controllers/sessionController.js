@@ -51,6 +51,23 @@ const postSystemMessage = async (io, fromId, toId, text, sessionId = null) => {
 const USER_FIELDS = 'name avatar role sport position skillLevel sportsCoached averageRating ratingCount location';
 
 // POST /api/sessions — post a session need
+function computeExpiresAt(date, dateWindowStart, dateWindowEnd) {
+  if (date === 'Flexible') {
+    if (dateWindowEnd) {
+      const d = new Date(dateWindowEnd);
+      d.setDate(d.getDate() + 1);
+      return d;
+    }
+    return null;
+  }
+  const parsed = new Date(date);
+  if (!isNaN(parsed.getTime())) {
+    parsed.setDate(parsed.getDate() + 1);
+    return parsed;
+  }
+  return null;
+}
+
 const createSession = async (req, res) => {
   try {
     const {
@@ -71,10 +88,27 @@ const createSession = async (req, res) => {
       clinicTitle,
       maxParticipants,
       pricePerAthlete,
+      dateWindowStart,
+      dateWindowEnd,
     } = req.body;
 
     if (!sport || !date) {
       return res.status(400).json({ message: 'Sport and date are required' });
+    }
+
+    if (date === 'Flexible') {
+      if (!dateWindowStart || !dateWindowEnd) {
+        return res.status(400).json({ message: 'A date window (start and end) is required for flexible sessions' });
+      }
+      const start = new Date(dateWindowStart);
+      const end = new Date(dateWindowEnd);
+      const diffDays = (end - start) / (1000 * 60 * 60 * 24);
+      if (diffDays < 0) {
+        return res.status(400).json({ message: 'End date must be after start date' });
+      }
+      if (diffDays > 14) {
+        return res.status(400).json({ message: 'Date window cannot exceed two weeks' });
+      }
     }
 
     const session = await Session.create({
@@ -96,6 +130,9 @@ const createSession = async (req, res) => {
       clinicTitle,
       maxParticipants,
       pricePerAthlete,
+      dateWindowStart: date === 'Flexible' ? dateWindowStart : null,
+      dateWindowEnd: date === 'Flexible' ? dateWindowEnd : null,
+      expiresAt: computeExpiresAt(date, dateWindowStart, dateWindowEnd),
     });
 
     await session.populate('postedBy', USER_FIELDS);
@@ -600,10 +637,28 @@ const completeSession = async (req, res) => {
   }
 };
 
+// GET /api/sessions/expired — open sessions posted by the user that are past their date
+const getExpiredSessions = async (req, res) => {
+  try {
+    const sessions = await Session.find({
+      postedBy: req.user._id,
+      status: 'open',
+      expiresAt: { $lt: new Date() },
+    })
+      .populate('postedBy', USER_FIELDS)
+      .sort({ expiresAt: 1 })
+      .lean();
+    res.json({ sessions });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   createSession,
   getAvailableSessions,
   getMySessions,
+  getExpiredSessions,
   getSessionById,
   updateSession,
   cancelSession,

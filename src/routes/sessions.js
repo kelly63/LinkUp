@@ -4,6 +4,7 @@ const {
   createSession,
   getAvailableSessions,
   getMySessions,
+  getExpiredSessions,
   getSessionById,
   updateSession,
   cancelSession,
@@ -20,6 +21,7 @@ router.use(protect);
 
 router.get('/available', getAvailableSessions);
 router.get('/my', getMySessions);
+router.get('/my/expired', getExpiredSessions);
 router.get('/:id', getSessionById);
 router.post('/', createSession);
 router.put('/:id', updateSession);

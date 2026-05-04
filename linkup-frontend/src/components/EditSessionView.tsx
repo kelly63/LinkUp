@@ -10,6 +10,8 @@ interface EditSessionViewProps {
     role?: string;
     posterRole?: string;
     date: string;
+    dateWindowStart?: string;
+    dateWindowEnd?: string;
     time: string;
     duration?: string;
     location: string;
@@ -47,6 +49,24 @@ function formatTime(t: string): string {
   return `${h % 12 || 12}:${minutes} ${ampm}`;
 }
 
+function toDateInput(val: string | undefined): string {
+  if (!val) return '';
+  const d = new Date(val);
+  if (isNaN(d.getTime())) return '';
+  return d.toISOString().slice(0, 10);
+}
+
+function maxWindowEnd(start: string): string {
+  if (!start) return '';
+  const d = new Date(start);
+  d.setDate(d.getDate() + 14);
+  return d.toISOString().slice(0, 10);
+}
+
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export function EditSessionView({ session, onBack, onSave }: EditSessionViewProps) {
   const isFlexibleDate = session.date === 'Flexible';
   const isFlexibleTime = session.time === 'Flexible';
@@ -54,6 +74,8 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
   const [dateFlexible, setDateFlexible] = useState(isFlexibleDate);
   const [timeFlexible, setTimeFlexible] = useState(isFlexibleTime);
   const [dateValue, setDateValue] = useState(isFlexibleDate ? '' : session.date);
+  const [windowStart, setWindowStart] = useState(toDateInput(session.dateWindowStart));
+  const [windowEnd, setWindowEnd] = useState(toDateInput(session.dateWindowEnd));
   const [timeValue, setTimeValue] = useState(isFlexibleTime ? '' : toTimeInputValue(session.time));
   const [location, setLocation] = useState(session.location || '');
   const [duration, setDuration] = useState(session.duration || '1 hour');
@@ -63,6 +85,8 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
     const updatedSession = {
       ...session,
       date: dateFlexible ? 'Flexible' : dateValue,
+      dateWindowStart: dateFlexible ? windowStart : null,
+      dateWindowEnd: dateFlexible ? windowEnd : null,
       time: timeFlexible ? 'Flexible' : (timeValue ? formatTime(timeValue) : ''),
       location,
       duration,
@@ -108,13 +132,41 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
                 <input
                   type="date"
                   value={dateValue}
+                  min={todayISO()}
                   onChange={(e) => setDateValue(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
                 />
               )}
               {dateFlexible && (
-                <div className="w-full px-4 py-3 rounded-xl border-2 border-blue-200 bg-blue-50 text-blue-700 text-sm font-medium">
-                  Flexible — will discuss with partner
+                <div className="space-y-2">
+                  <p className="text-xs text-slate-500">Set a window of up to two weeks</p>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <label className="text-xs text-slate-500 mb-1 block">From</label>
+                      <input
+                        type="date"
+                        value={windowStart}
+                        min={todayISO()}
+                        onChange={(e) => {
+                          setWindowStart(e.target.value);
+                          if (windowEnd && windowEnd < e.target.value) setWindowEnd('');
+                        }}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-blue-200 bg-blue-50 text-slate-900 focus:border-blue-500 focus:outline-none text-sm"
+                      />
+                    </div>
+                    <span className="text-slate-400 mt-4">–</span>
+                    <div className="flex-1">
+                      <label className="text-xs text-slate-500 mb-1 block">To</label>
+                      <input
+                        type="date"
+                        value={windowEnd}
+                        min={windowStart || todayISO()}
+                        max={maxWindowEnd(windowStart)}
+                        onChange={(e) => setWindowEnd(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-blue-200 bg-blue-50 text-slate-900 focus:border-blue-500 focus:outline-none text-sm"
+                      />
+                    </div>
+                  </div>
                 </div>
               )}
               <label className="flex items-center gap-2 mt-2 cursor-pointer group">

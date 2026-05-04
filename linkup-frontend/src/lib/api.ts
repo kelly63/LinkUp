@@ -257,6 +257,9 @@ export const sessions = {
       token
     ),
 
+  getExpired: (token: string) =>
+    request<{ sessions: Session[] }>('/api/sessions/my/expired', {}, token),
+
   getById: (token: string, id: string) =>
     request<{ session: Session }>(`/api/sessions/${id}`, {}, token),
 
