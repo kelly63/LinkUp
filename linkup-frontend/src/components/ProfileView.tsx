@@ -283,12 +283,13 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           return;
         }
         const photo = await CapCamera.getPhoto({
-          quality: 40,
+          quality: 80,
           resultType: CameraResultType.DataUrl,
           source: CameraSource.Prompt,
           width: 400,
           height: 400,
           correctOrientation: true,
+          allowEditing: true,
         });
         if (!photo.dataUrl) return;
         // On native, skip canvas compression — Capacitor already applied quality/size limits
