@@ -1,5 +1,12 @@
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+// Returns a Cloudinary URL resized to `size`px square — falls back to original for non-Cloudinary URLs
+export function avatarThumb(url: string | null | undefined, size = 80): string | null {
+  if (!url) return null;
+  if (!url.includes('res.cloudinary.com')) return url;
+  return url.replace('/upload/', `/upload/w_${size},h_${size},c_fill,g_face/`);
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface User {

@@ -18,7 +18,7 @@ import {
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
 import { useAuth } from '../lib/auth';
-import { posts as postsApi, Post } from '../lib/api';
+import { posts as postsApi, Post, avatarThumb } from '../lib/api';
 import { toast } from 'sonner';
 
 type Filter = 'all' | 'session_completion' | 'thought' | 'article';
@@ -143,7 +143,7 @@ function PostCard({
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
               {author?.avatar
-                ? <img src={author.avatar} alt={author.name} className="w-full h-full rounded-full object-cover" />
+                ? <img src={avatarThumb(author.avatar, 80)!} alt={author.name} className="w-full h-full rounded-full object-cover" />
                 : initials}
             </div>
             <div>
@@ -231,7 +231,7 @@ function PostCard({
                 <div key={c._id} className="flex gap-2.5">
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
                     {c.author?.avatar
-                      ? <img src={c.author.avatar} alt={c.author.name} className="w-full h-full object-cover" />
+                      ? <img src={avatarThumb(c.author.avatar, 80)!} alt={c.author.name} className="w-full h-full object-cover" />
                       : getInitials(c.author?.name || '?')}
                   </div>
                   <div className="flex-1 bg-slate-50 rounded-xl px-3 py-2">
@@ -249,7 +249,7 @@ function PostCard({
           <div className="flex gap-2 items-center pt-1">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
               {userAvatar
-                ? <img src={userAvatar} alt="me" className="w-full h-full object-cover" />
+                ? <img src={avatarThumb(userAvatar, 80)!} alt="me" className="w-full h-full object-cover" />
                 : userInitials}
             </div>
             <div className="flex-1 flex items-center gap-2 bg-slate-100 rounded-full px-3 py-1.5">

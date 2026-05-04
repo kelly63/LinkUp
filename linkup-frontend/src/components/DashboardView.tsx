@@ -16,7 +16,7 @@ import {
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
 import { useAuth } from '../lib/auth';
-import { sessions as sessionsApi, connections as connectionsApi, ratings as ratingsApi, posts as postsApi, Post } from '../lib/api';
+import { sessions as sessionsApi, connections as connectionsApi, ratings as ratingsApi, posts as postsApi, Post, avatarThumb } from '../lib/api';
 import { toast } from 'sonner';
 
 interface DashboardViewProps {
@@ -464,7 +464,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                 <div className="px-4 pt-4 pb-2 flex items-center gap-3">
                   <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden">
                     {author?.avatar
-                      ? <img src={author.avatar} alt={author.name} className="w-full h-full rounded-full object-cover" />
+                      ? <img src={avatarThumb(author.avatar, 80)!} alt={author.name} className="w-full h-full rounded-full object-cover" />
                       : initials}
                   </div>
                   <div className="flex-1 min-w-0">
