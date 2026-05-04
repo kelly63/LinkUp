@@ -110,7 +110,7 @@ const updateProfile = async (req, res) => {
     }
 
     if (req.file) {
-      updates.avatar = `/uploads/${req.file.filename}`;
+      updates.avatar = req.file.path; // Cloudinary secure URL
     }
 
     const user = await User.findByIdAndUpdate(req.user._id, updates, {
