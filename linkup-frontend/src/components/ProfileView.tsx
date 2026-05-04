@@ -291,13 +291,28 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           correctOrientation: true,
         });
         if (!photo.dataUrl) return;
+        // On native, skip canvas compression — Capacitor already applied quality/size limits
         const res = await fetch(photo.dataUrl);
         const blob = await res.blob();
         const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
-        await uploadFile(file);
+        if (!token) return;
+        const previewUrl = photo.dataUrl;
+        setProfileImage(previewUrl);
+        setUploadingAvatar(true);
+        try {
+          const { user: updated } = await usersApi.uploadAvatar(token, file);
+          updateUser(updated);
+          setProfileImage(updated.avatar || previewUrl);
+          toast.success('Profile photo updated');
+        } catch (uploadErr: any) {
+          toast.error(uploadErr?.message || 'Failed to upload photo');
+          setProfileImage(user?.avatar || null);
+        } finally {
+          setUploadingAvatar(false);
+        }
       } catch (err: any) {
         if (err?.message !== 'User cancelled photos app') {
-          toast.error('Could not access camera');
+          toast.error(err?.message || 'Could not access camera');
         }
       }
     } else {

@@ -222,11 +222,6 @@ export const users = {
     return data as { user: User };
   },
 
-  changePassword: (token: string, currentPassword: string, newPassword: string) =>
-    request<{ message: string }>('/api/users/password', {
-      method: 'PUT',
-      body: JSON.stringify({ currentPassword, newPassword }),
-    }, token),
 };
 
 // ─── Sessions ─────────────────────────────────────────────────────────────────
