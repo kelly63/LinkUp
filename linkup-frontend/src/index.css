@@ -3594,3 +3594,13 @@ html {
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* Push Sonner toasts below the notch/Dynamic Island on every iPhone */
+[data-sonner-toaster][data-y-position=top] {
+  top: calc(env(safe-area-inset-top) + 16px) !important;
+}
+@media (max-width: 600px) {
+  [data-sonner-toaster][data-y-position=top] {
+    top: calc(env(safe-area-inset-top) + 16px) !important;
+  }
+}

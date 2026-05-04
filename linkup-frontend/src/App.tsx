@@ -19,7 +19,7 @@ export default function App() {
           <MobileFrame />
         </div>
       )}
-      <Toaster position="top-center" richColors offset={isNative ? 120 : 16} />
+      <Toaster position="top-center" richColors offset={16} />
     </AuthProvider>
   );
 }
