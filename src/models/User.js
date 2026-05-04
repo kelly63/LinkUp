@@ -123,6 +123,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    deviceTokens: {
+      type: [String],
+      default: [],
+    },
 
     // Agreement
     signature: {

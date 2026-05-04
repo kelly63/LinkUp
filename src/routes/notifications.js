@@ -74,4 +74,33 @@ router.delete('/unsubscribe', auth, async (req, res) => {
   }
 });
 
+// POST /api/notifications/device-token — register APNs device token
+router.post('/device-token', auth, async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ message: 'token is required' });
+    const User = require('../models/User');
+    await User.findByIdAndUpdate(req.user.id, {
+      $addToSet: { deviceTokens: token },
+    });
+    res.json({ message: 'Token registered' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// DELETE /api/notifications/device-token — unregister APNs device token
+router.delete('/device-token', auth, async (req, res) => {
+  try {
+    const { token } = req.body;
+    const User = require('../models/User');
+    await User.findByIdAndUpdate(req.user.id, {
+      $pull: { deviceTokens: token },
+    });
+    res.json({ message: 'Token removed' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

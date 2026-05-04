@@ -10,6 +10,7 @@ import { ClinicFlyerView } from './ClinicFlyerView';
 import { LoginView } from './LoginView';
 import { SignUpView } from './SignUpView';
 import { PreferencesView } from './PreferencesView';
+import { SettingsView } from './SettingsView';
 import { UserProfileView } from './UserProfileView';
 import { RatingView } from './RatingView';
 import { ReviewsView } from './ReviewsView';
@@ -208,6 +209,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   }
 
   if (currentView === 'preferences') return <PreferencesView onBack={handleBack} />;
+  if (currentView === 'settings') return <SettingsView onBack={handleBack} onNavigate={handleNavigate} onLogout={handleLogout} />;
 
   if (currentView === 'roster') {
     return <RosterListView onBack={handleBack} onNavigate={handleNavigate} onOpenChat={handleOpenChat} />;
