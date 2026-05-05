@@ -8,11 +8,13 @@ const MessageRequest = require('./models/MessageRequest');
 const PushSubscription = require('./models/PushSubscription');
 const Notification = require('./models/Notification');
 
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL,
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+if (process.env.VAPID_EMAIL && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    process.env.VAPID_EMAIL,
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
 
 // Track userId → Set of socket IDs (a user can have multiple tabs/devices)
 const onlineUsers = new Map();
