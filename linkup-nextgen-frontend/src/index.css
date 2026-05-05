@@ -1,0 +1,16 @@
+@import url("https://fonts.googleapis.com/css2?family=Magra:wght@400;700&display=swap");
+@import "tailwindcss";
+
+* {
+  font-family: 'Magra', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Magra', sans-serif;
+  font-weight: 700;
+}
+
+body {
+  overscroll-behavior: none;
+}

@@ -35,7 +35,7 @@ const userSchema = new mongoose.Schema(
     // Role
     role: {
       type: String,
-      enum: ['athlete', 'coach'],
+      enum: ['athlete', 'coach', 'parent'],
       default: 'athlete',
     },
 
@@ -74,6 +74,18 @@ const userSchema = new mongoose.Schema(
       default: '',
     },
 
+    // Parent-specific fields
+    children: {
+      type: [{
+        name: { type: String, required: true },
+        age: { type: Number, default: null },
+        sports: { type: [String], default: [] },
+        skillLevel: { type: String, default: '' },
+        notes: { type: String, default: '' },
+      }],
+      default: [],
+    },
+
     // Coach-specific fields
     sportsCoached: {
       type: [String],
@@ -95,6 +107,10 @@ const userSchema = new mongoose.Schema(
     hourlyRate: {
       type: Number,
       default: null,
+    },
+    ageGroupsCoached: {
+      type: [String],
+      default: [],
     },
 
     // Privacy & visibility

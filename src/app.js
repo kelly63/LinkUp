@@ -17,6 +17,7 @@ const notificationRoutes = require('./routes/notifications');
 const utilRoutes = require('./routes/utils');
 const adminRoutes = require('./routes/admin');
 const profileRoutes = require('./routes/profile');
+const nextgenRoutes = require('./routes/nextgen');
 
 if (process.env.NODE_ENV !== 'test') connectDB();
 
@@ -60,6 +61,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/utils', utilRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/nextgen', nextgenRoutes);
 
 // Profile deep-link redirect (used by QR codes)
 app.use('/profile', profileRoutes);
