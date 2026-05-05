@@ -212,14 +212,14 @@ export const clinics = {
         .map(([k, v]) => [k, String(v)])
     ).toString();
     return request<{ sessions: Clinic[]; total: number; page: number; pages: number }>(
-      `/api/sessions/available?sessionType=clinic${q ? `&${q}` : ''}`, {}, token
+      `/api/sessions/available?sessionType=clinic&source=nextgen${q ? `&${q}` : ''}`, {}, token
     );
   },
 
   create: (token: string, body: Partial<Clinic> & { sessionType: 'clinic' }) =>
     request<{ session: Clinic }>('/api/sessions', {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify({ ...body, source: 'nextgen' }),
     }, token),
 };
 

@@ -116,6 +116,13 @@ const sessionSchema = new mongoose.Schema(
     // Poster is traveling to the session location (not at their home base)
     isTraveler: { type: Boolean, default: false },
 
+    // Which app created this session
+    source: {
+      type: String,
+      enum: ['athletics', 'nextgen'],
+      default: 'athletics',
+    },
+
     // Type of session
     sessionType: {
       type: String,
