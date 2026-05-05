@@ -462,9 +462,9 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
               >
                 {/* Author */}
                 <div className="px-4 pt-4 pb-2 flex items-center gap-3">
-                  <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden">
+                  <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-[10px] font-medium flex-shrink-0 overflow-hidden">
                     {author?.avatar
-                      ? <img src={avatarThumb(author.avatar, 80)!} alt={author.name} className="w-full h-full rounded-full object-cover" />
+                      ? <img src={avatarThumb(author.avatar, 40)!} alt={author.name} className="w-full h-full rounded-full object-cover" />
                       : initials}
                   </div>
                   <div className="flex-1 min-w-0">

@@ -8,6 +8,7 @@ import { users as usersApi, auth as authApi } from '../lib/api';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { ImageCropModal } from './ImageCropModal';
 
 function compressImage(file: File, maxDim = 800, quality = 0.75): Promise<File> {
   return new Promise((resolve) => {
@@ -106,6 +107,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [showQRCodeModal, setShowQRCodeModal] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Keep preview in sync if the auth user's avatar changes from outside
@@ -254,23 +256,25 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const uploadFile = async (file: File) => {
+  const doUpload = async (file: File) => {
     if (!token) return;
-    file = await compressImage(file);
-    const previewUrl = URL.createObjectURL(file);
-    setProfileImage(previewUrl);
     setUploadingAvatar(true);
     try {
       const { user: updated } = await usersApi.uploadAvatar(token, file);
       updateUser(updated);
-      setProfileImage(updated.avatar || previewUrl);
+      setProfileImage(updated.avatar || null);
       toast.success('Profile photo updated');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to upload photo');
+      toast.error(err?.message || 'Failed to upload photo');
       setProfileImage(user?.avatar || null);
     } finally {
       setUploadingAvatar(false);
     }
+  };
+
+  const handleCropConfirm = async (file: File) => {
+    setCropImageUrl(null);
+    await doUpload(file);
   };
 
   const handleCameraButtonClick = async () => {
@@ -283,34 +287,13 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           return;
         }
         const photo = await CapCamera.getPhoto({
-          quality: 80,
+          quality: 90,
           resultType: CameraResultType.DataUrl,
           source: CameraSource.Prompt,
-          width: 400,
-          height: 400,
           correctOrientation: true,
-          allowEditing: true,
         });
         if (!photo.dataUrl) return;
-        // On native, skip canvas compression — Capacitor already applied quality/size limits
-        const res = await fetch(photo.dataUrl);
-        const blob = await res.blob();
-        const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
-        if (!token) return;
-        const previewUrl = photo.dataUrl;
-        setProfileImage(previewUrl);
-        setUploadingAvatar(true);
-        try {
-          const { user: updated } = await usersApi.uploadAvatar(token, file);
-          updateUser(updated);
-          setProfileImage(updated.avatar || previewUrl);
-          toast.success('Profile photo updated');
-        } catch (uploadErr: any) {
-          toast.error(uploadErr?.message || 'Failed to upload photo');
-          setProfileImage(user?.avatar || null);
-        } finally {
-          setUploadingAvatar(false);
-        }
+        setCropImageUrl(photo.dataUrl);
       } catch (err: any) {
         if (err?.message !== 'User cancelled photos app') {
           toast.error(err?.message || 'Could not access camera');
@@ -321,7 +304,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     }
   };
 
-  const handleProfileImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !token) return;
     event.target.value = '';
@@ -329,7 +312,11 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
       toast.error('Please select an image file');
       return;
     }
-    await uploadFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) setCropImageUrl(e.target.result as string);
+    };
+    reader.readAsDataURL(file);
   };
   
   return (
@@ -1044,6 +1031,14 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             </button>
           </div>
         </div>
+      )}
+
+      {cropImageUrl && (
+        <ImageCropModal
+          imageUrl={cropImageUrl}
+          onConfirm={handleCropConfirm}
+          onCancel={() => setCropImageUrl(null)}
+        />
       )}
     </div>
   );
