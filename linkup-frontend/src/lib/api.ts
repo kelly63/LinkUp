@@ -60,6 +60,7 @@ export interface Session {
   partner: User | null;
   pendingPartner?: User | null;
   sessionType: 'need' | 'clinic';
+  isTraveler: boolean;
   createdAt: string;
   pendingChange?: {
     date: string;
@@ -236,7 +237,7 @@ export const users = {
 export const sessions = {
   getAvailable: (
     token: string,
-    params: { sport?: string; skillLevel?: string; page?: number; limit?: number } = {}
+    params: { sport?: string; skillLevel?: string; location?: string; page?: number; limit?: number } = {}
   ) => {
     const q = new URLSearchParams(
       Object.entries(params)

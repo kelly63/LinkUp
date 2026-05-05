@@ -1,4 +1,4 @@
-import { Calendar, Award, MapPin, Clock, ArrowLeft, Users, X, Search, Filter } from 'lucide-react';
+import { Calendar, Award, MapPin, Clock, ArrowLeft, Users, X, Search, Filter, Plane } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { NeedCard } from './NeedCard';
 import { AvailableSessionView } from './AvailableSessionView';
@@ -53,9 +53,12 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [filterPositions, setFilterPositions] = useState<string[]>([]);
   const [filterSkillLevels, setFilterSkillLevels] = useState<string[]>([]);
   const [filterDistance, setFilterDistance] = useState('10');
+  const [isFindTraveling, setIsFindTraveling] = useState(false);
+  const [findTravelLocation, setFindTravelLocation] = useState('');
   
   // Post form fields
   const [locationValue, setLocationValue] = useState('');
+  const [isPostTraveling, setIsPostTraveling] = useState(false);
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const durationRef = useRef<HTMLSelectElement>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -139,9 +142,11 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     setFilterPositions([]);
     setFilterSkillLevels([]);
     setFilterDistance('10');
+    setIsFindTraveling(false);
+    setFindTravelLocation('');
   };
-  
-  const activeFilterCount = filterSport.length + filterPositions.length + filterSkillLevels.length + (filterDistance !== '10' ? 1 : 0);
+
+  const activeFilterCount = filterSport.length + filterPositions.length + filterSkillLevels.length + (filterDistance !== '10' ? 1 : 0) + (isFindTraveling && findTravelLocation.trim() ? 1 : 0);
 
   const handleDateAdd = (date: string) => {
     if (date && !selectedDates.includes(date)) {
@@ -184,6 +189,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     sessionsApi.getAvailable(token, {
       sport: filterSport.length === 1 ? filterSport[0] : undefined,
       skillLevel: filterSkillLevels.length === 1 ? filterSkillLevels[0] : undefined,
+      location: isFindTraveling && findTravelLocation.trim() ? findTravelLocation.trim() : undefined,
       page: 1,
     }).then(({ sessions, total, pages }) => {
       setAvailableSessions(sessions);
@@ -192,7 +198,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     }).catch((err: any) => {
       toast.error(err?.message || 'Could not load sessions');
     }).finally(() => setLoadingFind(false));
-  }, [viewMode, token, filterSport, filterSkillLevels]);
+  }, [viewMode, token, filterSport, filterSkillLevels, isFindTraveling, findTravelLocation]);
 
   // Fetch accepted connections once when entering find mode
   useEffect(() => {
@@ -213,6 +219,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     sessionsApi.getAvailable(token, {
       sport: filterSport.length === 1 ? filterSport[0] : undefined,
       skillLevel: filterSkillLevels.length === 1 ? filterSkillLevels[0] : undefined,
+      location: isFindTraveling && findTravelLocation.trim() ? findTravelLocation.trim() : undefined,
       page: nextPage,
     }).then(({ sessions }) => {
       setAvailableSessions((prev) => [...prev, ...sessions]);
@@ -240,6 +247,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
       time: session.time || '',
       posterName: firstLastInitial((session.postedBy as any)?.name || ''),
       isOnRoster: posterId ? rosterIds.has(posterId) : false,
+      isTraveler: (session as any).isTraveler ?? false,
       _session: session,
     };
   });
@@ -574,14 +582,34 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
 
             {/* Location */}
             <div>
-              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
-                <MapPin className="w-4 h-4" />
-                Field Name/Address
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm text-slate-700 flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
+                  {isPostTraveling ? 'Destination / Field Name' : 'Field Name/Address'}
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsPostTraveling(v => !v)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
+                    isPostTraveling
+                      ? 'bg-amber-100 border-amber-300 text-amber-700'
+                      : 'bg-slate-100 border-slate-200 text-slate-500 hover:border-slate-300'
+                  }`}
+                >
+                  <Plane className="w-3 h-3" />
+                  {isPostTraveling ? 'Traveling ✓' : 'Traveling?'}
+                </button>
+              </div>
+              {isPostTraveling && (
+                <p className="text-xs text-amber-600 mb-2 flex items-center gap-1">
+                  <Plane className="w-3 h-3" />
+                  Your session will be marked as a traveler post so local athletes know you're visiting
+                </p>
+              )}
               <LocationAutocomplete
                 value={locationValue}
                 onChange={setLocationValue}
-                placeholder="Search for a field or address..."
+                placeholder={isPostTraveling ? "Where are you traveling to?" : "Search for a field or address..."}
               />
             </div>
 
@@ -653,6 +681,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     goals: notes,
                     sessionType: 'need',
                     status: 'open',
+                    isTraveler: isPostTraveling,
                   });
                   toast.success('Session posted! It\'s now visible to other athletes.');
                   // Reset form
@@ -662,6 +691,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   setSelectedTimes([]);
                   setSelectedSkillLevels([]);
                   setLocationValue('');
+                  setIsPostTraveling(false);
                   if (notesRef.current) notesRef.current.value = '';
                   onNavigateToDashboard?.('upcoming-sessions');
                 } catch (err: any) {
@@ -694,12 +724,44 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               />
             </div>
 
+            {/* Traveling Toggle */}
+            <button
+              onClick={() => { setIsFindTraveling(v => !v); if (isFindTraveling) setFindTravelLocation(''); }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${
+                isFindTraveling
+                  ? 'border-amber-400 bg-amber-50 text-amber-800'
+                  : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+              }`}
+            >
+              <Plane className={`w-4 h-4 flex-shrink-0 ${isFindTraveling ? 'text-amber-500' : 'text-slate-400'}`} />
+              <span className="font-medium text-sm">{isFindTraveling ? 'Traveling mode on' : 'Traveling? Find sessions at your destination'}</span>
+              <div className={`ml-auto w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                isFindTraveling ? 'bg-amber-400 border-amber-400' : 'border-slate-300'
+              }`}>
+                {isFindTraveling && <div className="w-2 h-2 bg-white rounded-full" />}
+              </div>
+            </button>
+
+            {/* Travel destination input */}
+            {isFindTraveling && (
+              <div className="relative">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                <input
+                  type="text"
+                  placeholder="Enter city or location (e.g. Miami, FL)"
+                  value={findTravelLocation}
+                  onChange={(e) => setFindTravelLocation(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3 rounded-xl border-2 border-amber-300 bg-amber-50 text-slate-900 placeholder-amber-400 focus:border-amber-500 focus:outline-none transition-colors"
+                />
+              </div>
+            )}
+
             {/* Filter Button */}
-            <button 
+            <button
               onClick={() => setShowFilters(!showFilters)}
               className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-colors ${
-                showFilters 
-                  ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                showFilters
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
                   : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
               }`}
             >

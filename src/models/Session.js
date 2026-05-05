@@ -113,6 +113,9 @@ const sessionSchema = new mongoose.Schema(
     // Computed expiry — when date is past and session should prompt repost/remove
     expiresAt: { type: Date, default: null },
 
+    // Poster is traveling to the session location (not at their home base)
+    isTraveler: { type: Boolean, default: false },
+
     // Type of session
     sessionType: {
       type: String,

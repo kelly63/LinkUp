@@ -1,4 +1,4 @@
-import { MapPin, Clock, Award, Users, Shield } from 'lucide-react';
+import { MapPin, Clock, Award, Users, Shield, Plane } from 'lucide-react';
 
 interface Need {
   id: string | number;
@@ -10,6 +10,7 @@ interface Need {
   time: string;
   posterName?: string;
   isOnRoster?: boolean;
+  isTraveler?: boolean;
 }
 
 interface NeedCardProps {
@@ -51,6 +52,12 @@ export function NeedCard({ need, onClick, onPosterClick }: NeedCardProps) {
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200">
                 <Shield className="w-2.5 h-2.5" />
                 Roster
+              </span>
+            )}
+            {need.isTraveler && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full border border-amber-200">
+                <Plane className="w-2.5 h-2.5" />
+                Traveling
               </span>
             )}
           </div>

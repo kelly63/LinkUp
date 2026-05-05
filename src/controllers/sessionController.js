@@ -90,6 +90,7 @@ const createSession = async (req, res) => {
       pricePerAthlete,
       dateWindowStart,
       dateWindowEnd,
+      isTraveler,
     } = req.body;
 
     if (!sport || !date) {
@@ -130,6 +131,7 @@ const createSession = async (req, res) => {
       clinicTitle,
       maxParticipants,
       pricePerAthlete,
+      isTraveler: !!isTraveler,
       dateWindowStart: date === 'Flexible' ? dateWindowStart : null,
       dateWindowEnd: date === 'Flexible' ? dateWindowEnd : null,
       expiresAt: computeExpiresAt(date, dateWindowStart, dateWindowEnd),
@@ -145,7 +147,7 @@ const createSession = async (req, res) => {
 // GET /api/sessions/available — open sessions not posted by current user
 const getAvailableSessions = async (req, res) => {
   try {
-    const { sport, skillLevel, page = 1, limit = 20 } = req.query;
+    const { sport, skillLevel, location, page = 1, limit = 20 } = req.query;
 
     const query = {
       status: 'open',
@@ -154,6 +156,7 @@ const getAvailableSessions = async (req, res) => {
 
     if (sport) query.sport = { $regex: sport, $options: 'i' };
     if (skillLevel) query.skillLevelRequired = skillLevel;
+    if (location) query.location = { $regex: location.trim(), $options: 'i' };
 
     const skip = (Number(page) - 1) * Number(limit);
     const sessions = await Session.find(query)
