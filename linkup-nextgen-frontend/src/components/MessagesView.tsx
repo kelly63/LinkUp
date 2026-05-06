@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, ArrowLeft, MessageSquare, CalendarPlus, Phone, Dumbbell, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { messages as messagesApi, Message, avatarThumb, BookingData } from '../lib/api';
+import { Send, ArrowLeft, MessageSquare, CalendarPlus, Phone, Dumbbell, Check, X } from 'lucide-react';
+import { messages as messagesApi, coaches as coachesApi, Message, avatarThumb, BookingData } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { getActiveSocket } from '../lib/socket';
 import { toast } from 'sonner';
@@ -282,6 +282,18 @@ export function MessagesView({ initialUserId, onClose }: MessagesViewProps) {
       .finally(() => setLoading(false));
   }, [token]);
 
+  // If we have an activeId but no activeUser (e.g. navigated from coach profile), fetch the user
+  useEffect(() => {
+    if (!token || !activeId || activeUser) return;
+    // Try to find in existing conversations first
+    const existing = conversations.find(c => c.user._id === activeId);
+    if (existing) { setActiveUser(existing.user); return; }
+    // Otherwise fetch from API
+    coachesApi.getById(token, activeId)
+      .then(r => setActiveUser(r.user))
+      .catch(() => {});
+  }, [token, activeId, activeUser, conversations]);
+
   useEffect(() => {
     if (!token || !activeId) return;
     messagesApi.getThread(token, activeId).then(r => {
@@ -346,6 +358,14 @@ export function MessagesView({ initialUserId, onClose }: MessagesViewProps) {
       toast.error(err.message || 'Could not respond');
     } finally { setResponding(null); }
   };
+
+  if (activeId && !activeUser) {
+    return (
+      <div className="h-full flex items-center justify-center bg-white">
+        <span className="w-7 h-7 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (activeId && activeUser) {
     return (
