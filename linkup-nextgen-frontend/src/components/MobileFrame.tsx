@@ -9,6 +9,7 @@ import { CoachDiscoveryView } from './CoachDiscoveryView';
 import { ClinicListView } from './ClinicListView';
 import { ChildProfilesView } from './ChildProfilesView';
 import { ParentProfileView } from './ParentProfileView';
+import { CoachProfileSelfView } from './CoachProfileSelfView';
 import { CoachProfileView } from './CoachProfileView';
 import { MessagesView } from './MessagesView';
 import { useAuth } from '../lib/auth';
@@ -59,8 +60,8 @@ export function MobileFrame() {
       case 'messages':
         return <MessagesView initialUserId={openChatUserId} onClose={() => setOpenChatUserId(null)} />;
       case 'profile':
-        return user?.role === 'parent'
-          ? <ParentProfileView />
+        return user?.role === 'coach'
+          ? <CoachProfileSelfView />
           : <ParentProfileView />;
       default:
         return <HomeView onViewCoach={handleViewCoach} onOpenChat={handleOpenChat} />;

@@ -33,6 +33,7 @@ export interface Coach {
   ratingCount: number;
   isOnline: boolean;
   role: 'coach';
+  documents: MediaItem[];
 }
 
 export interface Parent {
@@ -65,6 +66,14 @@ export interface Clinic {
   pricePerAthlete?: number;
   status: string;
   createdAt: string;
+}
+
+export interface MediaItem {
+  _id: string;
+  url: string;
+  publicId: string;
+  type: 'image' | 'pdf';
+  name: string;
 }
 
 export interface Message {
@@ -221,6 +230,44 @@ export const clinics = {
       method: 'POST',
       body: JSON.stringify({ ...body, source: 'nextgen' }),
     }, token),
+};
+
+// ─── Uploads ─────────────────────────────────────────────────────────────────
+
+export const uploads = {
+  addSessionMedia: async (token: string, sessionId: string, file: File, name?: string): Promise<{ media: MediaItem[] }> => {
+    const form = new FormData();
+    form.append('file', file);
+    if (name) form.append('name', name);
+    const res = await fetch(`${BASE_URL}/api/uploads/sessions/${sessionId}/media`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Upload failed');
+    return data;
+  },
+
+  removeSessionMedia: (token: string, sessionId: string, mediaId: string) =>
+    request<{ media: MediaItem[] }>(`/api/uploads/sessions/${sessionId}/media/${mediaId}`, { method: 'DELETE' }, token),
+
+  addDocument: async (token: string, file: File, name?: string): Promise<{ documents: MediaItem[] }> => {
+    const form = new FormData();
+    form.append('file', file);
+    if (name) form.append('name', name);
+    const res = await fetch(`${BASE_URL}/api/uploads/documents`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Upload failed');
+    return data;
+  },
+
+  removeDocument: (token: string, docId: string) =>
+    request<{ documents: MediaItem[] }>(`/api/uploads/documents/${docId}`, { method: 'DELETE' }, token),
 };
 
 // ─── Messages ────────────────────────────────────────────────────────────────

@@ -135,6 +135,17 @@ const sessionSchema = new mongoose.Schema(
     maxParticipants: { type: Number, default: null },
     pricePerAthlete: { type: Number, default: null },
     participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+
+    // Attached media (images and PDFs)
+    media: {
+      type: [{
+        url: { type: String, required: true },
+        publicId: { type: String, default: '' },
+        type: { type: String, enum: ['image', 'pdf'], required: true },
+        name: { type: String, default: '' },
+      }],
+      default: [],
+    },
   },
   { timestamps: true }
 );

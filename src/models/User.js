@@ -112,6 +112,18 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    // Coach documents (resumes, certifications, etc.)
+    documents: {
+      type: [{
+        url: { type: String, required: true },
+        publicId: { type: String, default: '' },
+        type: { type: String, enum: ['image', 'pdf'], required: true },
+        name: { type: String, default: '' },
+        createdAt: { type: Date, default: Date.now },
+      }],
+      default: [],
+    },
+
     // Privacy & visibility
     visibilityMode: {
       type: String,

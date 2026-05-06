@@ -170,6 +170,36 @@ export function CoachProfileView({ coachId, onBack, onMessage }: CoachProfileVie
             <p className="text-slate-700 text-sm leading-relaxed italic">{coach.coachingPhilosophy}</p>
           </div>
         )}
+
+        {/* Documents & Media */}
+        {coach.documents && coach.documents.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 border border-slate-200">
+            <h3 className="font-bold text-slate-900 mb-3">Documents & Media</h3>
+            <div className="space-y-2">
+              {coach.documents.map(doc => (
+                <a
+                  key={doc._id}
+                  href={doc.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors"
+                >
+                  {doc.type === 'pdf'
+                    ? <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-red-500" />
+                      </div>
+                    : <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-slate-100">
+                        <img src={doc.url} alt={doc.name} className="w-full h-full object-cover" />
+                      </div>}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">{doc.name || 'Document'}</p>
+                    <p className="text-xs text-emerald-600">{doc.type === 'pdf' ? 'View PDF ↗' : 'View Image ↗'}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
