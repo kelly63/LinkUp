@@ -232,6 +232,59 @@ export const clinics = {
     }, token),
 };
 
+export interface AssessmentCategory {
+  name: string;
+  rating: number;
+}
+
+export interface SessionReport {
+  _id: string;
+  session: { _id: string; sport: string; title: string; date: string; sessionType: string };
+  coach: { _id: string; name: string; avatar: string | null };
+  athlete: { _id: string; name: string; avatar: string | null } | null;
+  reportText: string;
+  assessmentCategories: AssessmentCategory[];
+  areasToWorkOn: string;
+  focusAreas: string;
+  createdAt: string;
+}
+
+export interface SessionWithReport {
+  _id: string;
+  sport: string;
+  title: string;
+  date: string;
+  sessionType: string;
+  status: string;
+  partner: { _id: string; name: string; avatar: string | null } | null;
+  hasReport: boolean;
+}
+
+// ─── Reports ──────────────────────────────────────────────────────────────────
+
+export const reports = {
+  save: (token: string, body: {
+    sessionId: string;
+    reportText?: string;
+    assessmentCategories?: AssessmentCategory[];
+    areasToWorkOn?: string;
+    focusAreas?: string;
+  }) =>
+    request<{ report: SessionReport }>('/api/reports', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }, token),
+
+  getBySession: (token: string, sessionId: string) =>
+    request<{ report: SessionReport }>(`/api/reports/session/${sessionId}`, {}, token),
+
+  getByCoach: (token: string, coachId: string) =>
+    request<{ reports: SessionReport[]; total: number }>(`/api/reports/coach/${coachId}`, {}, token),
+
+  getMySessions: (token: string) =>
+    request<{ sessions: SessionWithReport[] }>('/api/reports/my-sessions', {}, token),
+};
+
 // ─── Uploads ─────────────────────────────────────────────────────────────────
 
 export const uploads = {

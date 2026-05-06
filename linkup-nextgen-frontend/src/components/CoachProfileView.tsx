@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Star, MapPin, MessageSquare, Award, Clock, Users, CheckCircle } from 'lucide-react';
-import { coaches as coachesApi, Coach, avatarThumb } from '../lib/api';
+import { ArrowLeft, Star, MapPin, MessageSquare, Award, Clock, Users, CheckCircle, ClipboardList, FileText } from 'lucide-react';
+import { coaches as coachesApi, Coach, avatarThumb, reports as reportsApi, SessionReport } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
 function getInitials(name: string) {
@@ -17,13 +17,17 @@ export function CoachProfileView({ coachId, onBack, onMessage }: CoachProfileVie
   const { token } = useAuth();
   const [coach, setCoach] = useState<Coach | null>(null);
   const [loading, setLoading] = useState(true);
+  const [coachReports, setCoachReports] = useState<SessionReport[]>([]);
 
   useEffect(() => {
     if (!token) return;
-    coachesApi.getById(token, coachId)
-      .then(r => setCoach(r.user as Coach))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      coachesApi.getById(token, coachId),
+      reportsApi.getByCoach(token, coachId).catch(() => ({ reports: [] })),
+    ]).then(([coachRes, reportsRes]) => {
+      setCoach(coachRes.user as Coach);
+      setCoachReports(reportsRes.reports || []);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [token, coachId]);
 
   if (loading) {
@@ -168,6 +172,51 @@ export function CoachProfileView({ coachId, onBack, onMessage }: CoachProfileVie
           <div className="bg-white rounded-2xl p-4 border border-slate-200">
             <h3 className="font-bold text-slate-900 mb-2">Coaching Philosophy</h3>
             <p className="text-slate-700 text-sm leading-relaxed italic">{coach.coachingPhilosophy}</p>
+          </div>
+        )}
+
+        {/* Session Reports */}
+        {coachReports.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 border border-slate-200">
+            <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-emerald-600" /> Session Reports
+            </h3>
+            <div className="space-y-3">
+              {coachReports.slice(0, 3).map(report => (
+                <div key={report._id} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="font-semibold text-slate-900 text-sm">
+                      {(report.session as any)?.title || (report.session as any)?.sport || 'Session'}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {new Date(report.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </p>
+                  </div>
+                  {report.assessmentCategories.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {report.assessmentCategories.map((cat, i) => (
+                        <div key={i} className="flex items-center gap-1">
+                          <span className="text-xs text-slate-600 font-medium">{cat.name}:</span>
+                          <div className="flex">
+                            {[1,2,3,4,5].map(n => (
+                              <Star key={n} className={`w-3 h-3 ${n <= cat.rating ? 'text-amber-400 fill-amber-400' : 'text-slate-200'}`} />
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {report.reportText && (
+                    <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{report.reportText}</p>
+                  )}
+                  {report.areasToWorkOn && (
+                    <p className="text-xs text-slate-500 mt-1.5 italic line-clamp-1">
+                      Focus: {report.areasToWorkOn}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
