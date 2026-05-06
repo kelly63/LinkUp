@@ -93,10 +93,10 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
 // ─── Auth ─────────────────────────────────────────────────────────────────────
 
 export const auth = {
-  login: (email: string, password: string) =>
+  login: (email: string, password: string, role: string) =>
     request<{ token: string; user: Parent | Coach }>('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, role }),
     }),
 
   register: (body: Record<string, unknown>) =>

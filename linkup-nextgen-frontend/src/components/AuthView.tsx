@@ -37,7 +37,7 @@ export function AuthView() {
     if (!email || !password) { toast.error('Please fill in all fields'); return; }
     setSubmitting(true);
     try {
-      const { token, user } = await authApi.login(email, password);
+      const { token, user } = await authApi.login(email, password, accountType);
       login(token, user as any);
     } catch (err: any) {
       toast.error(err.message || 'Login failed');

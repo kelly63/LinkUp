@@ -60,16 +60,17 @@ const register = async (req, res) => {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
 
-    const existing = await User.findOne({ email });
+    const incomingRole = userType || role || 'athlete';
+    const existing = await User.findOne({ email, role: incomingRole });
     if (existing) {
-      return res.status(409).json({ message: 'Email already in use' });
+      return res.status(409).json({ message: 'An account with this email already exists' });
     }
 
     const userData = {
       name: displayName,
       email,
       password,
-      role: userType || role || 'athlete',
+      role: incomingRole,
     };
 
     // Optional fields
@@ -122,13 +123,14 @@ const register = async (req, res) => {
 // POST /api/auth/login
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = await User.findOne({ email }).select('+password');
+    const query = role ? { email, role } : { email };
+    const user = await User.findOne(query).select('+password');
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
