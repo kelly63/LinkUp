@@ -17,6 +17,14 @@ export interface Child {
   notes: string;
 }
 
+export interface CoachService {
+  _id?: string;
+  name: string;
+  description: string;
+  price: string;
+  duration: string;
+}
+
 export interface Coach {
   _id: string;
   name: string;
@@ -25,6 +33,8 @@ export interface Coach {
   bio: string;
   sportsCoached: string[];
   ageGroupsCoached: string[];
+  trainingTypes: string[];
+  services: CoachService[];
   yearsExperience: string;
   certifications: string;
   coachingPhilosophy: string;
@@ -154,7 +164,7 @@ export const children = {
 // ─── Coaches ──────────────────────────────────────────────────────────────────
 
 export const coaches = {
-  search: (token: string, params: { sport?: string; ageGroup?: string; maxRate?: number; search?: string; page?: number } = {}) => {
+  search: (token: string, params: { sport?: string; ageGroup?: string; maxRate?: number; trainingType?: string; search?: string; page?: number } = {}) => {
     const q = new URLSearchParams(
       Object.entries(params)
         .filter(([, v]) => v !== undefined && v !== '')

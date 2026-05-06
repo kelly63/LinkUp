@@ -61,18 +61,19 @@ router.delete('/children/:childId', protect, async (req, res) => {
 // GET /api/nextgen/coaches — search coaches (role=coach, filtered for NextGen use)
 router.get('/coaches', protect, async (req, res) => {
   try {
-    const { sport, ageGroup, maxRate, search, page = 1, limit = 20 } = req.query;
+    const { sport, ageGroup, maxRate, trainingType, search, page = 1, limit = 20 } = req.query;
     const query = { role: 'coach' };
     if (sport) query.sportsCoached = { $in: [new RegExp(sport, 'i')] };
     if (ageGroup) query.ageGroupsCoached = { $in: [ageGroup] };
     if (maxRate) query.hourlyRate = { $lte: Number(maxRate) };
+    if (trainingType) query.trainingTypes = { $in: [new RegExp(trainingType, 'i')] };
     if (search) query.$or = [
       { name: { $regex: search, $options: 'i' } },
       { location: { $regex: search, $options: 'i' } },
     ];
     const skip = (Number(page) - 1) * Number(limit);
     const coaches = await User.find(query)
-      .select('name avatar location sport sportsCoached hourlyRate ageGroupsCoached averageRating ratingCount yearsExperience certifications bio')
+      .select('name avatar location sport sportsCoached hourlyRate ageGroupsCoached trainingTypes services averageRating ratingCount yearsExperience certifications bio')
       .sort({ averageRating: -1, ratingCount: -1 })
       .skip(skip)
       .limit(Number(limit));

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Star, MapPin, MessageSquare, Award, Clock, Users, CheckCircle, ClipboardList, FileText } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, MessageSquare, Award, Clock, Users, CheckCircle, ClipboardList, FileText, Briefcase, Zap } from 'lucide-react';
 import { coaches as coachesApi, Coach, avatarThumb, reports as reportsApi, SessionReport } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
@@ -154,6 +154,51 @@ export function CoachProfileView({ coachId, onBack, onMessage }: CoachProfileVie
           <div className="bg-white rounded-2xl p-4 border border-slate-200">
             <h3 className="font-bold text-slate-900 mb-2">About</h3>
             <p className="text-slate-700 text-sm leading-relaxed">{coach.bio}</p>
+          </div>
+        )}
+
+        {/* Training types */}
+        {coach.trainingTypes && coach.trainingTypes.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 border border-slate-200">
+            <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <Zap className="w-4 h-4 text-emerald-600" /> Training Specialties
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {coach.trainingTypes.map(t => (
+                <span key={t} className="bg-violet-50 text-violet-700 text-sm font-medium px-3 py-1 rounded-full border border-violet-200">
+                  {t}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Services */}
+        {coach.services && coach.services.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 border border-slate-200">
+            <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <Briefcase className="w-4 h-4 text-emerald-600" /> Services Offered
+            </h3>
+            <div className="space-y-3">
+              {coach.services.map((svc, i) => (
+                <div key={i} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                  <p className="font-semibold text-slate-900 text-sm">{svc.name}</p>
+                  {svc.description && <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{svc.description}</p>}
+                  <div className="flex flex-wrap gap-2 mt-1.5">
+                    {svc.price && (
+                      <span className="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2 py-0.5 rounded-full border border-emerald-200">
+                        {svc.price}
+                      </span>
+                    )}
+                    {svc.duration && (
+                      <span className="bg-slate-100 text-slate-600 text-xs font-medium px-2 py-0.5 rounded-full border border-slate-200">
+                        {svc.duration}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

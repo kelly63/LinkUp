@@ -112,6 +112,23 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    // Training specialties beyond sports (agility, strength, etc.)
+    trainingTypes: {
+      type: [String],
+      default: [],
+    },
+
+    // Services the coach offers
+    services: {
+      type: [{
+        name: { type: String, required: true },
+        description: { type: String, default: '' },
+        price: { type: String, default: '' },
+        duration: { type: String, default: '' },
+      }],
+      default: [],
+    },
+
     // Coach documents (resumes, certifications, etc.)
     documents: {
       type: [{

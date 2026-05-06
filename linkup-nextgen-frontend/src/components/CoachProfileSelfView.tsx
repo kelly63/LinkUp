@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react';
-import { Camera, LogOut, KeyRound, ChevronRight, FileText, ClipboardList, Eye, EyeOff, Check, X, MapPin } from 'lucide-react';
+import { Camera, LogOut, KeyRound, ChevronRight, FileText, ClipboardList, Eye, EyeOff, Check, X, MapPin, Briefcase } from 'lucide-react';
 import { coaches as coachesApi, avatarThumb, auth as authApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { CoachDocumentsView } from './CoachDocumentsView';
 import { MySessionsView } from './MySessionsView';
+import { CoachServicesView } from './CoachServicesView';
 import { toast } from 'sonner';
 
 function getInitials(name: string) {
@@ -12,7 +13,7 @@ function getInitials(name: string) {
 
 export function CoachProfileSelfView() {
   const { token, user, updateUser, logout } = useAuth();
-  const [view, setView] = useState<'main' | 'documents' | 'sessions' | 'password'>('main');
+  const [view, setView] = useState<'main' | 'documents' | 'sessions' | 'password' | 'services'>('main');
   const [editingLocation, setEditingLocation] = useState(false);
   const [locationDraft, setLocationDraft] = useState((user as any)?.location || '');
   const [savingLocation, setSavingLocation] = useState(false);
@@ -29,6 +30,7 @@ export function CoachProfileSelfView() {
 
   if (view === 'documents') return <CoachDocumentsView onClose={() => setView('main')} />;
   if (view === 'sessions') return <MySessionsView onClose={() => setView('main')} />;
+  if (view === 'services') return <CoachServicesView onClose={() => setView('main')} />;
 
   if (view === 'password') {
     return (
@@ -156,6 +158,19 @@ export function CoachProfileSelfView() {
             <p className="text-slate-500 text-sm mt-0.5">{coach?.location || 'Not set'}</p>
           )}
         </div>
+
+        {/* My Services */}
+        <button onClick={() => setView('services')}
+          className="w-full bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center gap-3 hover:border-emerald-300 transition-all active:scale-[0.99] text-left">
+          <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Briefcase className="w-5 h-5 text-emerald-700" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-slate-900">My Services</p>
+            <p className="text-sm text-slate-500">1-on-1, group sessions, clinics & more</p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0" />
+        </button>
 
         {/* My Sessions & Reports */}
         <button onClick={() => setView('sessions')}

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 
 const SPORTS = ['Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis', 'Swimming', 'Wrestling', 'Cross Country'];
 const AGE_GROUPS = ['Under 8', '8–10', '11–13', '14–17', '18+', 'All Ages'];
+const TRAINING_TYPES = ['Agility', 'Strength', 'Conditioning', 'Speed', 'Flexibility', 'Plyometrics', 'Mental Coaching', 'Nutrition'];
 
 export function AuthView() {
   const { login } = useAuth();
@@ -26,6 +27,7 @@ export function AuthView() {
   // coach register
   const [sportsCoached, setSportsCoached] = useState<string[]>([]);
   const [ageGroups, setAgeGroups] = useState<string[]>([]);
+  const [trainingTypes, setTrainingTypes] = useState<string[]>([]);
   const [hourlyRate, setHourlyRate] = useState('');
   const [yearsExp, setYearsExp] = useState('');
 
@@ -55,6 +57,7 @@ export function AuthView() {
       if (accountType === 'coach') {
         body.sportsCoached = sportsCoached;
         body.ageGroupsCoached = ageGroups;
+        body.trainingTypes = trainingTypes;
         body.hourlyRate = hourlyRate ? Number(hourlyRate) : null;
         body.yearsExperience = yearsExp;
       }
@@ -216,6 +219,24 @@ export function AuthView() {
                         }`}
                       >
                         {ag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-white/70 text-sm mb-2">Training specialties (optional)</p>
+                  <div className="flex flex-wrap gap-2">
+                    {TRAINING_TYPES.map(t => (
+                      <button
+                        key={t}
+                        onClick={() => toggleSport(t, trainingTypes, setTrainingTypes)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                          trainingTypes.includes(t)
+                            ? 'bg-emerald-500 border-emerald-400 text-white'
+                            : 'bg-white/10 border-white/20 text-white/60'
+                        }`}
+                      >
+                        {t}
                       </button>
                     ))}
                   </div>

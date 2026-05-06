@@ -6,6 +6,7 @@ import { useAuth } from '../lib/auth';
 const SPORTS = ['Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis', 'Swimming', 'Wrestling'];
 const AGE_GROUPS = ['Under 8', '8–10', '11–13', '14–17', '18+', 'All Ages'];
 const MAX_RATES = [30, 50, 75, 100, 150, 200];
+const TRAINING_TYPES = ['Agility', 'Strength', 'Conditioning', 'Speed', 'Flexibility', 'Plyometrics', 'Mental Coaching', 'Nutrition'];
 
 function getInitials(name: string) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -24,8 +25,9 @@ export function CoachDiscoveryView({ onViewCoach }: CoachDiscoveryViewProps) {
   const [filterSport, setFilterSport] = useState('');
   const [filterAge, setFilterAge] = useState('');
   const [filterMaxRate, setFilterMaxRate] = useState<number | undefined>();
+  const [filterTrainingType, setFilterTrainingType] = useState('');
 
-  const activeFilterCount = [filterSport, filterAge, filterMaxRate].filter(Boolean).length;
+  const activeFilterCount = [filterSport, filterAge, filterMaxRate, filterTrainingType].filter(Boolean).length;
 
   const fetchCoaches = async () => {
     if (!token) return;
@@ -35,6 +37,7 @@ export function CoachDiscoveryView({ onViewCoach }: CoachDiscoveryViewProps) {
         sport: filterSport || undefined,
         ageGroup: filterAge || undefined,
         maxRate: filterMaxRate,
+        trainingType: filterTrainingType || undefined,
         search: search.trim() || undefined,
       });
       setCoachList(coaches);
@@ -45,7 +48,7 @@ export function CoachDiscoveryView({ onViewCoach }: CoachDiscoveryViewProps) {
     }
   };
 
-  useEffect(() => { fetchCoaches(); }, [token, filterSport, filterAge, filterMaxRate]);
+  useEffect(() => { fetchCoaches(); }, [token, filterSport, filterAge, filterMaxRate, filterTrainingType]);
 
   const handleSearch = () => fetchCoaches();
 
@@ -53,6 +56,7 @@ export function CoachDiscoveryView({ onViewCoach }: CoachDiscoveryViewProps) {
     setFilterSport('');
     setFilterAge('');
     setFilterMaxRate(undefined);
+    setFilterTrainingType('');
   };
 
   return (
@@ -155,6 +159,22 @@ export function CoachDiscoveryView({ onViewCoach }: CoachDiscoveryViewProps) {
               ))}
             </div>
           </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-700 mb-2">Training Specialty</p>
+            <div className="flex flex-wrap gap-2">
+              {TRAINING_TYPES.map(t => (
+                <button
+                  key={t}
+                  onClick={() => setFilterTrainingType(filterTrainingType === t ? '' : t)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                    filterTrainingType === t ? 'bg-emerald-600 border-emerald-500 text-white' : 'bg-slate-50 border-slate-200 text-slate-700'
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -202,6 +222,15 @@ export function CoachDiscoveryView({ onViewCoach }: CoachDiscoveryViewProps) {
                   <p className="text-sm text-slate-500 truncate">{coach.sportsCoached.join(', ')}</p>
                   {coach.ageGroupsCoached.length > 0 && (
                     <p className="text-xs text-slate-400 mt-0.5">Ages: {coach.ageGroupsCoached.join(', ')}</p>
+                  )}
+                  {coach.trainingTypes && coach.trainingTypes.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {coach.trainingTypes.slice(0, 3).map(t => (
+                        <span key={t} className="bg-violet-50 text-violet-700 text-[10px] font-medium px-1.5 py-0.5 rounded-full border border-violet-100">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
                   )}
                   <div className="flex items-center gap-3 mt-2">
                     {coach.averageRating > 0 && (
