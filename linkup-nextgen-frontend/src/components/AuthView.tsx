@@ -72,7 +72,10 @@ export function AuthView() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-950">
+    <div
+      className="h-full overflow-y-auto bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-950"
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       {/* Logo */}
       <div className="pt-14 pb-6 px-8 text-center">
         <div className="w-20 h-20 bg-emerald-500/20 backdrop-blur-sm rounded-3xl flex items-center justify-center mx-auto mb-4 border border-emerald-400/30">

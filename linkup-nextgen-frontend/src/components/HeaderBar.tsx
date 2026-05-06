@@ -8,8 +8,10 @@ interface HeaderBarProps {
 
 export function HeaderBar({ onBellClick, unreadCount = 0, showNotifications = false }: HeaderBarProps) {
   return (
-    <div className="bg-emerald-950 px-5 py-3 flex items-center justify-between flex-shrink-0">
-      <div className="flex items-center gap-2">
+    <div
+      className="bg-emerald-950 px-5 pb-3 flex items-center justify-between flex-shrink-0"
+      style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+    >      <div className="flex items-center gap-2">
         <div className="w-7 h-7 bg-emerald-500 rounded-lg flex items-center justify-center">
           <span className="text-white font-bold text-xs">NG</span>
         </div>

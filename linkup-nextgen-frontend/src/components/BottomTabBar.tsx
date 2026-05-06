@@ -16,7 +16,10 @@ const TABS = [
 
 export function BottomTabBar({ activeTab, onTabChange, badges = {} }: BottomTabBarProps) {
   return (
-    <div className="bg-white border-t border-slate-200 flex items-stretch flex-shrink-0 safe-area-pb">
+    <div
+      className="bg-white border-t border-slate-200 flex items-stretch flex-shrink-0"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+    >
       {TABS.map(({ id, label, Icon }) => {
         const isActive = activeTab === id;
         const badge = id === 'messages' ? badges.messages : 0;
