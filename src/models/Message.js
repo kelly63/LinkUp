@@ -14,8 +14,8 @@ const messageSchema = new mongoose.Schema(
     },
     text: {
       type: String,
-      required: [true, 'Message text is required'],
       maxlength: 2000,
+      default: '',
     },
     read: {
       type: Boolean,
@@ -23,8 +23,16 @@ const messageSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['user', 'system'],
+      enum: ['user', 'system', 'booking_request'],
       default: 'user',
+    },
+    bookingData: {
+      sessionType: { type: String, enum: ['lesson', 'call'] },
+      proposedDate: { type: String, default: '' },
+      proposedTime: { type: String, default: '' },
+      duration: { type: String, default: '' },
+      notes: { type: String, default: '' },
+      status: { type: String, enum: ['pending', 'accepted', 'declined'], default: 'pending' },
     },
     sessionId: {
       type: mongoose.Schema.Types.ObjectId,

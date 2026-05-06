@@ -118,6 +118,16 @@ const userSchema = new mongoose.Schema(
       default: [],
     },
 
+    // Coach weekly availability template
+    availability: {
+      type: [{
+        day: { type: String, required: true },
+        startTime: { type: String, default: '09:00' },
+        endTime: { type: String, default: '17:00' },
+      }],
+      default: [],
+    },
+
     // Services the coach offers
     services: {
       type: [{

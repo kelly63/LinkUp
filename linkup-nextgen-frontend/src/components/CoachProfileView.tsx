@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Star, MapPin, MessageSquare, Award, Clock, Users, CheckCircle, ClipboardList, FileText, Briefcase, Zap } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, MessageSquare, Award, Clock, Users, CheckCircle, ClipboardList, FileText, Briefcase, Zap, Calendar } from 'lucide-react';
 import { coaches as coachesApi, Coach, avatarThumb, reports as reportsApi, SessionReport } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
@@ -154,6 +154,32 @@ export function CoachProfileView({ coachId, onBack, onMessage }: CoachProfileVie
           <div className="bg-white rounded-2xl p-4 border border-slate-200">
             <h3 className="font-bold text-slate-900 mb-2">About</h3>
             <p className="text-slate-700 text-sm leading-relaxed">{coach.bio}</p>
+          </div>
+        )}
+
+        {/* Availability */}
+        {coach.availability && coach.availability.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 border border-slate-200">
+            <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-emerald-600" /> Availability
+            </h3>
+            <div className="space-y-1.5">
+              {(['monday','tuesday','wednesday','thursday','friday','saturday','sunday'] as const)
+                .map(day => coach.availability.find(s => s.day === day))
+                .filter(Boolean)
+                .map(slot => {
+                  const fmt = (t: string) => {
+                    const [h, m] = t.split(':').map(Number);
+                    return `${h % 12 || 12}:${m === 0 ? '00' : m} ${h < 12 ? 'AM' : 'PM'}`;
+                  };
+                  return (
+                    <div key={slot!.day} className="flex items-center justify-between py-1.5 border-b border-slate-50 last:border-0">
+                      <span className="text-sm font-medium text-slate-700 capitalize w-24">{slot!.day}</span>
+                      <span className="text-sm text-emerald-700 font-semibold">{fmt(slot!.startTime)} – {fmt(slot!.endTime)}</span>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
         )}
 

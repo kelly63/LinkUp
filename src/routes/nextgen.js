@@ -73,7 +73,7 @@ router.get('/coaches', protect, async (req, res) => {
     ];
     const skip = (Number(page) - 1) * Number(limit);
     const coaches = await User.find(query)
-      .select('name avatar location sport sportsCoached hourlyRate ageGroupsCoached trainingTypes services averageRating ratingCount yearsExperience certifications bio')
+      .select('name avatar location sport sportsCoached hourlyRate ageGroupsCoached trainingTypes services availability averageRating ratingCount yearsExperience certifications bio')
       .sort({ averageRating: -1, ratingCount: -1 })
       .skip(skip)
       .limit(Number(limit));

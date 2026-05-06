@@ -25,6 +25,21 @@ export interface CoachService {
   duration: string;
 }
 
+export interface AvailabilitySlot {
+  day: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface BookingData {
+  sessionType: 'lesson' | 'call';
+  proposedDate: string;
+  proposedTime: string;
+  duration: string;
+  notes: string;
+  status: 'pending' | 'accepted' | 'declined';
+}
+
 export interface Coach {
   _id: string;
   name: string;
@@ -35,6 +50,7 @@ export interface Coach {
   ageGroupsCoached: string[];
   trainingTypes: string[];
   services: CoachService[];
+  availability: AvailabilitySlot[];
   yearsExperience: string;
   certifications: string;
   coachingPhilosophy: string;
@@ -93,6 +109,8 @@ export interface Message {
   text: string;
   read: boolean;
   createdAt: string;
+  type?: 'user' | 'system' | 'booking_request';
+  bookingData?: BookingData;
 }
 
 // ─── HTTP helper ──────────────────────────────────────────────────────────────
@@ -345,8 +363,20 @@ export const messages = {
     request<{ messages: Message[] }>(`/api/messages/${userId}`, {}, token),
 
   send: (token: string, recipientId: string, text: string) =>
-    request<{ message: Message }>('/api/messages', {
+    request<{ message: Message }>(`/api/messages/${recipientId}`, {
       method: 'POST',
-      body: JSON.stringify({ recipientId, text }),
+      body: JSON.stringify({ text }),
+    }, token),
+
+  sendBooking: (token: string, recipientId: string, bookingData: Omit<BookingData, 'status'>) =>
+    request<{ message: Message }>(`/api/messages/${recipientId}`, {
+      method: 'POST',
+      body: JSON.stringify({ bookingData }),
+    }, token),
+
+  respondToBooking: (token: string, messageId: string, status: 'accepted' | 'declined') =>
+    request<{ message: Message }>(`/api/messages/${messageId}/booking`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
     }, token),
 };

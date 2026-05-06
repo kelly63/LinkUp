@@ -36,9 +36,10 @@ const getOrCreateRequest = async (requesterId, recipientId) => {
 const sendMessage = async (req, res) => {
   try {
     const recipientId = req.params.userId;
-    const { text } = req.body;
+    const { text, bookingData } = req.body;
+    const isBooking = bookingData && bookingData.sessionType;
 
-    if (!text || !text.trim()) {
+    if (!isBooking && (!text || !text.trim())) {
       return res.status(400).json({ message: 'Message text is required' });
     }
 
@@ -52,41 +53,76 @@ const sendMessage = async (req, res) => {
         return res.status(403).json({ message: 'This user has declined your message request' });
       }
 
-      // Notify recipient on the first message (new request)
       if (created) {
         const io = req.app.get('io');
         if (io) {
           io.notify(recipientId, 'message_request', {
-            from: {
-              _id: req.user._id,
-              name: req.user.name,
-              avatar: req.user.avatar,
-            },
+            from: { _id: req.user._id, name: req.user.name, avatar: req.user.avatar },
           });
         }
       }
     }
 
-    const message = await Message.create({
-      sender: req.user._id,
-      recipient: recipientId,
-      text: text.trim(),
-    });
+    const msgFields = isBooking
+      ? {
+          sender: req.user._id,
+          recipient: recipientId,
+          text: '',
+          type: 'booking_request',
+          bookingData: {
+            sessionType: bookingData.sessionType,
+            proposedDate: bookingData.proposedDate || '',
+            proposedTime: bookingData.proposedTime || '',
+            duration: bookingData.duration || '',
+            notes: bookingData.notes || '',
+            status: 'pending',
+          },
+        }
+      : {
+          sender: req.user._id,
+          recipient: recipientId,
+          text: text.trim(),
+        };
+
+    const message = await Message.create(msgFields);
 
     const io = req.app.get('io');
     if (io) {
-      const payload = {
-        _id: message._id,
-        sender: req.user._id.toString(),
-        recipient: recipientId,
-        text: message.text,
-        read: false,
-        createdAt: message.createdAt,
-      };
-      io.to(`user:${recipientId}`).emit('message:new', payload);
+      io.to(`user:${recipientId}`).emit('message:new', message.toObject());
     }
 
     res.status(201).json({ message });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+const respondToBooking = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { status } = req.body;
+    if (!['accepted', 'declined'].includes(status)) {
+      return res.status(400).json({ message: 'Status must be accepted or declined' });
+    }
+    const message = await Message.findById(messageId);
+    if (!message || message.type !== 'booking_request') {
+      return res.status(404).json({ message: 'Booking request not found' });
+    }
+    if (message.recipient.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only the recipient can respond' });
+    }
+    message.bookingData.status = status;
+    await message.save();
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user:${message.sender.toString()}`).emit('booking:updated', {
+        messageId: message._id,
+        status,
+      });
+    }
+
+    res.json({ message });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -352,4 +388,5 @@ module.exports = {
   acceptMessageRequest,
   declineMessageRequest,
   postSessionLink,
+  respondToBooking,
 };
