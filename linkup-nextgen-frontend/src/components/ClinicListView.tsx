@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { CalendarDays, MapPin, Users, SlidersHorizontal, X, Plus, Check } from 'lucide-react';
-import { clinics as clinicsApi, Clinic } from '../lib/api';
+import { CalendarDays, MapPin, Users, SlidersHorizontal, X, Plus, Check, User } from 'lucide-react';
+import { clinics as clinicsApi, Clinic, avatarThumb } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { toast } from 'sonner';
 
@@ -435,20 +435,25 @@ export function ClinicListView({ onViewCoach }: ClinicListViewProps) {
                 <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 mb-3">{clinic.notes}</p>
               )}
 
-              <div className="flex gap-2">
+              {/* Coach row */}
+              {(clinic.postedBy as any)?._id && (
                 <button
-                  onClick={() => onViewCoach((clinic.postedBy as any)?._id)}
-                  className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                  onClick={() => onViewCoach((clinic.postedBy as any)._id)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl transition-all mb-2"
                 >
-                  View Details
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white text-xs font-bold overflow-hidden flex-shrink-0">
+                    {(clinic.postedBy as any).avatar
+                      ? <img src={avatarThumb((clinic.postedBy as any).avatar, 64)!} className="w-full h-full object-cover" alt="" />
+                      : ((clinic.postedBy as any).name || 'C').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+                    }
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-xs text-slate-500">Posted by</p>
+                    <p className="text-sm font-semibold text-slate-900 truncate">{(clinic.postedBy as any).name}</p>
+                  </div>
+                  <User className="w-4 h-4 text-emerald-600 flex-shrink-0" />
                 </button>
-                <button
-                  onClick={() => onViewCoach((clinic.postedBy as any)?._id)}
-                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-xl transition-colors"
-                >
-                  Coach
-                </button>
-              </div>
+              )}
             </div>
           ))
         )}
