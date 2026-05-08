@@ -39,6 +39,8 @@
     "@radix-ui/react-toggle": "^1.1.2",
     "@radix-ui/react-toggle-group": "^1.1.2",
     "@radix-ui/react-tooltip": "^1.1.8",
+    "@sentry/capacitor": "^4.0.0",
+    "@sentry/react": "^10.52.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "*",
     "cmdk": "^1.1.1",
@@ -46,7 +48,6 @@
     "input-otp": "^1.4.2",
     "lucide-react": "^0.487.0",
     "next-themes": "^0.4.6",
-    "node-apn": "^3.0.0",
     "qrcode.react": "*",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
@@ -65,7 +66,7 @@
     "@vitejs/plugin-react-swc": "^3.10.2",
     "playwright": "^1.48.0",
     "typescript": "^6.0.3",
-    "vite": "6.3.5"
+    "vite": "^6.4.2"
   },
   "scripts": {
     "dev": "vite",
