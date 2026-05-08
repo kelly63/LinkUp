@@ -7,6 +7,10 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const connectDB = require('./config/database');
 const { getSocketIo } = require('./socket');
+const { initSentry, Sentry } = require('./config/sentry');
+
+// Must be called before any other code so Sentry can instrument automatically
+initSentry();
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -92,6 +96,9 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 // 404
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
+
+// Sentry error handler must come before the generic error handler
+app.use(Sentry.expressErrorHandler());
 
 // Global error handler
 app.use((err, req, res, next) => {
