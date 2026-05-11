@@ -73,6 +73,9 @@ app.use(express.urlencoded({ extended: true }));
 // Serve uploaded avatars
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
+// Serve public static pages (privacy policy, etc.)
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
