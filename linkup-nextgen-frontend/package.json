@@ -12,7 +12,7 @@
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
     "@sentry/capacitor": "^4.0.0",
-    "@sentry/react": "^10.43.0",
+    "@sentry/react": "10.43.0",
     "lucide-react": "^0.487.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
