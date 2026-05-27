@@ -201,7 +201,15 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
             <ChevronLeft className="w-6 h-6 text-white" />
           </button>
           <div>
-            <h2 className="text-white">Session Details</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-white">Session Details</h2>
+              {(localSession as any).teamType === 'mens' && (
+                <span className="px-2 py-0.5 bg-blue-500/60 border border-blue-300/40 text-white text-[10px] font-bold rounded-full">Men's</span>
+              )}
+              {(localSession as any).teamType === 'womens' && (
+                <span className="px-2 py-0.5 bg-pink-500/60 border border-pink-300/40 text-white text-[10px] font-bold rounded-full">Women's</span>
+              )}
+            </div>
             <p className="text-blue-200 text-sm">{localSession.title || `${localSession.sport} Practice`}</p>
             {!isPostedByMe && localSession.postedBy && typeof localSession.postedBy === 'object' && (
               <button

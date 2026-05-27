@@ -48,7 +48,7 @@ const postSystemMessage = async (io, fromId, toId, text, sessionId = null) => {
   return message;
 };
 
-const USER_FIELDS = 'name avatar role sport position skillLevel sportsCoached averageRating ratingCount location';
+const USER_FIELDS = 'name avatar role sport position skillLevel teamType sportsCoached averageRating ratingCount location';
 
 // POST /api/sessions — post a session need
 function computeExpiresAt(date, dateWindowStart, dateWindowEnd) {
@@ -71,6 +71,7 @@ function computeExpiresAt(date, dateWindowStart, dateWindowEnd) {
 const createSession = async (req, res) => {
   try {
     const {
+      teamType,
       sport,
       position,
       posterRole,
@@ -115,6 +116,7 @@ const createSession = async (req, res) => {
 
     const session = await Session.create({
       postedBy: req.user._id,
+      teamType: teamType || req.user.teamType || '',
       sport,
       position,
       posterRole,
@@ -236,7 +238,7 @@ const updateSession = async (req, res) => {
     }
 
     // Non-scheduling fields always apply immediately
-    const freeEditFields = ['sport', 'position', 'posterRole', 'partnerRole', 'title', 'goals', 'notes', 'equipment', 'skillLevelRequired'];
+    const freeEditFields = ['teamType', 'sport', 'position', 'posterRole', 'partnerRole', 'title', 'goals', 'notes', 'equipment', 'skillLevelRequired'];
     for (const field of freeEditFields) {
       if (req.body[field] !== undefined) session[field] = req.body[field];
     }

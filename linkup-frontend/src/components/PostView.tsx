@@ -42,6 +42,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [selectedSport, setSelectedSport] = useState(userSports.length > 0 ? userSports[0] : 'Baseball');
   const [selectedPartnerRoles, setSelectedPartnerRoles] = useState<string[]>([]);
   const [posterRole, setPosterRole] = useState('');
+  const [selectedTeamType, setSelectedTeamType] = useState<string>(user?.teamType || '');
   const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [isDateFlexible, setIsDateFlexible] = useState(false);
@@ -250,6 +251,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
       posterName: firstLastInitial((session.postedBy as any)?.name || ''),
       isOnRoster: posterId ? rosterIds.has(posterId) : false,
       isTraveler: (session as any).isTraveler ?? false,
+      teamType: (session as any).teamType || '',
       _session: session,
     };
   });
@@ -419,6 +421,27 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   </>
                 )}
               </select>
+            </div>
+
+            {/* Team Type */}
+            <div>
+              <label className="text-sm text-slate-700 mb-2 block">Team Type</label>
+              <div className="grid grid-cols-2 gap-2">
+                {([['mens', "Men's"], ['womens', "Women's"]] as const).map(([val, label]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setSelectedTeamType(selectedTeamType === val ? '' : val)}
+                    className={`py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                      selectedTeamType === val
+                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* My Position / Role */}
@@ -692,6 +715,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 const notes = notesRef.current?.value || '';
                 try {
                   await sessionsApi.create(token, {
+                    teamType: selectedTeamType,
                     sport: selectedSport,
                     posterRole: resolvedPosterRole,
                     partnerRole: selectedPartnerRoles.join(', '),
@@ -711,6 +735,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   // Reset form
                   setSelectedPartnerRoles([]);
                   setPosterRole('');
+                  setSelectedTeamType(user?.teamType || '');
                   setSelectedDates([]);
                   setSelectedTimes([]);
                   setDateInputValue('');

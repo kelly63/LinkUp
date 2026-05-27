@@ -11,6 +11,7 @@ interface Need {
   posterName?: string;
   isOnRoster?: boolean;
   isTraveler?: boolean;
+  teamType?: string;
 }
 
 interface NeedCardProps {
@@ -58,6 +59,16 @@ export function NeedCard({ need, onClick, onPosterClick }: NeedCardProps) {
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold rounded-full border border-amber-200">
                 <Plane className="w-2.5 h-2.5" />
                 Traveling
+              </span>
+            )}
+            {need.teamType === 'mens' && (
+              <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full border border-blue-200">
+                Men's
+              </span>
+            )}
+            {need.teamType === 'womens' && (
+              <span className="inline-flex items-center px-1.5 py-0.5 bg-pink-100 text-pink-700 text-[10px] font-bold rounded-full border border-pink-200">
+                Women's
               </span>
             )}
           </div>

@@ -186,11 +186,23 @@ export function UserProfileView({
             </div>
           )}
 
-          {profileUser.skillLevel && (
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <div className="bg-blue-700/50 backdrop-blur-sm px-3 py-1 rounded-full">
-                <span className="text-white text-xs font-semibold">{profileUser.skillLevel}</span>
-              </div>
+          {(profileUser.skillLevel || (isAthlete && (profileUser as any).teamType)) && (
+            <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
+              {profileUser.skillLevel && (
+                <div className="bg-blue-700/50 backdrop-blur-sm px-3 py-1 rounded-full">
+                  <span className="text-white text-xs font-semibold">{profileUser.skillLevel}</span>
+                </div>
+              )}
+              {isAthlete && (profileUser as any).teamType === 'mens' && (
+                <div className="bg-blue-500/70 backdrop-blur-sm px-3 py-1 rounded-full border border-blue-300/40">
+                  <span className="text-white text-xs font-semibold">Men's</span>
+                </div>
+              )}
+              {isAthlete && (profileUser as any).teamType === 'womens' && (
+                <div className="bg-pink-500/70 backdrop-blur-sm px-3 py-1 rounded-full border border-pink-300/40">
+                  <span className="text-white text-xs font-semibold">Women's</span>
+                </div>
+              )}
               {!isAthlete && profileUser.hourlyRate && (
                 <div className="bg-emerald-700/50 backdrop-blur-sm px-3 py-1 rounded-full">
                   <span className="text-white text-xs font-semibold">${profileUser.hourlyRate}/hr</span>

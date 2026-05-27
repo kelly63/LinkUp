@@ -17,6 +17,7 @@ export interface User {
   avatar: string | null;
   bio: string;
   location: string;
+  teamType: string;
   sport: string;
   position: string;
   skillLevel: string;

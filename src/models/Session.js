@@ -9,6 +9,13 @@ const sessionSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Team type (men's / women's)
+    teamType: {
+      type: String,
+      enum: ['mens', 'womens', ''],
+      default: '',
+    },
+
     // Sport and roles
     sport: {
       type: String,
