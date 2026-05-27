@@ -28,14 +28,20 @@ export default function App() {
 
   useEffect(() => {
     if (!isNative) return;
-    // Read the real safe-area-inset-top pixel value via computed style —
-    // this evaluates env() correctly even in WKWebView
-    const probe = document.createElement('div');
-    probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;padding-top:env(safe-area-inset-top)';
-    document.body.appendChild(probe);
-    const sat = parseFloat(getComputedStyle(probe).paddingTop) || 0;
-    document.body.removeChild(probe);
-    setToastOffset(sat > 0 ? sat + 16 : 70);
+
+    const readSafeArea = () => {
+      const probe = document.createElement('div');
+      probe.style.cssText = 'position:fixed;top:0;left:0;width:0;height:0;padding-top:env(safe-area-inset-top)';
+      document.body.appendChild(probe);
+      const sat = parseFloat(getComputedStyle(probe).paddingTop) || 0;
+      document.body.removeChild(probe);
+      // sat+24 gives breathing room below the Dynamic Island
+      setToastOffset(sat > 0 ? sat + 24 : 100);
+    };
+
+    // Delay so WKWebView has time to populate env(safe-area-inset-top)
+    const t = setTimeout(readSafeArea, 300);
+    return () => clearTimeout(t);
   }, []);
 
   return (
