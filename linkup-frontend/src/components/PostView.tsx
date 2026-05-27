@@ -46,6 +46,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [isDateFlexible, setIsDateFlexible] = useState(false);
   const [isTimeFlexible, setIsTimeFlexible] = useState(false);
+  const [dateInputValue, setDateInputValue] = useState('');
+  const [timeInputValue, setTimeInputValue] = useState('');
   
   // Find Sessions filters
   const [showFilters, setShowFilters] = useState(false);
@@ -469,11 +471,22 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 <Calendar className="w-4 h-4" />
                 Date
               </label>
-              <input
-                type="date"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
-                onChange={(e) => handleDateAdd(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  value={dateInputValue}
+                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                  onChange={(e) => setDateInputValue(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => { if (dateInputValue) { handleDateAdd(dateInputValue); setDateInputValue(''); } }}
+                  disabled={!dateInputValue}
+                  className="px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl font-semibold transition-colors text-sm"
+                >
+                  Add
+                </button>
+              </div>
               {selectedDates.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {selectedDates.map((date) => (
@@ -521,11 +534,22 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 <Clock className="w-4 h-4" />
                 Time
               </label>
-              <input
-                type="time"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
-                onChange={(e) => handleTimeAdd(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <input
+                  type="time"
+                  value={timeInputValue}
+                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                  onChange={(e) => setTimeInputValue(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => { if (timeInputValue) { handleTimeAdd(timeInputValue); setTimeInputValue(''); } }}
+                  disabled={!timeInputValue}
+                  className="px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl font-semibold transition-colors text-sm"
+                >
+                  Add
+                </button>
+              </div>
               {selectedTimes.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
                   {selectedTimes.map((time) => (
@@ -689,6 +713,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   setPosterRole('');
                   setSelectedDates([]);
                   setSelectedTimes([]);
+                  setDateInputValue('');
+                  setTimeInputValue('');
                   setSelectedSkillLevels([]);
                   setLocationValue('');
                   setIsPostTraveling(false);
