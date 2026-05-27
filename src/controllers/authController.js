@@ -1,7 +1,8 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
-const { sendVerificationEmail } = require('../utils/email');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/email');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'linkup-admin-secret';
@@ -243,4 +244,67 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout, getMe, googleAuth, changePassword };
+// POST /api/auth/forgot-password
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    // Always return 200 so we don't reveal whether an account exists
+    if (!user) return res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+
+    if (!user.password) {
+      return res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save({ validateBeforeSave: false });
+
+    const resetUrl = `${APP_URL}/reset-password.html?token=${rawToken}`;
+    await sendPasswordResetEmail({ toEmail: user.email, toName: user.name, resetUrl });
+
+    res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+  } catch (error) {
+    console.error('forgot-password error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// POST /api/auth/reset-password/:token
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: new Date() },
+    }).select('+resetPasswordToken +resetPasswordExpires');
+
+    if (!user) {
+      return res.status(400).json({ message: 'Reset link is invalid or has expired.' });
+    }
+
+    user.password = password;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    res.json({ message: 'Password updated successfully. You can now sign in.' });
+  } catch (error) {
+    console.error('reset-password error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { register, login, logout, getMe, googleAuth, changePassword, forgotPassword, resetPassword };

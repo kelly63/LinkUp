@@ -17,6 +17,37 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
   const [error, setError] = useState('');
 
   // Google new-user terms acceptance state
+  // Forgot-password state
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotDone, setForgotDone] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail.trim()) {
+      setForgotError('Please enter your email address');
+      return;
+    }
+    setForgotLoading(true);
+    setForgotError('');
+    try {
+      await authApi.forgotPassword(forgotEmail.trim());
+      setForgotDone(true);
+    } catch (err: any) {
+      setForgotError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const closeForgot = () => {
+    setShowForgot(false);
+    setForgotEmail('');
+    setForgotDone(false);
+    setForgotError('');
+  };
+
   const [googlePendingToken, setGooglePendingToken] = useState<string | null>(null);
   const [googlePendingUser, setGooglePendingUser] = useState<any>(null);
   const [gtAgreedTerms, setGtAgreedTerms] = useState(false);
@@ -151,12 +182,13 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
 
             {/* Forgot Password */}
             <div className="text-right">
-              <a 
-                href="mailto:support@linkupathletics.com?subject=Password Reset Request&body=Hi LinkUp Athletics Support,%0D%0A%0D%0AI would like to reset my password for my account.%0D%0A%0D%0AThank you"
-                className="text-sm text-blue-600 hover:text-blue-700 font-[Magra]"
+              <button
+                type="button"
+                onClick={() => { setShowForgot(true); setForgotEmail(email); }}
+                className="text-sm text-blue-600 hover:text-blue-700 font-[Magra] bg-transparent border-none cursor-pointer p-0"
               >
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             {/* Error message */}
@@ -207,6 +239,67 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
             </button>
           </div>
         </div>
+
+      {/* Forgot Password modal */}
+      {showForgot && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
+          <div className="bg-white rounded-t-3xl w-full p-6 space-y-4">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Lock className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 font-[Magra]">Reset Password</h3>
+              <p className="text-sm text-slate-500 mt-1">
+                {forgotDone
+                  ? "Check your email for a reset link."
+                  : "Enter your email and we'll send you a link to reset your password."}
+              </p>
+            </div>
+
+            {!forgotDone && (
+              <>
+                <input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleForgotPassword(); }}
+                  placeholder="your.email@example.com"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors font-[Magra]"
+                  autoFocus
+                />
+
+                {forgotError && (
+                  <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
+                    {forgotError}
+                  </p>
+                )}
+
+                <button
+                  onClick={handleForgotPassword}
+                  disabled={forgotLoading}
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white py-4 rounded-xl font-semibold transition-all flex items-center justify-center font-[Magra]"
+                >
+                  {forgotLoading
+                    ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    : 'Send Reset Link'}
+                </button>
+              </>
+            )}
+
+            {forgotDone && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 text-center">
+                <p className="text-sm text-emerald-700">
+                  If an account with that email exists, a reset link has been sent. Check your inbox (and spam folder).
+                </p>
+              </div>
+            )}
+
+            <button onClick={closeForgot} className="w-full py-3 text-sm text-slate-500 font-[Magra]">
+              {forgotDone ? 'Back to Sign In' : 'Cancel'}
+            </button>
+          </div>
+        </div>
+      )}
 
         {/* Google new-user terms modal */}
       {googlePendingToken && (
