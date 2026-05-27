@@ -517,7 +517,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                     {likeCount > 0 && <span>{likeCount}</span>}
                   </button>
                   <button
-                    onClick={() => onNavigate?.('lockerRoom')}
+                    onClick={() => onNavigate?.('lockerRoom', { postId: post._id })}
                     className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-500 transition-colors"
                   >
                     <MessageCircle className="w-4 h-4" />

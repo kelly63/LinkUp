@@ -55,6 +55,11 @@ const userSchema = new mongoose.Schema(
     },
 
     // Athlete-specific fields
+    teamType: {
+      type: String,
+      enum: ['mens', 'womens', 'coed', ''],
+      default: '',
+    },
     sport: {
       type: String,
       default: '',

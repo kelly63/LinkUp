@@ -260,6 +260,7 @@ function PostCard({
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onSubmitComment(); } }}
                 placeholder="Add a comment…"
                 className="flex-1 bg-transparent text-sm text-slate-900 placeholder-slate-400 outline-none"
+                autoFocus
               />
               <button
                 onClick={onSubmitComment}
@@ -280,7 +281,7 @@ function PostCard({
 
 // ── LockerRoomView ─────────────────────────────────────────────────────────
 
-export function LockerRoomView({ onBack }: { onBack?: () => void }) {
+export function LockerRoomView({ onBack, initialOpenCommentPostId }: { onBack?: () => void; initialOpenCommentPostId?: string | null }) {
   const { token, user } = useAuth();
   const [feedPosts, setFeedPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -291,7 +292,8 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
   const [isCreatePostDialogOpen, setIsCreatePostDialogOpen] = useState(false);
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
-  const [openCommentPostId, setOpenCommentPostId] = useState<string | null>(null);
+  const [openCommentPostId, setOpenCommentPostId] = useState<string | null>(initialOpenCommentPostId ?? null);
+  const didAutoScrollRef = useRef(false);
   const [postComments, setPostComments] = useState<Record<string, Post['comments']>>({});
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
@@ -309,6 +311,16 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
   }, [openMenuPostId]);
+
+  // Auto-scroll to the targeted post once it loads
+  useEffect(() => {
+    if (loading || !initialOpenCommentPostId || didAutoScrollRef.current) return;
+    didAutoScrollRef.current = true;
+    setTimeout(() => {
+      const el = document.getElementById(`post-${initialOpenCommentPostId}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  }, [loading, initialOpenCommentPostId]);
 
   const fetchPage = useCallback(async (p: number, replace: boolean) => {
     if (!token) return;
@@ -503,6 +515,7 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
         )}
 
         {!loading && feedPosts.map((post) => (
+          <div key={post._id} id={`post-${post._id}`}>
           <PostCard
             key={post._id}
             post={post}
@@ -526,6 +539,7 @@ export function LockerRoomView({ onBack }: { onBack?: () => void }) {
             onMenuToggle={() => setOpenMenuPostId(openMenuPostId === post._id ? null : post._id)}
             onDraftChange={(val) => setCommentDrafts((prev) => ({ ...prev, [post._id]: val }))}
           />
+          </div>
         ))}
 
         {page < totalPages && !loading && (

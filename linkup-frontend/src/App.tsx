@@ -24,7 +24,8 @@ function CrashFallback() {
 export default function App() {
   const isNative = Capacitor.isNativePlatform();
   const [splashDone, setSplashDone] = useState(false);
-  const [toastOffset, setToastOffset] = useState(16);
+  // Start at 100 on native so early toasts clear the Dynamic Island before env() resolves
+  const [toastOffset, setToastOffset] = useState(isNative ? 100 : 16);
 
   useEffect(() => {
     if (!isNative) return;
@@ -35,12 +36,12 @@ export default function App() {
       document.body.appendChild(probe);
       const sat = parseFloat(getComputedStyle(probe).paddingTop) || 0;
       document.body.removeChild(probe);
-      // sat+24 gives breathing room below the Dynamic Island
-      setToastOffset(sat > 0 ? sat + 24 : 100);
+      // Only refine if env() resolved; otherwise keep the 100px safe default
+      if (sat > 0) setToastOffset(sat + 32);
     };
 
-    // Delay so WKWebView has time to populate env(safe-area-inset-top)
-    const t = setTimeout(readSafeArea, 300);
+    // 500ms gives WKWebView time to populate env(safe-area-inset-top)
+    const t = setTimeout(readSafeArea, 500);
     return () => clearTimeout(t);
   }, []);
 

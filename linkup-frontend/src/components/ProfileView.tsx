@@ -125,6 +125,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [philosophy, setPhilosophy] = useState(user?.coachingPhilosophy || '');
   
   // Temporary edit states
+  const [tempTeamType, setTempTeamType] = useState('');
   const [tempSport, setTempSport] = useState('');
   const [tempPosition, setTempPosition] = useState('');
   const [tempLevel, setTempLevel] = useState('');
@@ -150,6 +151,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   };
   
   const handleOpenAthleteEdit = () => {
+    setTempTeamType(user?.teamType || '');
     setTempSport(athleteSport);
     setTempPosition(athletePosition);
     setTempLevel(athleteLevel);
@@ -166,6 +168,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
       setSavingProfile(true);
       try {
         const { user: updated } = await usersApi.updateProfile(token, {
+          teamType: tempTeamType,
           sport: tempSport,
           position: tempPosition,
           skillLevel: tempLevel,
@@ -737,6 +740,27 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 <h4 className="text-sm font-semibold text-slate-900">Primary Sport</h4>
               </div>
               
+              {/* Team Type */}
+              <div>
+                <label className="text-sm text-slate-700 mb-2 block">Team Type</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([['mens', "Men's"], ['womens', "Women's"], ['coed', 'Co-ed']] as [string, string][]).map(([val, label]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setTempTeamType(val)}
+                      className={`py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                        tempTeamType === val
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-blue-300'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Sport Selection */}
               <div>
                 <label className="text-sm text-slate-700 mb-2 block">Sport</label>

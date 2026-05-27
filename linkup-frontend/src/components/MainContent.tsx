@@ -59,6 +59,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   const [editSessionData, setEditSessionData] = useState<any>(null);
   // When navigating to userProfile from within a session, store where to return
   const [profileReturnState, setProfileReturnState] = useState<{ view: string; data: any } | null>(null);
+  const [lockerRoomInitPostId, setLockerRoomInitPostId] = useState<string | null>(null);
 
   // When the user taps a bottom tab, dismiss any open sub-view so the tab content shows
   useEffect(() => {
@@ -97,9 +98,10 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
     if (view === 'rating' && data) setRatingSessionData(data);
     if (view === 'sessionDetails' && data) setSessionDetailsData(data);
     if (view === 'editSession' && data) setEditSessionData(data);
+    if (view === 'lockerRoom') setLockerRoomInitPostId(data?.postId ?? null);
   };
 
-  const handleBack = () => setCurrentView('');
+  const handleBack = () => { setCurrentView(''); setLockerRoomInitPostId(null); };
 
   const handleLogin = (token?: string, userData?: any) => {
     if (token && userData) login(token, userData);
@@ -188,7 +190,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   }
 
   // ── Sub-views ────────────────────────────────────────────────────────────────
-  if (currentView === 'lockerRoom') return <LockerRoomView onBack={handleBack} />;
+  if (currentView === 'lockerRoom') return <LockerRoomView onBack={handleBack} initialOpenCommentPostId={lockerRoomInitPostId} />;
 
   if (currentView === 'coachSetup') return <CoachProfileSetup onBack={handleBack} />;
 

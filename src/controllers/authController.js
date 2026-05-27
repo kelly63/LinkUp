@@ -29,6 +29,7 @@ const register = async (req, res) => {
       userType,
       role,
       // Athlete fields
+      teamType,
       sport,
       position,
       skillLevel,
@@ -77,6 +78,7 @@ const register = async (req, res) => {
     // Optional fields
     if (phone) userData.phone = phone;
     if (location) userData.location = location;
+    if (teamType) userData.teamType = teamType;
     if (sport) userData.sport = sport;
     if (position) userData.position = position;
     if (skillLevel) userData.skillLevel = skillLevel;

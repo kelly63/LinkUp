@@ -39,6 +39,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     confirmPassword: '',
     location: '',
     // Athlete specific
+    teamType: '',
     sport: '',
     position: '',
     skillLevel: '',
@@ -185,6 +186,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         location: formData.location,
         role: userType || 'athlete',
         // Athlete fields
+        teamType: formData.teamType,
         sport: formData.sport,
         position: formData.position,
         skillLevel: formData.skillLevel,
@@ -702,6 +704,29 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
 
         <div className="p-6">
           <div className="max-w-md mx-auto space-y-5">
+            {/* Team Type */}
+            <div>
+              <label className="text-sm text-slate-700 mb-2 block">
+                Team Type
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {([['mens', "Men's"], ['womens', "Women's"], ['coed', 'Co-ed']] as const).map(([val, label]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, teamType: val })}
+                    className={`py-3 rounded-xl border-2 text-sm font-medium transition-all ${
+                      formData.teamType === val
+                        ? 'border-blue-600 bg-blue-50 text-blue-700'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-300'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Primary Sport */}
             <div>
               <label className="text-sm text-slate-700 mb-2 block">
