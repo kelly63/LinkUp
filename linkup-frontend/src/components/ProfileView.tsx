@@ -743,8 +743,8 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
               {/* Team Type */}
               <div>
                 <label className="text-sm text-slate-700 mb-2 block">Team Type</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {([['mens', "Men's"], ['womens', "Women's"], ['coed', 'Co-ed']] as [string, string][]).map(([val, label]) => (
+                <div className="grid grid-cols-2 gap-2">
+                  {([['mens', "Men's"], ['womens', "Women's"]] as [string, string][]).map(([val, label]) => (
                     <button
                       key={val}
                       type="button"
