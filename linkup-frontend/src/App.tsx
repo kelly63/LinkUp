@@ -36,7 +36,7 @@ export default function App() {
             <MobileFrame />
           </div>
         )}
-        <Toaster position="top-center" richColors offset={isNative ? 'calc(env(safe-area-inset-top) + 16px)' : '16px'} />
+        <Toaster position="top-center" richColors />
       </AuthProvider>
     </Sentry.ErrorBoundary>
   );

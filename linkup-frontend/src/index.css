@@ -3594,3 +3594,8 @@ html {
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* Push Sonner toasts below the Dynamic Island / notch on iOS */
+[data-sonner-toaster][data-y-position="top"] {
+  top: calc(env(safe-area-inset-top) + 16px) !important;
+}
