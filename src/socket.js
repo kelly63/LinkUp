@@ -7,6 +7,24 @@ const Connection = require('./models/Connection');
 const MessageRequest = require('./models/MessageRequest');
 const PushSubscription = require('./models/PushSubscription');
 const Notification = require('./models/Notification');
+const { sendPush } = require('./utils/pushNotification');
+
+const PUSH_MESSAGES = {
+  roster_request:  (d) => ({ title: 'New Connection Request', body: `${d.from?.name || 'Someone'} wants to connect with you` }),
+  roster_accepted: (d) => ({ title: 'Connection Accepted',   body: `${d.by?.name || 'Someone'} accepted your request` }),
+  session_accepted:(d) => ({ title: 'Session Accepted',      body: d.sessionTitle ? `"${d.sessionTitle}" has a new partner` : 'Someone accepted your session' }),
+  message_new:     (d) => ({ title: 'New Message',           body: d.senderName ? `${d.senderName}: ${(d.text || '').slice(0, 80)}` : 'You have a new message' }),
+  message_request: (d) => ({ title: 'Message Request',       body: `${d.from?.name || 'Someone'} sent you a message request` }),
+  rating_new:      (d) => ({ title: 'New Rating',            body: d.from?.name ? `${d.from.name} gave you a ${d.overallRating}★ rating` : 'You received a new rating' }),
+  session_updated: (d) => ({ title: 'Session Updated',       body: d.updatedBy?.name ? `${d.updatedBy.name} updated "${d.sessionTitle || 'your session'}"` : 'A session you joined was updated' }),
+  change_proposed: (d) => ({ title: 'Review Requested',      body: d.proposedBy?.name ? `${d.proposedBy.name} proposed schedule changes` : 'Your partner proposed schedule changes' }),
+  change_approved: (d) => ({ title: 'Changes Approved',      body: d.approvedBy?.name ? `${d.approvedBy.name} approved your proposed changes` : 'Your proposed changes were approved' }),
+  change_declined: (d) => ({ title: 'Changes Declined',      body: d.declinedBy?.name ? `${d.declinedBy.name} declined your proposed changes` : 'Your proposed changes were declined' }),
+  session_cancelled:(d)=> ({ title: 'Session Cancelled',     body: d.cancelledBy?.name ? `${d.cancelledBy.name} cancelled "${d.sessionTitle || 'your session'}"` : 'A session was cancelled' }),
+  session_inquiry: (d) => ({ title: 'Session Inquiry',       body: d.from?.name ? `${d.from.name} is interested in your session` : 'Someone is interested in your session' }),
+  partner_approved:(d) => ({ title: 'Request Approved',      body: d.approvedBy?.name ? `${d.approvedBy.name} approved your session request` : 'Your session request was approved' }),
+  partner_declined:(d) => ({ title: 'Request Declined',      body: d.declinedBy?.name ? `${d.declinedBy.name} declined your session request` : 'Your session request was declined' }),
+};
 
 if (process.env.VAPID_EMAIL && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
@@ -215,18 +233,28 @@ function getSocketIo(httpServer) {
     // Real-time via Socket.io (works when app is open)
     io.to(`user:${userIdStr}`).emit('notification', notification);
 
-    // Web Push for users not currently connected (app closed / backgrounded)
+    // Push to offline users (app closed / backgrounded)
     const isOnline = onlineUsers.has(userIdStr) && onlineUsers.get(userIdStr).size > 0;
     if (!isOnline) {
+      // Web Push (browser)
       const subs = await PushSubscription.find({ user: userId }).lean().catch(() => []);
       const payload = JSON.stringify({ type, data });
       for (const sub of subs) {
         webpush.sendNotification(sub, payload).catch((err) => {
-          // 410 Gone = subscription expired; clean it up
           if (err.statusCode === 410) {
             PushSubscription.findByIdAndDelete(sub._id).catch(() => {});
           }
         });
+      }
+
+      // APNs (iOS native app)
+      const msgFn = PUSH_MESSAGES[type];
+      if (msgFn) {
+        const user = await User.findById(userId).select('deviceTokens').lean().catch(() => null);
+        if (user?.deviceTokens?.length) {
+          const { title, body } = msgFn(data);
+          sendPush(user.deviceTokens, { title, body, data: { type, ...data } }).catch(() => {});
+        }
       }
     }
   };

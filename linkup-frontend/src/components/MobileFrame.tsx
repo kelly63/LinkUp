@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { useSocket, Notification } from '../hooks/useSocket';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { useNativePush } from '../hooks/useNativePush';
 import { StoredNotification } from '../lib/api';
 import { ExpiredSessionsModal } from './ExpiredSessionsModal';
 import { Capacitor } from '@capacitor/core';
@@ -105,6 +106,7 @@ export function MobileFrame() {
   const { token, isAuthenticated } = useAuth();
 
   usePushNotifications(token);
+  useNativePush(token); // auto-registers APNs device token if permission already granted
 
   const handleNotification = useCallback((notification: Notification) => {
     setUnreadCount((c) => c + 1);
@@ -137,6 +139,34 @@ export function MobileFrame() {
       }
     });
     return () => { listener.then((l) => l.remove()); };
+  }, []);
+
+  // Handle push notification taps (app opened/foregrounded from a notification)
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const { PushNotifications } = require('@capacitor/push-notifications');
+    const foreground = PushNotifications.addListener('pushNotificationReceived', () => {
+      // Already handled by socket when app is open — no extra action needed
+    });
+    const tapped = PushNotifications.addListener('pushNotificationActionPerformed', (action: any) => {
+      const data = action.notification?.data ?? {};
+      const type = data.type as string | undefined;
+      if (type === 'message_new' || type === 'message_request') {
+        setActiveTab('chat');
+      } else if (type === 'roster_request' || type === 'roster_accepted') {
+        setActiveTab('dashboard');
+        setPendingNav({ view: 'roster' });
+      } else if (type === 'session_accepted' || type === 'session_updated' || type === 'change_proposed' || type === 'change_approved' || type === 'change_declined' || type === 'session_cancelled' || type === 'session_inquiry' || type === 'partner_approved' || type === 'partner_declined') {
+        setActiveTab('dashboard');
+        setPendingNav({ view: 'sessions' });
+      } else if (type === 'rating_new') {
+        setActiveTab('profile');
+      }
+    });
+    return () => {
+      foreground.then((l: any) => l.remove());
+      tapped.then((l: any) => l.remove());
+    };
   }, []);
 
   const handleBellClick = useCallback(() => {
