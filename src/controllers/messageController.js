@@ -230,6 +230,7 @@ const getInbox = async (req, res) => {
           unread: 1,
         },
       },
+      { $sort: { 'lastMessage.createdAt': -1 } },
     ]);
 
     // Attach message request status to each conversation
