@@ -64,7 +64,7 @@ export function UserProfileView({
     try {
       await connectionsApi.sendRequest(token, userId);
       setConnStatus('pending');
-      toast.success('Practice request sent!');
+      toast.success('Roster request sent!');
       onSendPracticeRequest?.();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to send request');
