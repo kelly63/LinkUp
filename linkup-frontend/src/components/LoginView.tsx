@@ -1,13 +1,16 @@
 import { Mail, Lock, Award } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { auth as authApi, users as usersApi } from '../lib/api';
 import { Capacitor } from '@capacitor/core';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { SocialLogin } from '@capgo/capacitor-social-login';
 
 interface LoginViewProps {
   onLogin: (token?: string, user?: any) => void;
   onSignUp: () => void;
 }
+
+const IOS_CLIENT_ID = '432112410961-39m83q270cgj7q5140nl5kghnn8es4qd.apps.googleusercontent.com';
+const WEB_CLIENT_ID = '432112410961-q9da62ss2fb94ipb7h6e5ige1v0eaoni.apps.googleusercontent.com';
 
 export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
   const [email, setEmail] = useState('');
@@ -15,6 +18,17 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    SocialLogin.initialize({
+      google: {
+        iOSClientId: IOS_CLIENT_ID,
+        iOSServerClientId: WEB_CLIENT_ID,
+        webClientId: WEB_CLIENT_ID,
+        mode: 'online',
+      },
+    }).catch(() => {});
+  }, []);
 
   // Google new-user terms acceptance state
   // Forgot-password state
@@ -77,14 +91,11 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
     setError('');
     setGoogleLoading(true);
     try {
-      if (!Capacitor.isNativePlatform()) {
-        await GoogleAuth.initialize({
-          clientId: import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || '',
-          scopes: ['profile', 'email'],
-        });
-      }
-      const googleUser = await GoogleAuth.signIn();
-      const idToken = googleUser.authentication?.idToken;
+      const result = await SocialLogin.login({
+        provider: 'google',
+        options: { scopes: ['email', 'profile'] },
+      });
+      const idToken = (result.result as any)?.idToken;
       if (!idToken) throw new Error('No ID token returned from Google');
 
       const { token, user, isNewUser } = await authApi.googleLogin(idToken);
@@ -95,8 +106,9 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
         setGooglePendingUser(user);
       }
     } catch (err: any) {
-      if (err?.message !== 'The user canceled the sign-in flow.') {
-        setError(err.message || 'Google sign-in failed. Please try again.');
+      const msg = err?.message || '';
+      if (!msg.includes('cancel') && !msg.includes('Cancel') && !msg.includes('dismiss')) {
+        setError(msg || 'Google sign-in failed. Please try again.');
       }
     } finally {
       setGoogleLoading(false);

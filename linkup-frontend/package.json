@@ -12,7 +12,7 @@
     "@capacitor/push-notifications": "^8.0.3",
     "@capacitor/splash-screen": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
-    "@codetrix-studio/capacitor-google-auth": "^3.4.0-rc.4",
+    "@capgo/capacitor-social-login": "^8.3.22",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-aspect-ratio": "^1.1.2",
