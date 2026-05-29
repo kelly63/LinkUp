@@ -252,12 +252,16 @@ const forgotPassword = async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email is required' });
 
+    console.log('[forgot-password] request for:', email);
     const user = await User.findOne({ email: email.toLowerCase().trim() });
-    // Always return 200 so we don't reveal whether an account exists
-    if (!user) return res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+    if (!user) {
+      console.log('[forgot-password] no user found');
+      return res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+    }
 
     if (!user.password) {
-      return res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+      console.log('[forgot-password] account has no password (Google sign-in)');
+      return res.status(400).json({ message: 'This account uses Google Sign-In. Please sign in with Google instead.' });
     }
 
     const rawToken = crypto.randomBytes(32).toString('hex');
@@ -269,6 +273,7 @@ const forgotPassword = async (req, res) => {
 
     const resetUrl = `${APP_URL}/reset-password.html?token=${rawToken}`;
     await sendPasswordResetEmail({ toEmail: user.email, toName: user.name, resetUrl });
+    console.log('[forgot-password] email sent to:', user.email);
 
     res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
   } catch (error) {
