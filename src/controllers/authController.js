@@ -55,6 +55,7 @@ const register = async (req, res) => {
       // Verification
       verificationRosterUrl,
       verificationNote,
+      school,
     } = req.body;
 
     const displayName = fullName || name;
@@ -99,6 +100,7 @@ const register = async (req, res) => {
     if (agreedToPrivacyPolicy) userData.agreedToPrivacyPolicy = true;
     if (ageVerified) userData.ageVerified = true;
     if (agreedToTerms || agreedToPrivacyPolicy) userData.agreedAt = new Date();
+    if (school) userData.school = school;
     if (verificationRosterUrl) userData.verificationRosterUrl = verificationRosterUrl;
     if (verificationNote) userData.verificationNote = verificationNote;
     if (verificationRosterUrl || verificationNote) userData.verificationStatus = 'pending';
@@ -106,13 +108,16 @@ const register = async (req, res) => {
     const user = await User.create(userData);
     const token = generateToken(user._id);
 
-    if (verificationRosterUrl || verificationNote) {
+    if (incomingRole === 'athlete') {
       const userIdStr = user._id.toString();
-      const approveToken = jwt.sign({ userId: userIdStr, action: 'approve' }, ADMIN_SECRET, { expiresIn: '7d' });
-      const rejectToken  = jwt.sign({ userId: userIdStr, action: 'reject'  }, ADMIN_SECRET, { expiresIn: '7d' });
+      const approveToken = jwt.sign({ userId: userIdStr, action: 'approve' }, ADMIN_SECRET, { expiresIn: '30d' });
+      const rejectToken  = jwt.sign({ userId: userIdStr, action: 'reject'  }, ADMIN_SECRET, { expiresIn: '30d' });
+      const clarifyToken = jwt.sign({ userId: userIdStr, action: 'clarify' }, ADMIN_SECRET, { expiresIn: '30d' });
       const approveUrl = `${APP_URL}/api/admin/verify/${userIdStr}/approve?token=${approveToken}`;
       const rejectUrl  = `${APP_URL}/api/admin/verify/${userIdStr}/reject?token=${rejectToken}`;
-      sendVerificationEmail({ user, approveUrl, rejectUrl }).catch((err) =>
+      const clarifyUrl = `${APP_URL}/api/admin/verify/${userIdStr}/clarify?token=${clarifyToken}`;
+      if (userData.verificationStatus !== 'pending') userData.verificationStatus = 'pending';
+      sendVerificationEmail({ user, approveUrl, rejectUrl, clarifyUrl }).catch((err) =>
         console.error('[verification email]', err.message)
       );
     }
@@ -193,6 +198,7 @@ const googleAuth = async (req, res) => {
     // Find existing user by googleId or email
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
 
+    let isNewUser = false;
     if (user) {
       // Link googleId if they previously signed up with email
       if (!user.googleId) {
@@ -210,10 +216,25 @@ const googleAuth = async (req, res) => {
         agreedToTerms: false,
         role: 'athlete',
       });
+      isNewUser = true;
+    }
+
+    // Send verification email for new Google-registered athletes
+    if (isNewUser && user.role === 'athlete') {
+      const userIdStr = user._id.toString();
+      const approveToken = jwt.sign({ userId: userIdStr, action: 'approve' }, ADMIN_SECRET, { expiresIn: '30d' });
+      const rejectToken  = jwt.sign({ userId: userIdStr, action: 'reject'  }, ADMIN_SECRET, { expiresIn: '30d' });
+      const clarifyToken = jwt.sign({ userId: userIdStr, action: 'clarify' }, ADMIN_SECRET, { expiresIn: '30d' });
+      const approveUrl = `${APP_URL}/api/admin/verify/${userIdStr}/approve?token=${approveToken}`;
+      const rejectUrl  = `${APP_URL}/api/admin/verify/${userIdStr}/reject?token=${rejectToken}`;
+      const clarifyUrl = `${APP_URL}/api/admin/verify/${userIdStr}/clarify?token=${clarifyToken}`;
+      sendVerificationEmail({ user, approveUrl, rejectUrl, clarifyUrl }).catch((err) =>
+        console.error('[verification email google]', err.message)
+      );
     }
 
     const token = generateToken(user._id);
-    res.json({ token, user: user.toPublicJSON(), isNewUser: !user.agreedToTerms });
+    res.json({ token, user: user.toPublicJSON(), isNewUser: isNewUser || !user.agreedToTerms });
   } catch (error) {
     console.error('Google auth error:', error);
     res.status(500).json({ message: 'Google sign-in failed' });

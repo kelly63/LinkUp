@@ -40,6 +40,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     location: '',
     // Athlete specific
     teamType: '',
+    school: '',
     sport: '',
     position: '',
     skillLevel: '',
@@ -187,6 +188,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         role: userType || 'athlete',
         // Athlete fields
         teamType: formData.teamType,
+        school: formData.school,
         sport: formData.sport,
         position: formData.position,
         skillLevel: formData.skillLevel,
@@ -725,6 +727,20 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* School / College */}
+            <div>
+              <label className="text-sm text-slate-700 mb-2 block">
+                School / College
+              </label>
+              <input
+                type="text"
+                value={formData.school}
+                onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+                placeholder="e.g., University of Maryland"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+              />
             </div>
 
             {/* Primary Sport */}

@@ -72,6 +72,64 @@ router.get('/verify/:userId/reject', async (req, res) => {
   }
 });
 
+// GET /api/admin/verify/:userId/clarify?token=... — shows the clarification form
+router.get('/verify/:userId/clarify', async (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).send(adminPage('Missing token', false));
+  try {
+    const payload = jwt.verify(token, ADMIN_SECRET);
+    if (payload.action !== 'clarify' || payload.userId !== req.params.userId) {
+      return res.status(400).send(adminPage('Token mismatch', false));
+    }
+  } catch {
+    return res.status(401).send(adminPage('Invalid or expired link', false));
+  }
+  const user = await User.findById(req.params.userId).catch(() => null);
+  if (!user) return res.status(404).send(adminPage('User not found', false));
+
+  // Show a form to type the clarification message
+  res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Request Clarification</title></head>
+<body style="font-family:Arial,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#f4f6f9">
+<div style="background:#fff;padding:40px 48px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.1);max-width:480px;width:100%">
+  <h2 style="margin:0 0 8px;color:#1e3a5f">Request Clarification</h2>
+  <p style="color:#6b7280;margin:0 0 24px">Send a message to <strong>${user.name}</strong> (${user.email}) asking for more information.</p>
+  <form method="POST" action="/api/admin/verify/${req.params.userId}/clarify?token=${token}">
+    <textarea name="message" placeholder="e.g. Could you please provide your roster URL or a photo of your student-athlete ID?"
+      style="width:100%;min-height:120px;padding:12px;border:2px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:Arial,sans-serif;resize:vertical;box-sizing:border-box" required></textarea>
+    <button type="submit" style="margin-top:16px;width:100%;padding:14px;background:#d97706;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer">
+      Send Clarification Request
+    </button>
+  </form>
+</div></body></html>`);
+});
+
+// POST /api/admin/verify/:userId/clarify?token=... — sends the message to the user
+router.post('/verify/:userId/clarify', express.urlencoded({ extended: false }), async (req, res) => {
+  const { token } = req.query;
+  const { message } = req.body;
+  if (!token) return res.status(400).send(adminPage('Missing token', false));
+  if (!message?.trim()) return res.status(400).send(adminPage('Message is required', false));
+  try {
+    const payload = jwt.verify(token, ADMIN_SECRET);
+    if (payload.action !== 'clarify' || payload.userId !== req.params.userId) {
+      return res.status(400).send(adminPage('Token mismatch', false));
+    }
+  } catch {
+    return res.status(401).send(adminPage('Invalid or expired link', false));
+  }
+  const user = await User.findById(req.params.userId).catch(() => null);
+  if (!user) return res.status(404).send(adminPage('User not found', false));
+
+  const { sendClarificationEmail } = require('../utils/email');
+  await sendClarificationEmail({ user, message: message.trim() }).catch((err) => {
+    console.error('[clarify email]', err.message);
+  });
+  user.verificationStatus = 'rejected';
+  user.verificationNote = message.trim();
+  await user.save({ validateBeforeSave: false });
+  return res.send(adminPage(`Clarification request sent to ${user.name} at ${user.email}.`, true));
+});
+
 // POST /api/admin/reset-password
 // Body: { email, newPassword, adminSecret }
 router.post('/reset-password', async (req, res) => {

@@ -18,6 +18,7 @@ export interface User {
   bio: string;
   location: string;
   teamType: string;
+  school?: string;
   sport: string;
   position: string;
   skillLevel: string;

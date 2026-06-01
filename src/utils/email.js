@@ -90,13 +90,13 @@ async function sendAdminRatingReviewEmail({ rating, raterName, rateeName, approv
 
   await transport.sendMail({
     from: `"LinkUp Athletics" <${process.env.SMTP_USER}>`,
-    to: process.env.ADMIN_EMAIL || 'kelly@linkupathlethics.com',
+    to: process.env.ADMIN_EMAIL || 'kelly@linkupathletics.com',
     subject: `[Review Needed] ${raterName} rated ${rateeName} — ${rating.overallRating}/5 stars`,
     html,
   });
 }
 
-async function sendVerificationEmail({ user, approveUrl, rejectUrl }) {
+async function sendVerificationEmail({ user, approveUrl, rejectUrl, clarifyUrl }) {
   const transport = createTransport();
 
   const html = `
@@ -119,6 +119,10 @@ async function sendVerificationEmail({ user, approveUrl, rejectUrl }) {
         <tr>
           <td style="padding:6px 12px 6px 0;color:#666">Email</td>
           <td>${user.email}</td>
+        </tr>
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#666">School</td>
+          <td>${user.school || '—'}</td>
         </tr>
         <tr>
           <td style="padding:6px 12px 6px 0;color:#666">Sport</td>
@@ -150,21 +154,27 @@ async function sendVerificationEmail({ user, approveUrl, rejectUrl }) {
 
       <table style="width:100%;border-collapse:collapse">
         <tr>
-          <td style="padding-right:8px">
-            <a href="${approveUrl}" style="display:block;text-align:center;background:#16a34a;color:#fff;text-decoration:none;padding:14px;border-radius:8px;font-weight:600;font-size:15px">
-              ✅ Approve Verification
+          <td style="padding-right:4px;width:33%">
+            <a href="${approveUrl}" style="display:block;text-align:center;background:#16a34a;color:#fff;text-decoration:none;padding:14px;border-radius:8px;font-weight:600;font-size:14px">
+              ✅ Approve
             </a>
           </td>
-          <td style="padding-left:8px">
-            <a href="${rejectUrl}" style="display:block;text-align:center;background:#dc2626;color:#fff;text-decoration:none;padding:14px;border-radius:8px;font-weight:600;font-size:15px">
+          <td style="padding:0 4px;width:34%">
+            <a href="${rejectUrl}" style="display:block;text-align:center;background:#dc2626;color:#fff;text-decoration:none;padding:14px;border-radius:8px;font-weight:600;font-size:14px">
               ❌ Reject
             </a>
           </td>
+          ${clarifyUrl ? `
+          <td style="padding-left:4px;width:33%">
+            <a href="${clarifyUrl}" style="display:block;text-align:center;background:#d97706;color:#fff;text-decoration:none;padding:14px;border-radius:8px;font-weight:600;font-size:14px">
+              ✏️ Request Clarification
+            </a>
+          </td>` : ''}
         </tr>
       </table>
 
       <p style="color:#9ca3af;font-size:12px;margin-top:24px;text-align:center">
-        These links expire in 7 days. LinkUp Athletics Admin Panel.
+        These links expire in 30 days. LinkUp Athletics Admin Panel.
       </p>
     </div>
   </div>
@@ -173,7 +183,7 @@ async function sendVerificationEmail({ user, approveUrl, rejectUrl }) {
 
   await transport.sendMail({
     from: `"LinkUp Athletics" <${process.env.SMTP_USER}>`,
-    to: process.env.ADMIN_EMAIL || 'kelly@linkupathlethics.com',
+    to: process.env.ADMIN_EMAIL || 'kelly@linkupathletics.com',
     subject: `[Verify] ${user.name} — ${user.sport || 'Athlete'} (${user.skillLevel || 'Unknown Level'})`,
     html,
   });
@@ -229,4 +239,40 @@ async function sendPasswordResetEmail({ toEmail, toName, resetUrl }) {
   });
 }
 
-module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail };
+async function sendClarificationEmail({ user, message }) {
+  const transport = createTransport();
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+    <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:28px 32px">
+      <h1 style="color:#fff;margin:0;font-size:20px">Action Required — Verification</h1>
+      <p style="color:rgba(255,255,255,.8);margin:6px 0 0;font-size:14px">LinkUp Athletics</p>
+    </div>
+    <div style="padding:28px 32px">
+      <p style="color:#374151;margin-bottom:16px">Hi ${user.name},</p>
+      <p style="color:#374151;margin-bottom:20px">We're reviewing your LinkUp Athletics account and need a bit more information to verify your college team membership:</p>
+      <div style="background:#fffbeb;border-left:3px solid #d97706;border-radius:0 8px 8px 0;padding:16px;margin-bottom:24px">
+        <p style="margin:0;color:#1e293b;line-height:1.6">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
+      </div>
+      <p style="color:#374151;margin-bottom:8px">Please reply to this email with the requested information and we'll complete your verification as soon as possible.</p>
+      <p style="color:#6b7280;font-size:13px">Questions? Reply to this email or contact us at support@linkupathletics.com</p>
+    </div>
+    <div style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb">
+      <p style="color:#9ca3af;font-size:12px;margin:0;text-align:center">LinkUp Athletics · <a href="https://linkup-swpu.onrender.com/privacy.html" style="color:#9ca3af">Privacy Policy</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  await transport.sendMail({
+    from: `"LinkUp Athletics" <${process.env.SMTP_USER}>`,
+    to: user.email,
+    subject: 'Action Required — Complete Your LinkUp Athletics Verification',
+    html,
+  });
+}
+
+module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail };
