@@ -1,6 +1,8 @@
-import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Award, Users, Check, Upload, Shield, FileCheck, Camera, Plus, X, Info, Eye, Map } from 'lucide-react';
-import { useState } from 'react';
-import { auth as authApi } from '../lib/api';
+import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Award, Users, Check, Upload, Shield, FileCheck, Camera, Plus, X, Info, Eye, Map, Bell } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { auth as authApi, users as usersApi } from '../lib/api';
 
 interface SignUpViewProps {
   onComplete: (token?: string, user?: any) => void;
@@ -30,7 +32,14 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
   const [verificationRosterUrl, setVerificationRosterUrl] = useState('');
   const [verificationNote, setVerificationNote] = useState('');
   const [ngbMemberId, setNgbMemberId] = useState('');
-  
+
+  // Post-registration state (Steps 7 & 8)
+  const [regToken, setRegToken] = useState<string | null>(null);
+  const [regUser, setRegUser] = useState<any>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
   // Form state
   const [formData, setFormData] = useState({
     fullName: '',
@@ -235,7 +244,9 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         ngbMemberId: ngbMemberId.trim(),
       };
       const { token, user } = await authApi.register(body);
-      onComplete(token, user);
+      setRegToken(token);
+      setRegUser(user);
+      setStep(7);
     } catch (err: any) {
       setSubmitError(err.message || 'Registration failed. Please try again.');
       setSubmitting(false);
@@ -246,6 +257,55 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedDocument(file);
+    }
+  };
+
+  const handlePhotoSelect = async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const perms = await CapCamera.requestPermissions({ permissions: ['photos'] });
+        if (perms.photos === 'denied') return;
+        const photo = await CapCamera.getPhoto({
+          quality: 85,
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Photos,
+          correctOrientation: true,
+        });
+        if (photo.dataUrl) setAvatarPreview(photo.dataUrl);
+      } catch (err: any) {
+        if (err?.message !== 'User cancelled photos app') console.error(err);
+      }
+    } else {
+      photoInputRef.current?.click();
+    }
+  };
+
+  const handlePhotoInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => { if (ev.target?.result) setAvatarPreview(ev.target.result as string); };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handlePhotoUploadAndContinue = async () => {
+    if (!regToken || !avatarPreview) { setStep(8); return; }
+    setAvatarUploading(true);
+    try {
+      const base64 = avatarPreview.split(',')[1];
+      const binary = atob(base64);
+      const arr = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+      const blob = new Blob([arr], { type: 'image/jpeg' });
+      const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+      const { user: updatedUser } = await usersApi.uploadAvatar(regToken, file);
+      setRegUser(updatedUser);
+    } catch (err) {
+      console.error('Avatar upload failed', err);
+    } finally {
+      setAvatarUploading(false);
+      setStep(8);
     }
   };
 
@@ -1300,6 +1360,118 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 <><Check className="w-5 h-5" /> Complete Setup</>
               )}
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 7: Profile Photo
+  if (step === 7) {
+    return (
+      <div className="h-full overflow-y-auto bg-slate-50">
+        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-3">
+          <h2 className="text-slate-900">Profile Photo</h2>
+        </div>
+        <div className="p-6">
+          <div className="max-w-md mx-auto space-y-6">
+            <div className="text-center">
+              <p className="text-sm text-slate-600 mt-1">Add a photo so other athletes and coaches can recognize you</p>
+            </div>
+
+            {/* Avatar preview / picker */}
+            <div className="flex flex-col items-center gap-4">
+              <button
+                onClick={handlePhotoSelect}
+                className="relative w-32 h-32 rounded-full overflow-hidden bg-emerald-100 border-4 border-emerald-200 flex items-center justify-center"
+              >
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                ) : (
+                  <Camera className="w-12 h-12 text-emerald-400" />
+                )}
+              </button>
+              <button
+                onClick={handlePhotoSelect}
+                className="px-5 py-2 border-2 border-emerald-500 text-emerald-600 rounded-xl text-sm font-medium"
+              >
+                {avatarPreview ? 'Change Photo' : 'Choose Photo'}
+              </button>
+              <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoInputChange} />
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <button
+                onClick={handlePhotoUploadAndContinue}
+                disabled={avatarUploading}
+                className="w-full bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white py-4 rounded-xl font-medium flex items-center justify-center gap-2"
+              >
+                {avatarUploading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : avatarPreview ? 'Save Photo & Continue' : 'Skip for Now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 8: Push Notifications
+  if (step === 8) {
+    const requestAndFinish = async () => {
+      try {
+        if (Capacitor.isNativePlatform()) {
+          const { PushNotifications } = await import('@capacitor/push-notifications');
+          await PushNotifications.requestPermissions();
+          await PushNotifications.register();
+        } else if ('Notification' in window) {
+          await Notification.requestPermission();
+        }
+      } catch {}
+      onComplete(regToken ?? undefined, regUser);
+    };
+
+    return (
+      <div className="h-full overflow-y-auto bg-slate-50">
+        <div className="bg-white border-b border-slate-200 px-6 py-4">
+          <h2 className="text-slate-900">Stay in the Loop</h2>
+        </div>
+        <div className="p-6">
+          <div className="max-w-md mx-auto space-y-6">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-emerald-100 rounded-full mx-auto flex items-center justify-center mb-4">
+                <Bell className="w-10 h-10 text-emerald-600" />
+              </div>
+              <h3 className="text-slate-900 font-semibold text-lg mb-2">Enable Notifications</h3>
+              <p className="text-sm text-slate-600">Get notified about connection requests, messages, and session updates</p>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+              {[
+                { icon: '🤝', text: 'New connection requests' },
+                { icon: '💬', text: 'Messages from teammates & coaches' },
+                { icon: '📅', text: 'Session confirmations & updates' },
+              ].map(({ icon, text }) => (
+                <div key={text} className="flex items-center gap-3">
+                  <span className="text-xl">{icon}</span>
+                  <span className="text-sm text-slate-700">{text}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={requestAndFinish}
+                className="w-full bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white py-4 rounded-xl font-medium"
+              >
+                Enable Notifications
+              </button>
+              <button
+                onClick={() => onComplete(regToken ?? undefined, regUser)}
+                className="w-full py-3 text-slate-500 text-sm"
+              >
+                Not now
+              </button>
+            </div>
           </div>
         </div>
       </div>
