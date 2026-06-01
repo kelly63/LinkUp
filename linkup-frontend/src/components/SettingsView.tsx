@@ -47,7 +47,10 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
   const handleChangePassword = async () => {
     if (!cpCurrent || !cpNew || !cpConfirm) { toast.error('Please fill in all fields'); return; }
     if (cpNew !== cpConfirm) { toast.error('New passwords do not match'); return; }
-    if (cpNew.length < 6) { toast.error('New password must be at least 6 characters'); return; }
+    if (cpNew.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+    if (!/[A-Z]/.test(cpNew)) { toast.error('Password must contain at least one uppercase letter'); return; }
+    if (!/[0-9]/.test(cpNew)) { toast.error('Password must contain at least one number'); return; }
+    if (!/[^A-Za-z0-9]/.test(cpNew)) { toast.error('Password must contain at least one special character'); return; }
     if (!token) return;
     setCpSaving(true);
     try {
@@ -183,12 +186,27 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
                 <div className="relative">
-                  <input type={cpShowNew ? 'text' : 'password'} value={cpNew} onChange={e => setCpNew(e.target.value)} placeholder="At least 6 characters"
+                  <input type={cpShowNew ? 'text' : 'password'} value={cpNew} onChange={e => setCpNew(e.target.value)} placeholder="At least 8 characters"
                     className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                   <button type="button" onClick={() => setCpShowNew(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                     {cpShowNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {cpNew.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    {[
+                      { ok: cpNew.length >= 8, label: '8+ characters' },
+                      { ok: /[A-Z]/.test(cpNew), label: 'One uppercase letter' },
+                      { ok: /[0-9]/.test(cpNew), label: 'One number' },
+                      { ok: /[^A-Za-z0-9]/.test(cpNew), label: 'One special character (!@#$…)' },
+                    ].map(({ ok, label }) => (
+                      <div key={label} className="flex items-center gap-2 text-xs">
+                        <span className={ok ? 'text-emerald-500' : 'text-slate-400'}>{ok ? '✓' : '○'}</span>
+                        <span className={ok ? 'text-emerald-600' : 'text-slate-400'}>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
