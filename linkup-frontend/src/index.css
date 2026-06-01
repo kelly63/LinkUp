@@ -101,6 +101,7 @@
     --color-emerald-50: oklch(.979 .021 166.113);
     --color-emerald-100: oklch(.95 .052 163.051);
     --color-emerald-200: oklch(.905 .093 164.15);
+    --color-emerald-300: oklch(.837 .128 163.57);
     --color-emerald-400: oklch(.765 .177 163.223);
     --color-emerald-500: oklch(.696 .17 162.48);
     --color-emerald-600: oklch(.596 .145 163.225);
@@ -3174,6 +3175,71 @@
       padding: calc(var(--spacing) * 4);
     }
   }
+
+  /* emerald utilities for retheme */
+  .border-emerald-300 { border-color: var(--color-emerald-300); }
+  .border-emerald-300\/40 { border-color: color-mix(in srgb, oklch(.837 .128 163.57) 40%, transparent); }
+  @supports (color: color-mix(in lab, red, red)) {
+    .border-emerald-300\/40 { border-color: color-mix(in oklab, color-mix(in oklab, var(--color-emerald-300) 40%, transparent) var(--tw-border-opacity, 1), transparent); }
+  }
+  .border-emerald-400\/30 { border-color: color-mix(in srgb, oklch(.765 .177 163.223) 30%, transparent); }
+  @supports (color: color-mix(in lab, red, red)) {
+    .border-emerald-400\/30 { border-color: color-mix(in oklab, color-mix(in oklab, var(--color-emerald-400) 30%, transparent) var(--tw-border-opacity, 1), transparent); }
+  }
+  .border-emerald-600 { border-color: var(--color-emerald-600); }
+  .bg-emerald-100 { background-color: var(--color-emerald-100); }
+  .bg-emerald-400\/20 { background-color: color-mix(in srgb, oklch(.765 .177 163.223) 20%, transparent); }
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-emerald-400\/20 { background-color: color-mix(in oklab, color-mix(in oklab, var(--color-emerald-400) 20%, transparent) var(--tw-bg-opacity, 1), transparent); }
+  }
+  .bg-emerald-400\/60 { background-color: color-mix(in srgb, oklch(.765 .177 163.223) 60%, transparent); }
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-emerald-400\/60 { background-color: color-mix(in oklab, color-mix(in oklab, var(--color-emerald-400) 60%, transparent) var(--tw-bg-opacity, 1), transparent); }
+  }
+  .bg-emerald-400\/70 { background-color: color-mix(in srgb, oklch(.765 .177 163.223) 70%, transparent); }
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-emerald-400\/70 { background-color: color-mix(in oklab, color-mix(in oklab, var(--color-emerald-400) 70%, transparent) var(--tw-bg-opacity, 1), transparent); }
+  }
+  .bg-emerald-600\/50 { background-color: color-mix(in srgb, oklch(.596 .145 163.225) 50%, transparent); }
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-emerald-600\/50 { background-color: color-mix(in oklab, color-mix(in oklab, var(--color-emerald-600) 50%, transparent) var(--tw-bg-opacity, 1), transparent); }
+  }
+  .from-emerald-400 {
+    --tw-gradient-from: var(--color-emerald-400);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+  }
+  .shadow-emerald-500\/20 { --tw-shadow-color: color-mix(in srgb, oklch(.696 .17 162.48) 20%, transparent); }
+  @supports (color: color-mix(in lab, red, red)) {
+    .shadow-emerald-500\/20 { --tw-shadow-color: color-mix(in oklab, color-mix(in oklab, var(--color-emerald-500) 20%, transparent) var(--tw-shadow-alpha), transparent); }
+  }
+  .text-emerald-200 { color: var(--color-emerald-200); }
+  .text-emerald-300 { color: var(--color-emerald-300); }
+  .text-emerald-400 { color: var(--color-emerald-400); }
+  .text-emerald-500 { color: var(--color-emerald-500); }
+  .accent-emerald-600 { accent-color: var(--color-emerald-600); }
+  .peer-checked\:bg-emerald-500:is(:where(.peer):checked ~ *) { background-color: var(--color-emerald-500); }
+  .peer-checked\:border-emerald-600:is(:where(.peer):checked ~ *) { border-color: var(--color-emerald-600); }
+  .focus\:border-emerald-400:focus { border-color: var(--color-emerald-400); }
+  .focus\:border-emerald-500:focus { border-color: var(--color-emerald-500); }
+  .focus\:ring-emerald-500:focus { --tw-ring-color: var(--color-emerald-500); }
+  .hover\:bg-emerald-50:hover { background-color: var(--color-emerald-50); }
+  .hover\:bg-emerald-100:hover { background-color: var(--color-emerald-100); }
+  .hover\:bg-emerald-600:hover { background-color: var(--color-emerald-600); }
+  .hover\:border-emerald-300:hover { border-color: var(--color-emerald-300); }
+  .hover\:text-emerald-300:hover { color: var(--color-emerald-300); }
+  .hover\:text-emerald-500:hover { color: var(--color-emerald-500); }
+  .hover\:text-emerald-600:hover { color: var(--color-emerald-600); }
+  .hover\:text-emerald-700:hover { color: var(--color-emerald-700); }
+  .hover\:from-emerald-600:hover {
+    --tw-gradient-from: var(--color-emerald-600);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+  }
+  .hover\:to-emerald-700:hover {
+    --tw-gradient-to: var(--color-emerald-700);
+    --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));
+  }
+  .group-hover\:text-emerald-600:is(:where(.group):hover *) { color: var(--color-emerald-600); }
+  .group-hover\:text-emerald-900:is(:where(.group):hover *) { color: var(--color-emerald-900); }
 }
 
 
