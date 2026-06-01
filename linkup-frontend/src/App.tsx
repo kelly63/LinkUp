@@ -6,12 +6,13 @@ import { Capacitor } from '@capacitor/core';
 import { useState } from 'react';
 import { Sentry } from './lib/sentry';
 
-function CrashFallback({ error }: { error?: any }) {
+function CrashFallback({ error, componentStack }: any) {
+  const msg = error?.message || (typeof error === 'string' ? error : null) || JSON.stringify(error) || 'unknown';
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 p-8 text-center">
       <p className="text-white font-semibold text-lg">Something went wrong</p>
-      {error && <p className="text-red-400 text-xs font-mono break-all max-w-sm">{String(error)}</p>}
-      <p className="text-zinc-400 text-sm">Please restart the app. If it keeps happening, contact support.</p>
+      <p className="text-red-400 text-xs font-mono break-all max-w-sm">{msg}</p>
+      {componentStack && <p className="text-zinc-500 text-xs font-mono break-all max-w-sm">{componentStack.slice(0, 300)}</p>}
       <button
         onClick={() => window.location.reload()}
         className="mt-2 px-6 py-2 bg-blue-600 text-white rounded-xl font-medium"
@@ -27,7 +28,7 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false);
 
   return (
-    <Sentry.ErrorBoundary fallback={({ error }: any) => <CrashFallback error={error} />}>
+    <Sentry.ErrorBoundary fallback={(errorData: any) => <CrashFallback error={errorData?.error} componentStack={errorData?.componentStack} />}>
       <AuthProvider>
         {!splashDone && <SplashOverlay onDone={() => setSplashDone(true)} />}
         {isNative ? (
