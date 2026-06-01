@@ -53,7 +53,7 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
   }, [fetchAthletes]);
 
 
-  const sports = ['All Sports', 'Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis'];
+  const sports = ['All Sports', 'Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Wrestling', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis', 'Swimming'];
   const levels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro'];
 
   const toggleLevel = (level: string) => {

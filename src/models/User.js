@@ -69,6 +69,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    ngbMemberId: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     position: {
       type: String,
       default: '',

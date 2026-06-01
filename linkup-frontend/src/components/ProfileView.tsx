@@ -133,7 +133,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [tempAboutMe, setTempAboutMe] = useState('');
   const [tempPhilosophy, setTempPhilosophy] = useState('');
   
-  const sports = ['Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis'];
+  const sports = ['Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Wrestling', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis', 'Swimming'];
   const levels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro'];
   
   const sportPositions: Record<string, string[]> = {

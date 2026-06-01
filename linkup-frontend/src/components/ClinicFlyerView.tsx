@@ -17,7 +17,7 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
   const [maxParticipants, setMaxParticipants] = useState('');
   const [price, setPrice] = useState('');
 
-  const sports = ['Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis'];
+  const sports = ['Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Wrestling', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis', 'Swimming'];
   const skillLevels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro', 'Youth (8-12)', 'Youth (13-17)', 'Adult (18+)'];
 
   const toggleSkillLevel = (level: string) => {

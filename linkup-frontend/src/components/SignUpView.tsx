@@ -29,6 +29,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
   const [verificationOption, setVerificationOption] = useState<'roster' | 'other' | null>(null);
   const [verificationRosterUrl, setVerificationRosterUrl] = useState('');
   const [verificationNote, setVerificationNote] = useState('');
+  const [ngbMemberId, setNgbMemberId] = useState('');
   
   // Form state
   const [formData, setFormData] = useState({
@@ -67,13 +68,30 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     'Volleyball',
     'Football',
     'Lacrosse',
+    'Wrestling',
     'Field Hockey',
     'Track and Field',
     'Golf',
-    'Tennis'
+    'Tennis',
+    'Swimming',
   ];
 
   const skillLevels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro', 'Athlete - Other'];
+
+  // Sports that have NGB (National Governing Body) membership IDs
+  const ngbBySport: Record<string, string> = {
+    'Wrestling':      'USA Wrestling Membership ID',
+    'Lacrosse':       'US Lacrosse Member ID',
+    'Swimming':       'USA Swimming Member ID',
+    'Track and Field':'USATF Member ID',
+    'Volleyball':     'USA Volleyball (USAV) Member ID',
+    'Tennis':         'USTA Membership ID',
+    'Golf':           'GHIN Number (USGA)',
+    'Soccer':         'US Soccer Player ID',
+    'Field Hockey':   'USA Field Hockey Member ID',
+    'Baseball':       'USA Baseball Player ID',
+    'Softball':       'USA Softball Member ID',
+  };
 
   const positionsBySport: Record<string, string[]> = {
     'Baseball': ['Pitcher', 'Catcher', 'Infielder', 'Outfielder', 'Utility'],
@@ -83,10 +101,12 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     'Volleyball': ['Setter', 'Outside Hitter', 'Middle Blocker', 'Libero', 'Opposite'],
     'Football': ['QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'DB'],
     'Lacrosse': ['Attack', 'Midfield', 'Defense', 'Goalie'],
+    'Wrestling': ['125 lbs', '133 lbs', '141 lbs', '149 lbs', '157 lbs', '165 lbs', '174 lbs', '184 lbs', '197 lbs', '285 lbs'],
     'Field Hockey': ['Forward', 'Midfielder', 'Defender', 'Goalkeeper'],
     'Track and Field': ['Sprinter', 'Distance Runner', 'Hurdler', 'Long Jumper', 'High Jumper', 'Triple Jumper', 'Pole Vaulter', 'Shot Putter', 'Discus Thrower', 'Javelin Thrower', 'Decathlete/Heptathlete'],
     'Golf': ['Driver', 'Irons', 'Short Game', 'Putting', 'Course Management'],
-    'Tennis': ['Singles', 'Doubles', 'Serve & Volley', 'Baseline', 'Net Play']
+    'Tennis': ['Singles', 'Doubles', 'Serve & Volley', 'Baseline', 'Net Play'],
+    'Swimming': ['Freestyle', 'Backstroke', 'Breaststroke', 'Butterfly', 'Individual Medley', 'Diver'],
   };
 
   const toggleSportCoached = (sport: string) => {
@@ -212,6 +232,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         // Verification
         verificationRosterUrl: verificationRosterUrl.trim(),
         verificationNote: verificationNote.trim(),
+        ngbMemberId: ngbMemberId.trim(),
       };
       const { token, user } = await authApi.register(body);
       onComplete(token, user);
@@ -925,6 +946,24 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 Verified athletes earn a badge on their profile. An admin will review your submission within a few days.
               </p>
             </div>
+
+            {/* NGB Member ID — shown only for sports with an NGB */}
+            {ngbBySport[formData.sport] && (
+              <div className="bg-white rounded-2xl border-2 border-purple-200 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-purple-700 font-semibold text-sm">{ngbBySport[formData.sport]}</span>
+                  <span className="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-medium">Optional</span>
+                </div>
+                <input
+                  type="text"
+                  value={ngbMemberId}
+                  onChange={(e) => setNgbMemberId(e.target.value)}
+                  placeholder="Enter your membership ID"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-purple-500 focus:outline-none transition-colors text-sm"
+                />
+                <p className="text-xs text-slate-500 mt-2">If you have one, this helps us verify your team membership faster.</p>
+              </div>
+            )}
 
             {/* Option 1: Roster URL */}
             <div

@@ -136,6 +136,11 @@ async function sendVerificationEmail({ user, approveUrl, clarifyUrl }) {
           <td style="padding:6px 12px 6px 0;color:#666">Position</td>
           <td>${user.position || '—'}</td>
         </tr>
+        ${user.ngbMemberId ? `
+        <tr>
+          <td style="padding:6px 12px 6px 0;color:#666">NGB Member ID</td>
+          <td><strong>${user.ngbMemberId}</strong></td>
+        </tr>` : ''}
       </table>
 
       ${user.verificationRosterUrl ? `

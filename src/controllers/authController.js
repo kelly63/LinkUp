@@ -56,6 +56,7 @@ const register = async (req, res) => {
       verificationRosterUrl,
       verificationNote,
       school,
+      ngbMemberId,
     } = req.body;
 
     const displayName = fullName || name;
@@ -101,6 +102,7 @@ const register = async (req, res) => {
     if (ageVerified) userData.ageVerified = true;
     if (agreedToTerms || agreedToPrivacyPolicy) userData.agreedAt = new Date();
     if (school) userData.school = school;
+    if (ngbMemberId) userData.ngbMemberId = ngbMemberId;
     if (verificationRosterUrl) userData.verificationRosterUrl = verificationRosterUrl;
     if (verificationNote) userData.verificationNote = verificationNote;
     if (verificationRosterUrl || verificationNote) userData.verificationStatus = 'pending';

@@ -26,7 +26,8 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
 
   const sports = [
     'Baseball', 'Softball', 'Basketball', 'Volleyball',
-    'Football', 'Soccer', 'Lacrosse', 'Field Hockey',
+    'Football', 'Soccer', 'Lacrosse', 'Wrestling',
+    'Field Hockey', 'Track and Field', 'Golf', 'Tennis', 'Swimming',
   ];
 
   const toggleLevel = (level: string) => {
