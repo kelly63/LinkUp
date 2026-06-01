@@ -10,7 +10,7 @@ function CrashFallback({ error, componentStack }: any) {
   const msg = error?.message || (typeof error === 'string' ? error : null) || JSON.stringify(error) || 'unknown';
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 p-8 text-center">
-      <p className="text-white font-semibold text-lg">Something went wrong</p>
+      <p className="text-white font-semibold text-lg">DEBUG BUILD v3</p>
       <p className="text-red-400 text-xs font-mono break-all max-w-sm">{msg}</p>
       {componentStack && <p className="text-zinc-500 text-xs font-mono break-all max-w-sm">{componentStack.slice(0, 300)}</p>}
       <button
