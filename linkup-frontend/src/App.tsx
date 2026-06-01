@@ -6,17 +6,17 @@ import { Capacitor } from '@capacitor/core';
 import { useState } from 'react';
 import { Sentry } from './lib/sentry';
 
-function CrashFallback({ error, componentStack }: any) {
-  const name = error?.name || 'Error';
-  const message = error?.message || '(no message)';
-  const stack = error?.stack || '(no stack)';
+function CrashFallback() {
   return (
-    <div style={{ minHeight: '100vh', background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32, textAlign: 'center' }}>
-      <p style={{ color: '#fff', fontWeight: 700, fontSize: 18 }}>DEBUG BUILD v5</p>
-      <p style={{ color: 'yellow', fontSize: 14, fontWeight: 700 }}>{name}</p>
-      <p style={{ color: 'orange', fontSize: 13, wordBreak: 'break-all', maxWidth: 320 }}>{message}</p>
-      <p style={{ color: 'red', fontSize: 10, fontFamily: 'monospace', wordBreak: 'break-all', maxWidth: 320 }}>{stack.slice(0, 500)}</p>
-      <button onClick={() => window.location.reload()} style={{ marginTop: 8, padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 600 }}>Reload</button>
+    <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 p-8 text-center">
+      <p className="text-white font-semibold text-lg">Something went wrong</p>
+      <p className="text-zinc-400 text-sm">Please restart the app. If it keeps happening, contact support.</p>
+      <button
+        onClick={() => window.location.reload()}
+        className="mt-2 px-6 py-2 bg-emerald-500 text-white rounded-xl font-medium"
+      >
+        Reload
+      </button>
     </div>
   );
 }
@@ -26,7 +26,7 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false);
 
   return (
-    <Sentry.ErrorBoundary fallback={(errorData: any) => <CrashFallback error={errorData?.error} componentStack={errorData?.componentStack} />}>
+    <Sentry.ErrorBoundary fallback={<CrashFallback />}>
       <AuthProvider>
         {!splashDone && <SplashOverlay onDone={() => setSplashDone(true)} />}
         {isNative ? (

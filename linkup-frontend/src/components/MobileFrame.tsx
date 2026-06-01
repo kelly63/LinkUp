@@ -12,6 +12,7 @@ import { StoredNotification } from '../lib/api';
 import { ExpiredSessionsModal } from './ExpiredSessionsModal';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { toast } from 'sonner';
 
 type PendingNav = { view: string; data?: any } | null;
@@ -144,7 +145,6 @@ export function MobileFrame() {
   // Handle push notification taps (app opened/foregrounded from a notification)
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-    const { PushNotifications } = require('@capacitor/push-notifications');
     const foreground = PushNotifications.addListener('pushNotificationReceived', () => {
       // Already handled by socket when app is open — no extra action needed
     });
