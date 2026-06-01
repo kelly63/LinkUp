@@ -111,13 +111,11 @@ const register = async (req, res) => {
     if (incomingRole === 'athlete') {
       const userIdStr = user._id.toString();
       const approveToken = jwt.sign({ userId: userIdStr, action: 'approve' }, ADMIN_SECRET, { expiresIn: '30d' });
-      const rejectToken  = jwt.sign({ userId: userIdStr, action: 'reject'  }, ADMIN_SECRET, { expiresIn: '30d' });
       const clarifyToken = jwt.sign({ userId: userIdStr, action: 'clarify' }, ADMIN_SECRET, { expiresIn: '30d' });
       const approveUrl = `${APP_URL}/api/admin/verify/${userIdStr}/approve?token=${approveToken}`;
-      const rejectUrl  = `${APP_URL}/api/admin/verify/${userIdStr}/reject?token=${rejectToken}`;
       const clarifyUrl = `${APP_URL}/api/admin/verify/${userIdStr}/clarify?token=${clarifyToken}`;
       if (userData.verificationStatus !== 'pending') userData.verificationStatus = 'pending';
-      sendVerificationEmail({ user, approveUrl, rejectUrl, clarifyUrl }).catch((err) =>
+      sendVerificationEmail({ user, approveUrl, clarifyUrl }).catch((err) =>
         console.error('[verification email]', err.message)
       );
     }
@@ -223,12 +221,10 @@ const googleAuth = async (req, res) => {
     if (isNewUser && user.role === 'athlete') {
       const userIdStr = user._id.toString();
       const approveToken = jwt.sign({ userId: userIdStr, action: 'approve' }, ADMIN_SECRET, { expiresIn: '30d' });
-      const rejectToken  = jwt.sign({ userId: userIdStr, action: 'reject'  }, ADMIN_SECRET, { expiresIn: '30d' });
       const clarifyToken = jwt.sign({ userId: userIdStr, action: 'clarify' }, ADMIN_SECRET, { expiresIn: '30d' });
       const approveUrl = `${APP_URL}/api/admin/verify/${userIdStr}/approve?token=${approveToken}`;
-      const rejectUrl  = `${APP_URL}/api/admin/verify/${userIdStr}/reject?token=${rejectToken}`;
       const clarifyUrl = `${APP_URL}/api/admin/verify/${userIdStr}/clarify?token=${clarifyToken}`;
-      sendVerificationEmail({ user, approveUrl, rejectUrl, clarifyUrl }).catch((err) =>
+      sendVerificationEmail({ user, approveUrl, clarifyUrl }).catch((err) =>
         console.error('[verification email google]', err.message)
       );
     }

@@ -96,7 +96,7 @@ async function sendAdminRatingReviewEmail({ rating, raterName, rateeName, approv
   });
 }
 
-async function sendVerificationEmail({ user, approveUrl, rejectUrl, clarifyUrl }) {
+async function sendVerificationEmail({ user, approveUrl, clarifyUrl }) {
   const transport = createTransport();
 
   const html = `
@@ -150,26 +150,20 @@ async function sendVerificationEmail({ user, approveUrl, rejectUrl, clarifyUrl }
         <p style="margin:0;color:#1e293b;line-height:1.5">${user.verificationNote.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
       </div>` : ''}
 
-      <p style="color:#374151;margin-bottom:16px">Review the athlete's credentials and approve or reject their verification:</p>
+      <p style="color:#374151;margin-bottom:16px">Review the athlete's credentials:</p>
 
       <table style="width:100%;border-collapse:collapse">
         <tr>
-          <td style="padding-right:4px;width:33%">
-            <a href="${approveUrl}" style="display:block;text-align:center;background:#16a34a;color:#fff;text-decoration:none;padding:14px;border-radius:8px;font-weight:600;font-size:14px">
+          <td style="padding-right:8px">
+            <a href="${approveUrl}" style="display:block;text-align:center;background:#16a34a;color:#fff;text-decoration:none;padding:14px;border-radius:8px;font-weight:600;font-size:15px">
               ✅ Approve
             </a>
           </td>
-          <td style="padding:0 4px;width:34%">
-            <a href="${rejectUrl}" style="display:block;text-align:center;background:#dc2626;color:#fff;text-decoration:none;padding:14px;border-radius:8px;font-weight:600;font-size:14px">
-              ❌ Reject
-            </a>
-          </td>
-          ${clarifyUrl ? `
-          <td style="padding-left:4px;width:33%">
-            <a href="${clarifyUrl}" style="display:block;text-align:center;background:#d97706;color:#fff;text-decoration:none;padding:14px;border-radius:8px;font-weight:600;font-size:14px">
+          <td style="padding-left:8px">
+            <a href="${clarifyUrl}" style="display:block;text-align:center;background:#d97706;color:#fff;text-decoration:none;padding:14px;border-radius:8px;font-weight:600;font-size:15px">
               ✏️ Request Clarification
             </a>
-          </td>` : ''}
+          </td>
         </tr>
       </table>
 
