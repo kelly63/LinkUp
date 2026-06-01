@@ -119,8 +119,8 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
             onClick={() => onNavigate('preferences')}
             className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors border-b border-slate-100"
           >
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Shield className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Shield className="w-5 h-5 text-emerald-600" />
             </div>
             <div className="flex-1 text-left">
               <h4 className="text-slate-900">Privacy & Visibility</h4>
@@ -174,7 +174,7 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
                 <label className="block text-sm font-medium text-slate-700 mb-1">Current Password</label>
                 <div className="relative">
                   <input type={cpShowCurrent ? 'text' : 'password'} value={cpCurrent} onChange={e => setCpCurrent(e.target.value)} placeholder="Enter current password"
-                    className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                   <button type="button" onClick={() => setCpShowCurrent(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                     {cpShowCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -184,7 +184,7 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
                 <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
                 <div className="relative">
                   <input type={cpShowNew ? 'text' : 'password'} value={cpNew} onChange={e => setCpNew(e.target.value)} placeholder="At least 6 characters"
-                    className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                   <button type="button" onClick={() => setCpShowNew(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                     {cpShowNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -193,10 +193,10 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
                 <input type="password" value={cpConfirm} onChange={e => setCpConfirm(e.target.value)} placeholder="Re-enter new password"
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
               </div>
               <button onClick={handleChangePassword} disabled={cpSaving}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors disabled:opacity-60">
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-medium transition-colors disabled:opacity-60">
                 {cpSaving ? 'Updating…' : 'Update Password'}
               </button>
             </div>

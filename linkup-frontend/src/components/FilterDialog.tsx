@@ -51,7 +51,7 @@ export function FilterDialog({ filters, onFiltersChange, onClose }: FilterDialog
                 onClick={() => onFiltersChange({ ...filters, skillLevel: level.value })}
                 className={`w-full text-left px-4 py-3 rounded-xl transition-all ${
                   filters.skillLevel === level.value
-                    ? 'bg-blue-100 text-blue-700 border-2 border-blue-400'
+                    ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-400'
                     : 'bg-slate-50 text-slate-700 border-2 border-transparent hover:bg-slate-100'
                 }`}
               >
@@ -71,7 +71,7 @@ export function FilterDialog({ filters, onFiltersChange, onClose }: FilterDialog
                 onClick={() => onFiltersChange({ ...filters, dateTime: time.value })}
                 className={`w-full text-left px-4 py-3 rounded-xl transition-all ${
                   filters.dateTime === time.value
-                    ? 'bg-blue-100 text-blue-700 border-2 border-blue-400'
+                    ? 'bg-emerald-100 text-emerald-700 border-2 border-emerald-400'
                     : 'bg-slate-50 text-slate-700 border-2 border-transparent hover:bg-slate-100'
                 }`}
               >
@@ -84,7 +84,7 @@ export function FilterDialog({ filters, onFiltersChange, onClose }: FilterDialog
         {/* Apply Button */}
         <button
           onClick={onClose}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl transition-colors"
+          className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-xl transition-colors"
         >
           Apply Filters
         </button>

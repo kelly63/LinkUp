@@ -100,7 +100,7 @@ export function ExpiredSessionsModal() {
                 <button
                   onClick={() => handleRepost(session)}
                   disabled={acting === session._id}
-                  className="flex-1 flex items-center justify-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 rounded-xl transition-colors disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm py-2 rounded-xl transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   Repost

@@ -114,7 +114,7 @@ export function UserProfileView({
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-slate-50">
-        <span className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <span className="w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -123,7 +123,7 @@ export function UserProfileView({
     return (
       <div className="h-full flex flex-col items-center justify-center bg-slate-50 gap-3">
         <p className="text-slate-600">Profile not found.</p>
-        <button onClick={onBack} className="text-blue-600 text-sm">Go back</button>
+        <button onClick={onBack} className="text-emerald-600 text-sm">Go back</button>
       </div>
     );
   }
@@ -173,15 +173,15 @@ export function UserProfileView({
           <h1 className="text-white text-2xl mb-2">{profileUser.name}</h1>
 
           {isAthlete && profileUser.position && (
-            <div className="flex items-center justify-center gap-2 text-blue-200 mb-2">
+            <div className="flex items-center justify-center gap-2 text-emerald-200 mb-2">
               <span className="text-sm">{profileUser.sport}</span>
-              <span className="text-blue-400">•</span>
+              <span className="text-emerald-400">•</span>
               <span className="text-sm">{profileUser.position}</span>
             </div>
           )}
 
           {!isAthlete && profileUser.sportsCoached?.length > 0 && (
-            <div className="text-blue-200 mb-2">
+            <div className="text-emerald-200 mb-2">
               <span className="text-sm">{profileUser.sportsCoached.join(' • ')}</span>
             </div>
           )}
@@ -189,12 +189,12 @@ export function UserProfileView({
           {(profileUser.skillLevel || (isAthlete && (profileUser as any).teamType)) && (
             <div className="flex items-center justify-center gap-2 mb-3 flex-wrap">
               {profileUser.skillLevel && (
-                <div className="bg-blue-700/50 backdrop-blur-sm px-3 py-1 rounded-full">
+                <div className="bg-emerald-600/50 backdrop-blur-sm px-3 py-1 rounded-full">
                   <span className="text-white text-xs font-semibold">{profileUser.skillLevel}</span>
                 </div>
               )}
               {isAthlete && (profileUser as any).teamType === 'mens' && (
-                <div className="bg-blue-500/70 backdrop-blur-sm px-3 py-1 rounded-full border border-blue-300/40">
+                <div className="bg-emerald-400/70 backdrop-blur-sm px-3 py-1 rounded-full border border-emerald-300/40">
                   <span className="text-white text-xs font-semibold">Men's</span>
                 </div>
               )}
@@ -212,7 +212,7 @@ export function UserProfileView({
           )}
 
           {profileUser.location && (
-            <div className="flex items-center justify-center gap-1.5 text-blue-200 text-sm">
+            <div className="flex items-center justify-center gap-1.5 text-emerald-200 text-sm">
               <MapPin className="w-4 h-4" />
               <span>{profileUser.location}</span>
             </div>
@@ -226,8 +226,8 @@ export function UserProfileView({
           <div className="grid grid-cols-4 gap-3">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="w-10 h-10 bg-blue-100 rounded-full mx-auto mb-2 flex items-center justify-center">
-                  <stat.icon className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-emerald-100 rounded-full mx-auto mb-2 flex items-center justify-center">
+                  <stat.icon className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div className="text-base font-semibold text-slate-900 truncate">{stat.value}</div>
                 <div className="text-xs text-slate-600">{stat.label}</div>
@@ -241,12 +241,12 @@ export function UserProfileView({
       <div className="px-6 mb-6 space-y-3">
         {isRosterRequest ? (
           <div className="space-y-3">
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+            <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
-                <Users className="w-5 h-5 text-blue-600" />
-                <h4 className="text-sm font-semibold text-blue-900">Roster Request</h4>
+                <Users className="w-5 h-5 text-emerald-600" />
+                <h4 className="text-sm font-semibold text-emerald-900">Roster Request</h4>
               </div>
-              <p className="text-xs text-blue-700">
+              <p className="text-xs text-emerald-700">
                 {profileUser.name} wants to add you to their team. Review their profile and choose your response.
               </p>
             </div>
@@ -283,7 +283,7 @@ export function UserProfileView({
               <button
                 onClick={handleSendPracticeRequest}
                 disabled={sendingRequest}
-                className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-60 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+                className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-60 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
               >
                 {sendingRequest
                   ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -295,7 +295,7 @@ export function UserProfileView({
             {/* Message button — always available */}
             <button
               onClick={onSendMessage}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
             >
               <MessageSquare className="w-5 h-5" />
               <span className="font-semibold">Message</span>
@@ -318,7 +318,7 @@ export function UserProfileView({
         <div className="px-6 mb-6">
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
             <h3 className="text-slate-900 font-semibold mb-3 flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600" />
+              <Users className="w-5 h-5 text-emerald-600" />
               {isAthlete ? 'About' : 'Coaching Philosophy'}
             </h3>
             <p className="text-sm text-slate-700 leading-relaxed">{bio}</p>
@@ -384,7 +384,7 @@ export function UserProfileView({
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group"
                 >
-                  <div className="w-10 h-10 bg-blue-700 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
                     <LinkIcon className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">

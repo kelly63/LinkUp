@@ -152,7 +152,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
           </div>
           
           <h1 className="text-white text-3xl mb-2 font-[Magra]">LinkUp Athletics</h1>
-          <p className="text-blue-200">LinkUp. Level Up.</p>
+          <p className="text-emerald-200">LinkUp. Level Up.</p>
         </div>
       </div>
 
@@ -173,7 +173,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your.email@example.com"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors font-[Magra]"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors font-[Magra]"
               />
             </div>
 
@@ -188,7 +188,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors font-[Magra]"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors font-[Magra]"
               />
             </div>
 
@@ -197,7 +197,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
               <button
                 type="button"
                 onClick={() => { setShowForgot(true); setForgotEmail(email); }}
-                className="text-sm text-blue-600 hover:text-blue-700 font-[Magra] bg-transparent border-none cursor-pointer p-0"
+                className="text-sm text-emerald-600 hover:text-emerald-700 font-[Magra] bg-transparent border-none cursor-pointer p-0"
               >
                 Forgot password?
               </button>
@@ -214,7 +214,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
             <button
               onClick={handleLogin}
               disabled={loading}
-              className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-60 text-white py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 hover:shadow-xl active:scale-[0.98] font-[Magra] flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-60 text-white py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:shadow-xl active:scale-[0.98] font-[Magra] flex items-center justify-center gap-2"
             >
               {loading ? (
                 <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -257,8 +257,8 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
           <div className="bg-white rounded-t-3xl w-full p-6 space-y-4">
             <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Lock className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Lock className="w-6 h-6 text-emerald-600" />
               </div>
               <h3 className="text-lg font-bold text-slate-900 font-[Magra]">Reset Password</h3>
               <p className="text-sm text-slate-500 mt-1">
@@ -276,7 +276,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
                   onChange={(e) => setForgotEmail(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleForgotPassword(); }}
                   placeholder="your.email@example.com"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors font-[Magra]"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors font-[Magra]"
                   autoFocus
                 />
 
@@ -289,7 +289,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
                 <button
                   onClick={handleForgotPassword}
                   disabled={forgotLoading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white py-4 rounded-xl font-semibold transition-all flex items-center justify-center font-[Magra]"
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white py-4 rounded-xl font-semibold transition-all flex items-center justify-center font-[Magra]"
                 >
                   {forgotLoading
                     ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -318,7 +318,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
           <div className="bg-white rounded-t-3xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
             <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <svg className="w-6 h-6" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -332,12 +332,12 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
 
             <label className="flex items-start gap-3 cursor-pointer bg-slate-50 rounded-xl p-3">
               <input type="checkbox" checked={gtAgreedTerms} onChange={(e) => setGtAgreedTerms(e.target.checked)} className="w-5 h-5 mt-0.5 flex-shrink-0 accent-blue-600" />
-              <p className="text-sm text-slate-700">I agree to the <span className="text-blue-600 font-medium">Terms of Service</span> — including the no background check disclosure and in-person meeting liability waiver</p>
+              <p className="text-sm text-slate-700">I agree to the <span className="text-emerald-600 font-medium">Terms of Service</span> — including the no background check disclosure and in-person meeting liability waiver</p>
             </label>
 
             <label className="flex items-start gap-3 cursor-pointer bg-slate-50 rounded-xl p-3">
               <input type="checkbox" checked={gtAgreedPrivacy} onChange={(e) => setGtAgreedPrivacy(e.target.checked)} className="w-5 h-5 mt-0.5 flex-shrink-0 accent-blue-600" />
-              <p className="text-sm text-slate-700">I agree to the <span className="text-blue-600 font-medium">Privacy Policy</span></p>
+              <p className="text-sm text-slate-700">I agree to the <span className="text-emerald-600 font-medium">Privacy Policy</span></p>
             </label>
 
             <label className="flex items-start gap-3 cursor-pointer bg-slate-50 rounded-xl p-3">
@@ -352,7 +352,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
                 value={gtSignature}
                 onChange={(e) => setGtSignature(e.target.value)}
                 placeholder="Your full legal name"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none font-serif text-lg"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none font-serif text-lg"
               />
             </div>
 
@@ -363,7 +363,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
               disabled={!gtAgreedTerms || !gtAgreedPrivacy || !gtAgeVerified || !gtSignature.trim() || gtSaving}
               className={`w-full py-4 rounded-xl font-semibold transition-all ${
                 gtAgreedTerms && gtAgreedPrivacy && gtAgeVerified && gtSignature.trim()
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
                   : 'bg-slate-300 text-slate-500 cursor-not-allowed'
               }`}
             >
@@ -395,8 +395,8 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
         {/* Features */}
         <div className="space-y-3 pb-8">
           <div className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-3">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Award className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Award className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
               <h4 className="text-slate-900 text-sm font-semibold">For Athletes</h4>

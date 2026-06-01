@@ -9,7 +9,7 @@ interface PinLocation {
 
 const pins: PinLocation[] = [
   { id: 1, top: '25%', left: '35%', color: 'text-red-500' },
-  { id: 2, top: '45%', left: '60%', color: 'text-blue-500' },
+  { id: 2, top: '45%', left: '60%', color: 'text-emerald-500' },
   { id: 3, top: '55%', left: '25%', color: 'text-green-500' },
   { id: 4, top: '35%', left: '70%', color: 'text-orange-500' },
   { id: 5, top: '65%', left: '50%', color: 'text-purple-500' },

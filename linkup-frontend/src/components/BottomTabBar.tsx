@@ -34,7 +34,7 @@ export function BottomTabBar({ activeTab, onTabChange, badges = {} }: BottomTabB
               onClick={() => onTabChange(tab.id)}
               className={`relative flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-xl transition-all ${
                 isActive
-                  ? 'text-blue-900'
+                  ? 'text-emerald-900'
                   : 'text-slate-400 hover:text-slate-600'
               }`}
             >

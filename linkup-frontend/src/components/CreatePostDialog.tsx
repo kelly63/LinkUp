@@ -115,7 +115,7 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
 
         {/* Author Info */}
         <div className="px-6 py-4 flex items-center gap-3 flex-shrink-0">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
+          <div className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-purple-600 rounded-full flex items-center justify-center text-white font-medium">
             {initials}
           </div>
           <div>
@@ -133,9 +133,9 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
 
             <button
               onClick={() => setPostType('thought')}
-              className="w-full bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-2xl p-5 flex items-start gap-4 hover:border-blue-400 transition-all"
+              className="w-full bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-emerald-200 rounded-2xl p-5 flex items-start gap-4 hover:border-emerald-400 transition-all"
             >
-              <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
                 <Type className="w-6 h-6 text-white" />
               </div>
               <div className="text-left flex-1">
@@ -176,7 +176,7 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Share what's on your mind..."
-              className="w-full min-h-[200px] p-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-blue-400 resize-none text-slate-900"
+              className="w-full min-h-[200px] p-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-400 resize-none text-slate-900"
               autoFocus
             />
           </div>
@@ -192,7 +192,7 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
                 value={articleUrl}
                 onChange={(e) => setArticleUrl(e.target.value)}
                 placeholder="https://..."
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-400"
+                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-emerald-400"
                 autoFocus
               />
             </div>
@@ -210,7 +210,7 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
                 href={articleUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block border-2 border-slate-200 rounded-2xl overflow-hidden hover:border-blue-400 transition-colors"
+                className="block border-2 border-slate-200 rounded-2xl overflow-hidden hover:border-emerald-400 transition-colors"
               >
                 {preview.image && (
                   <img
@@ -245,7 +245,7 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
                 value={articleTitle}
                 onChange={(e) => setArticleTitle(e.target.value)}
                 placeholder="Title of the article..."
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-400"
+                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-emerald-400"
               />
             </div>
             <div>
@@ -254,7 +254,7 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="Add your commentary..."
-                className="w-full min-h-[100px] p-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-blue-400 resize-none"
+                className="w-full min-h-[100px] p-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-emerald-400 resize-none"
               />
             </div>
           </div>
@@ -273,7 +273,7 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
             <button
               onClick={handlePost}
               disabled={submitting}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-60"
+              className="flex-1 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-colors disabled:opacity-60"
             >
               {submitting ? 'Posting…' : 'Post'}
             </button>

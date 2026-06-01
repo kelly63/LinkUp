@@ -279,7 +279,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               </div>
             </div>
             <h1 className="text-white text-2xl mb-2 font-[Magra]">LinkUp Athletics</h1>
-            <p className="text-blue-200 text-sm">LinkUp. Level Up.</p>
+            <p className="text-emerald-200 text-sm">LinkUp. Level Up.</p>
           </div>
         </div>
 
@@ -298,7 +298,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                   setUserType('athlete');
                   handleNext();
                 }}
-                className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-6 rounded-2xl flex items-center justify-between transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]"
+                className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white p-6 rounded-2xl flex items-center justify-between transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
               >
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
@@ -318,7 +318,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div className="text-center pb-6">
               <p className="text-sm text-slate-600">
                 Already have an account?{' '}
-                <button onClick={onBackToLogin} className="text-blue-600 hover:text-blue-700 font-semibold">
+                <button onClick={onBackToLogin} className="text-emerald-600 hover:text-emerald-700 font-semibold">
                   Sign In
                 </button>
               </p>
@@ -347,8 +347,8 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         {/* Progress Indicator */}
         <div className="bg-white px-6 py-3 border-b border-slate-200">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-            <div className="w-12 h-1 bg-blue-600 rounded"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+            <div className="w-12 h-1 bg-emerald-500 rounded"></div>
             <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
             <div className="w-12 h-1 bg-slate-300 rounded"></div>
             <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
@@ -371,7 +371,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 placeholder="Enter your full name"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
 
@@ -386,7 +386,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="your.email@example.com"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
 
@@ -401,7 +401,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="(555) 123-4567"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
 
@@ -416,7 +416,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                 placeholder="City, State"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
 
@@ -431,7 +431,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="Create a strong password"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
 
@@ -446,14 +446,14 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 placeholder="Re-enter your password"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
 
             {/* Continue Button */}
             <button 
               onClick={handleNext}
-              className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-blue-600/20 hover:shadow-xl active:scale-[0.98]"
+              className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-emerald-500/20 hover:shadow-xl active:scale-[0.98]"
             >
               Continue
             </button>
@@ -479,11 +479,11 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         {/* Progress */}
         <div className="bg-white px-6 py-3 border-b border-slate-200">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-2 h-2 bg-blue-600 rounded-full" />
-            <div className="w-12 h-1 bg-blue-600 rounded" />
-            <div className="w-2 h-2 bg-blue-600 rounded-full" />
-            <div className="w-12 h-1 bg-blue-600 rounded" />
-            <div className="w-2 h-2 bg-blue-600 rounded-full" />
+            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+            <div className="w-12 h-1 bg-emerald-500 rounded" />
+            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+            <div className="w-12 h-1 bg-emerald-500 rounded" />
+            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
             <div className="w-12 h-1 bg-slate-300 rounded" />
             <div className="w-2 h-2 bg-slate-300 rounded-full" />
           </div>
@@ -657,7 +657,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 value={signature}
                 onChange={(e) => setSignature(e.target.value)}
                 placeholder="Your full legal name"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors font-serif text-lg"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors font-serif text-lg"
               />
               {signature && (
                 <p className="text-xs text-slate-400 mt-2">
@@ -686,7 +686,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               disabled={!canContinue}
               className={`w-full py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] ${
                 canContinue
-                  ? 'bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-blue-600/20'
+                  ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-emerald-500/20'
                   : 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
               }`}
             >
@@ -716,11 +716,11 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         {/* Progress Indicator */}
         <div className="bg-white px-6 py-3 border-b border-slate-200">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-            <div className="w-16 h-1 bg-blue-600 rounded"></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-            <div className="w-16 h-1 bg-blue-600 rounded"></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+            <div className="w-16 h-1 bg-emerald-500 rounded"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+            <div className="w-16 h-1 bg-emerald-500 rounded"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
           </div>
           <p className="text-center text-xs text-slate-600 mt-2">Step 4 of 6</p>
         </div>
@@ -740,8 +740,8 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                     onClick={() => setFormData({ ...formData, teamType: val })}
                     className={`py-3 rounded-xl border-2 text-sm font-medium transition-all ${
                       formData.teamType === val
-                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-300'
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-300'
                     }`}
                   >
                     {label}
@@ -760,7 +760,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 value={formData.school}
                 onChange={(e) => setFormData({ ...formData, school: e.target.value })}
                 placeholder="e.g., University of Maryland"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
 
@@ -772,7 +772,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               <select 
                 value={formData.sport}
                 onChange={(e) => setFormData({ ...formData, sport: e.target.value, position: '' })}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
               >
                 <option value="">Select your sport</option>
                 {availableSports.map(sport => (
@@ -787,7 +787,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               {!formData.customSportRequest && (
                 <button
                   onClick={() => setShowCustomSportInput(true)}
-                  className="mt-2 text-sm text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
+                  className="mt-2 text-sm text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1"
                 >
                   <Plus className="w-4 h-4" />
                   Add New Sport
@@ -820,7 +820,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
 
               {/* Custom Sport Input Form */}
               {showCustomSportInput && (
-                <div className="mt-3 bg-white border-2 border-blue-300 rounded-xl p-4">
+                <div className="mt-3 bg-white border-2 border-emerald-300 rounded-xl p-4">
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-sm text-slate-900 font-semibold">Add New Sport</label>
                     <button
@@ -838,10 +838,10 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                     value={customSport}
                     onChange={(e) => setCustomSport(e.target.value)}
                     placeholder="e.g., Rugby, Cricket, Tennis..."
-                    className="w-full px-4 py-2.5 rounded-lg border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors mb-3"
+                    className="w-full px-4 py-2.5 rounded-lg border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors mb-3"
                   />
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mb-3">
-                    <p className="text-xs text-blue-900 flex items-start gap-1">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2 mb-3">
+                    <p className="text-xs text-emerald-900 flex items-start gap-1">
                       <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                       <span>This will be sent to admins for approval before being added to the official sport list.</span>
                     </p>
@@ -857,7 +857,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                     disabled={!customSport.trim()}
                     className={`w-full py-2.5 rounded-lg transition-all ${
                       customSport.trim()
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                        ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
                         : 'bg-slate-200 text-slate-400 cursor-not-allowed'
                     }`}
                   >
@@ -880,7 +880,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               <select 
                 value={formData.skillLevel}
                 onChange={(e) => setFormData({ ...formData, skillLevel: e.target.value })}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
               >
                 <option value="">Select your level</option>
                 {skillLevels.map(level => (
@@ -892,7 +892,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             {/* Continue Button */}
             <button 
               onClick={handleNext}
-              className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-blue-600/20 hover:shadow-xl active:scale-[0.98]"
+              className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-emerald-500/20 hover:shadow-xl active:scale-[0.98]"
             >
               Continue
             </button>
@@ -922,13 +922,13 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
 
         <div className="bg-white px-6 py-3 border-b border-slate-200">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-2 h-2 bg-blue-600 rounded-full" />
-            <div className="w-10 h-1 bg-blue-600 rounded" />
-            <div className="w-2 h-2 bg-blue-600 rounded-full" />
-            <div className="w-10 h-1 bg-blue-600 rounded" />
-            <div className="w-2 h-2 bg-blue-600 rounded-full" />
-            <div className="w-10 h-1 bg-blue-600 rounded" />
-            <div className="w-2 h-2 bg-blue-600 rounded-full" />
+            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+            <div className="w-10 h-1 bg-emerald-500 rounded" />
+            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+            <div className="w-10 h-1 bg-emerald-500 rounded" />
+            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+            <div className="w-10 h-1 bg-emerald-500 rounded" />
+            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
             <div className="w-10 h-1 bg-slate-300 rounded" />
             <div className="w-2 h-2 bg-slate-300 rounded-full" />
           </div>
@@ -969,14 +969,14 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div
               onClick={() => setVerificationOption('roster')}
               className={`bg-white rounded-2xl border-2 p-4 cursor-pointer transition-all ${
-                verificationOption === 'roster' ? 'border-blue-500 bg-blue-50' : 'border-slate-200'
+                verificationOption === 'roster' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
               }`}
             >
               <div className="flex items-center gap-3 mb-1">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  verificationOption === 'roster' ? 'border-blue-600' : 'border-slate-300'
+                  verificationOption === 'roster' ? 'border-emerald-600' : 'border-slate-300'
                 }`}>
-                  {verificationOption === 'roster' && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />}
+                  {verificationOption === 'roster' && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />}
                 </div>
                 <span className="text-sm font-semibold text-slate-900">I have a college or team roster page</span>
               </div>
@@ -988,7 +988,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                     onChange={(e) => setVerificationRosterUrl(e.target.value)}
                     onClick={(e) => e.stopPropagation()}
                     placeholder="https://goterps.com/roster/player123"
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors text-sm"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors text-sm"
                   />
                 </div>
               )}
@@ -998,14 +998,14 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div
               onClick={() => setVerificationOption('other')}
               className={`bg-white rounded-2xl border-2 p-4 cursor-pointer transition-all ${
-                verificationOption === 'other' ? 'border-blue-500 bg-blue-50' : 'border-slate-200'
+                verificationOption === 'other' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'
               }`}
             >
               <div className="flex items-center gap-3 mb-1">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  verificationOption === 'other' ? 'border-blue-600' : 'border-slate-300'
+                  verificationOption === 'other' ? 'border-emerald-600' : 'border-slate-300'
                 }`}>
-                  {verificationOption === 'other' && <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />}
+                  {verificationOption === 'other' && <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />}
                 </div>
                 <span className="text-sm font-semibold text-slate-900">Other — describe your credentials</span>
               </div>
@@ -1017,7 +1017,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                     onClick={(e) => e.stopPropagation()}
                     placeholder="e.g., I played D1 soccer at University of Maryland (2019–2023). You can verify at goterps.com/soccer."
                     rows={4}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors text-sm resize-none"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors text-sm resize-none"
                   />
                 </div>
               )}
@@ -1028,7 +1028,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               disabled={!canContinue}
               className={`w-full py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] ${
                 canContinue
-                  ? 'bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-blue-600/20'
+                  ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-emerald-500/20'
                   : 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
               }`}
             >
@@ -1070,11 +1070,11 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         {/* Progress Indicator */}
         <div className="bg-white px-6 py-3 border-b border-slate-200">
           <div className="flex items-center justify-center gap-2">
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-            <div className="w-16 h-1 bg-blue-600 rounded"></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-            <div className="w-16 h-1 bg-blue-600 rounded"></div>
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+            <div className="w-16 h-1 bg-emerald-500 rounded"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+            <div className="w-16 h-1 bg-emerald-500 rounded"></div>
+            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
           </div>
           <p className="text-center text-xs text-slate-600 mt-2">Final Step!</p>
         </div>
@@ -1083,8 +1083,8 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
           <div className="max-w-md mx-auto space-y-5">
             {/* Intro */}
             <div className="text-center mb-4">
-              <div className="w-16 h-16 bg-blue-100 rounded-full mx-auto flex items-center justify-center mb-3">
-                <Eye className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 bg-emerald-100 rounded-full mx-auto flex items-center justify-center mb-3">
+                <Eye className="w-8 h-8 text-emerald-600" />
               </div>
               <h3 className="text-slate-900 font-semibold mb-2">Control Your Visibility</h3>
               <p className="text-sm text-slate-600">
@@ -1097,7 +1097,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               <label className="text-sm text-slate-700 mb-3 block font-semibold">Who can find you?</label>
               
               <div className="space-y-3">
-                <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all hover:bg-slate-50 {formData.visibilityMode === 'everyone' ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}">
+                <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all hover:bg-slate-50 {formData.visibilityMode === 'everyone' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'}">
                   <div className="relative mt-0.5">
                     <input
                       type="radio"
@@ -1106,9 +1106,9 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                       onChange={() => setFormData({ ...formData, visibilityMode: 'everyone' })}
                       className="sr-only peer"
                     />
-                    <div className="w-5 h-5 border-2 border-slate-300 rounded-full bg-white peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-slate-300 rounded-full bg-white peer-checked:border-emerald-600 transition-all flex items-center justify-center">
                       {formData.visibilityMode === 'everyone' && (
-                        <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />
+                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
                       )}
                     </div>
                   </div>
@@ -1118,7 +1118,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                   </div>
                 </label>
 
-                <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all hover:bg-slate-50 {formData.visibilityMode === 'filtered' ? 'border-blue-500 bg-blue-50' : 'border-slate-200'}">
+                <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all hover:bg-slate-50 {formData.visibilityMode === 'filtered' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'}">
                   <div className="relative mt-0.5">
                     <input
                       type="radio"
@@ -1127,9 +1127,9 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                       onChange={() => setFormData({ ...formData, visibilityMode: 'filtered' })}
                       className="sr-only peer"
                     />
-                    <div className="w-5 h-5 border-2 border-slate-300 rounded-full bg-white peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-slate-300 rounded-full bg-white peer-checked:border-emerald-600 transition-all flex items-center justify-center">
                       {formData.visibilityMode === 'filtered' && (
-                        <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />
+                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
                       )}
                     </div>
                   </div>
@@ -1156,7 +1156,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                         onClick={() => toggleLevel(level)}
                         className={`px-3 py-2 rounded-lg text-xs transition-all ${
                           formData.allowedLevels.includes(level)
-                            ? 'bg-blue-600 text-white border-2 border-blue-500'
+                            ? 'bg-emerald-500 text-white border-2 border-emerald-500'
                             : 'bg-white text-slate-700 border-2 border-slate-300'
                         }`}
                       >
@@ -1168,7 +1168,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                       className={`px-3 py-2 rounded-lg text-xs transition-all ${
                         formData.allowedLevels.length === skillLevels.length
                           ? 'bg-red-600 text-white border-2 border-red-500'
-                          : 'bg-blue-600 text-white border-2 border-blue-500'
+                          : 'bg-emerald-500 text-white border-2 border-emerald-500'
                       }`}
                     >
                       {formData.allowedLevels.length === skillLevels.length ? 'Deselect All' : 'Select All'}
@@ -1200,7 +1200,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                       className={`px-3 py-2 rounded-lg text-xs transition-all ${
                         formData.allowedSports.length === availableSports.length
                           ? 'bg-red-600 text-white border-2 border-red-500'
-                          : 'bg-blue-600 text-white border-2 border-blue-500'
+                          : 'bg-emerald-500 text-white border-2 border-emerald-500'
                       }`}
                     >
                       {formData.allowedSports.length === availableSports.length ? 'Deselect All' : 'Select All'}
@@ -1258,8 +1258,8 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             </div>
 
             {/* Info Note */}
-            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
-              <p className="text-xs text-blue-900 leading-relaxed">
+            <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
+              <p className="text-xs text-emerald-900 leading-relaxed">
                 <strong>Note:</strong> You can always change these settings later in your profile settings.
               </p>
             </div>

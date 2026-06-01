@@ -176,7 +176,7 @@ export function RatingView({ sessionPartner, sessionDetails, onBack, onSubmit }:
           <div>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <Target className="w-5 h-5 text-blue-600" />
+                <Target className="w-5 h-5 text-emerald-600" />
                 <span className="text-sm text-slate-700 font-medium">Skill Level</span>
               </div>
               {renderStars(skillLevel, setSkillLevel)}
@@ -276,8 +276,8 @@ export function RatingView({ sessionPartner, sessionDetails, onBack, onSubmit }:
         </div>
 
         {/* Privacy Notice */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <p className="text-xs text-blue-800 leading-relaxed">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+          <p className="text-xs text-emerald-800 leading-relaxed">
             <strong>Privacy Note:</strong> After administrative review, your rating will be visible to {sessionPartner.name} and may be displayed on their profile. Written feedback is private and only used to improve the community.
           </p>
         </div>

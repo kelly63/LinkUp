@@ -90,7 +90,7 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
           <p className="text-white text-sm font-semibold">Move and Scale</p>
           <button
             onClick={handleConfirm}
-            className="text-blue-400 font-semibold text-sm hover:text-blue-300 px-1"
+            className="text-emerald-400 font-semibold text-sm hover:text-emerald-300 px-1"
           >
             Apply
           </button>

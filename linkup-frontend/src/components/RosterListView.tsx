@@ -120,7 +120,7 @@ export function RosterListView({ onBack, onNavigate, onOpenChat }: RosterListVie
           </div>
           <div>
             <h3 className="text-white text-xl font-semibold">{connections.length} Connections</h3>
-            <p className="text-blue-200 text-sm">Your practice partners & coaches</p>
+            <p className="text-emerald-200 text-sm">Your practice partners & coaches</p>
           </div>
           {pending.length > 0 && (
             <div className="ml-auto bg-amber-400 text-amber-900 text-xs font-bold px-2.5 py-1 rounded-full">
@@ -151,7 +151,7 @@ export function RosterListView({ onBack, onNavigate, onOpenChat }: RosterListVie
                     onClick={() => onNavigate?.('userProfile', { id: u._id, name: u.name, avatar: u.avatar, sport, position, level: u.skillLevel, type: u.role })}
                     className="px-5 py-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors"
                   >
-                    <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 overflow-hidden">
+                    <div className="w-11 h-11 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 overflow-hidden">
                       {u.avatar
                         ? <img src={avatarThumb(u.avatar, 80)!} alt={u.name} className="w-full h-full object-cover" />
                         : initials}
@@ -216,10 +216,10 @@ export function RosterListView({ onBack, onNavigate, onOpenChat }: RosterListVie
                 <div
                   key={connection.connectionId}
                   onClick={() => handleViewProfile(connection)}
-                  className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer active:scale-[0.99]"
+                  className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer active:scale-[0.99]"
                 >
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0 shadow-md">
+                    <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0 shadow-md">
                       {initials}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -238,7 +238,7 @@ export function RosterListView({ onBack, onNavigate, onOpenChat }: RosterListVie
                         {position && <span className="text-sm text-slate-600">{position}</span>}
                       </div>
                       {level && (
-                        <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md text-xs font-medium border border-blue-200">
+                        <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md text-xs font-medium border border-emerald-200">
                           {level}
                         </span>
                       )}
@@ -269,7 +269,7 @@ export function RosterListView({ onBack, onNavigate, onOpenChat }: RosterListVie
                   <div className="flex items-center gap-2">
                     <button
                       onClick={(e) => handleMessage(connection, e)}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
+                      className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm"
                     >
                       <MessageSquare className="w-4 h-4" />
                       <span className="text-sm font-semibold">Message</span>

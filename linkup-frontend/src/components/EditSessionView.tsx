@@ -111,7 +111,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
           </button>
           <div>
             <h2 className="text-white">Edit Session</h2>
-            <p className="text-blue-200 text-sm">{sessionTitle}</p>
+            <p className="text-emerald-200 text-sm">{sessionTitle}</p>
           </div>
         </div>
       </div>
@@ -134,7 +134,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
                   value={dateValue}
                   min={todayISO()}
                   onChange={(e) => setDateValue(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               )}
               {dateFlexible && (
@@ -151,7 +151,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
                           setWindowStart(e.target.value);
                           if (windowEnd && windowEnd < e.target.value) setWindowEnd('');
                         }}
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-blue-200 bg-blue-50 text-slate-900 focus:border-blue-500 focus:outline-none text-sm"
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-emerald-200 bg-emerald-50 text-slate-900 focus:border-emerald-500 focus:outline-none text-sm"
                       />
                     </div>
                     <span className="text-slate-400 mt-4">–</span>
@@ -163,7 +163,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
                         min={windowStart || todayISO()}
                         max={maxWindowEnd(windowStart)}
                         onChange={(e) => setWindowEnd(e.target.value)}
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-blue-200 bg-blue-50 text-slate-900 focus:border-blue-500 focus:outline-none text-sm"
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-emerald-200 bg-emerald-50 text-slate-900 focus:border-emerald-500 focus:outline-none text-sm"
                       />
                     </div>
                   </div>
@@ -177,7 +177,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
                     onChange={() => setDateFlexible((v) => !v)}
                     className="sr-only peer"
                   />
-                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-emerald-500 peer-checked:border-emerald-600 transition-all flex items-center justify-center">
                     {dateFlexible && (
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -202,11 +202,11 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
                   type="time"
                   value={timeValue}
                   onChange={(e) => setTimeValue(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               )}
               {timeFlexible && (
-                <div className="w-full px-4 py-3 rounded-xl border-2 border-blue-200 bg-blue-50 text-blue-700 text-sm font-medium">
+                <div className="w-full px-4 py-3 rounded-xl border-2 border-emerald-200 bg-emerald-50 text-emerald-700 text-sm font-medium">
                   Flexible — will discuss with partner
                 </div>
               )}
@@ -218,7 +218,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
                     onChange={() => setTimeFlexible((v) => !v)}
                     className="sr-only peer"
                   />
-                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-emerald-500 peer-checked:border-emerald-600 transition-all flex items-center justify-center">
                     {timeFlexible && (
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -241,7 +241,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
               <select
                 value={duration}
                 onChange={(e) => setDuration(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
               >
                 <option value="30 minutes">30 minutes</option>
                 <option value="1 hour">1 hour</option>
@@ -264,7 +264,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Enter location"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
 
@@ -278,7 +278,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add details about the session..."
                 rows={4}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors resize-none"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors resize-none"
               />
             </div>
           </div>
@@ -288,7 +288,7 @@ export function EditSessionView({ session, onBack, onSave }: EditSessionViewProp
         <div className="space-y-3 pb-6">
           <button
             onClick={handleSave}
-            className="w-full py-3.5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-2"
+            className="w-full py-3.5 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <Save className="w-5 h-5" />
             Save Changes

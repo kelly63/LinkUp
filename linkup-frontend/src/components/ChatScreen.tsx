@@ -144,7 +144,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
               {chat.avatar}
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-slate-900 hover:text-blue-600 transition-colors">{chat.name}</h3>
+              <h3 className="text-slate-900 hover:text-emerald-600 transition-colors">{chat.name}</h3>
               {chat.role && (
                 <p className="text-xs text-slate-500 capitalize">{chat.role}</p>
               )}
@@ -162,7 +162,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
               <div className="flex gap-2">
                 <button
                   onClick={handleAcceptRequest}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1"
+                  className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1"
                 >
                   <UserCheck className="w-4 h-4" />
                   Accept
@@ -198,9 +198,9 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                 </div>
               </div>
             ) : (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
                 <div className="flex items-center gap-2 text-sm text-slate-700 mb-2">
-                  <Calendar className="w-4 h-4 text-blue-600" />
+                  <Calendar className="w-4 h-4 text-emerald-600" />
                   <span>{chat.sessionDetails.date}, {chat.sessionDetails.time}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm text-slate-600 mb-3">
@@ -224,7 +224,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {loading && (
           <div className="flex justify-center py-8">
-            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
@@ -242,15 +242,15 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                 <div key={msg._id} className="flex justify-center my-2 px-2">
                   <button
                     onClick={() => onViewSession?.(msg.sessionId!)}
-                    className="w-full max-w-[92%] bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3 text-left hover:bg-blue-100 active:scale-[0.98] transition-all"
+                    className="w-full max-w-[92%] bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 text-left hover:bg-emerald-100 active:scale-[0.98] transition-all"
                   >
                     <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                         <Calendar className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-blue-900 leading-snug mb-0.5">{msg.text}</p>
-                        <p className="text-xs text-blue-600 flex items-center gap-0.5">
+                        <p className="text-xs font-semibold text-emerald-900 leading-snug mb-0.5">{msg.text}</p>
+                        <p className="text-xs text-emerald-600 flex items-center gap-0.5">
                           Tap to view session <ChevronRight className="w-3 h-3" />
                         </p>
                       </div>
@@ -277,7 +277,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                 <div
                   className={`rounded-2xl px-4 py-2.5 ${
                     isMe
-                      ? 'bg-blue-600 text-white rounded-br-sm'
+                      ? 'bg-emerald-500 text-white rounded-br-sm'
                       : 'bg-white text-slate-900 rounded-bl-sm shadow-sm'
                   }`}
                 >
@@ -286,7 +286,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                 <p className={`text-xs text-slate-500 mt-1 px-1 ${isMe ? 'text-right' : 'text-left'}`}>
                   {formatTime(msg.createdAt)}
                   {isMe && msg.read && (
-                    <span className="ml-1 text-blue-400">✓✓</span>
+                    <span className="ml-1 text-emerald-400">✓✓</span>
                   )}
                 </p>
               </div>
@@ -319,12 +319,12 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
-            className="flex-1 px-4 py-3 rounded-full bg-slate-50 border-2 border-transparent focus:border-blue-400 focus:outline-none transition-colors"
+            className="flex-1 px-4 py-3 rounded-full bg-slate-50 border-2 border-transparent focus:border-emerald-400 focus:outline-none transition-colors"
           />
           <button
             onClick={handleSend}
             disabled={!inputText.trim()}
-            className="w-11 h-11 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+            className="w-11 h-11 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
           >
             <Send className="w-5 h-5" />
           </button>
@@ -347,7 +347,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
 
             <div className="bg-slate-50 rounded-xl p-4 mb-6 space-y-3">
               <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-blue-600" />
+                <Calendar className="w-5 h-5 text-emerald-600" />
                 <div>
                   <p className="text-xs text-slate-500">Date & Time</p>
                   <p className="text-sm text-slate-900 font-medium">
@@ -356,7 +356,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-blue-600" />
+                <MapPin className="w-5 h-5 text-emerald-600" />
                 <div>
                   <p className="text-xs text-slate-500">Location</p>
                   <p className="text-sm text-slate-900 font-medium">{chat.sessionDetails.location}</p>
@@ -379,7 +379,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                   setProposedTime(chat.sessionDetails?.time || '');
                   setProposedLocation(chat.sessionDetails?.location || '');
                 }}
-                className="w-full py-3.5 bg-white hover:bg-slate-50 text-slate-900 border-2 border-blue-500 rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-white hover:bg-slate-50 text-slate-900 border-2 border-emerald-500 rounded-xl font-medium transition-all flex items-center justify-center gap-2"
               >
                 <Edit3 className="w-4 h-4" />
                 Propose Changes
@@ -400,8 +400,8 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-50 px-6 pb-6">
           <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl max-h-[85vh] overflow-y-auto">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Edit3 className="w-8 h-8 text-blue-600" />
+              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Edit3 className="w-8 h-8 text-emerald-600" />
               </div>
               <h3 className="text-slate-900 font-semibold mb-2">Propose Changes</h3>
               <p className="text-sm text-slate-600">
@@ -420,7 +420,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                   value={proposedDate}
                   onChange={(e) => setProposedDate(e.target.value)}
                   placeholder={chat.sessionDetails.date}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               </div>
               <div>
@@ -433,7 +433,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                   value={proposedTime}
                   onChange={(e) => setProposedTime(e.target.value)}
                   placeholder={chat.sessionDetails.time}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               </div>
               <div>
@@ -446,7 +446,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                   value={proposedLocation}
                   onChange={(e) => setProposedLocation(e.target.value)}
                   placeholder={chat.sessionDetails.location}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               </div>
             </div>
@@ -454,7 +454,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
             <div className="space-y-3">
               <button
                 onClick={handleApplyChanges}
-                className="w-full py-3.5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-medium transition-all shadow-sm active:scale-[0.98]"
+                className="w-full py-3.5 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl font-medium transition-all shadow-sm active:scale-[0.98]"
               >
                 Send Proposal
               </button>

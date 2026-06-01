@@ -38,7 +38,7 @@ export function ReviewsView({ onBack, onNavigate }: ReviewsViewProps) {
           </button>
           <div>
             <h2 className="text-white">Session Reviews</h2>
-            <p className="text-blue-200 text-sm">Ratings you've given to others</p>
+            <p className="text-emerald-200 text-sm">Ratings you've given to others</p>
           </div>
         </div>
       </div>
@@ -70,7 +70,7 @@ export function ReviewsView({ onBack, onNavigate }: ReviewsViewProps) {
                   {/* Partner Header */}
                   <div className="px-4 py-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-200">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
                         {initials}
                       </div>
                       <div className="flex-1">
@@ -78,9 +78,9 @@ export function ReviewsView({ onBack, onNavigate }: ReviewsViewProps) {
                         {position && <p className="text-sm text-slate-600">{position}</p>}
                       </div>
                       {sport && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg">
-                          <Trophy className="w-3.5 h-3.5 text-blue-600" />
-                          <span className="text-xs text-blue-700 font-medium">{sport}</span>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-lg">
+                          <Trophy className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-xs text-emerald-700 font-medium">{sport}</span>
                         </div>
                       )}
                     </div>

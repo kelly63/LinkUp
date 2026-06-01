@@ -81,8 +81,8 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
           {/* Profile Visibility Section */}
           <div className="bg-white rounded-2xl p-5 border border-slate-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                <Eye className="w-5 h-5 text-blue-900" />
+              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <Eye className="w-5 h-5 text-emerald-900" />
               </div>
               <div>
                 <h3 className="font-medium text-slate-900">Profile Visibility</h3>
@@ -100,14 +100,14 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
                     onChange={() => setVisibilityMode('everyone')}
                     className="sr-only peer"
                   />
-                  <div className="w-5 h-5 border-2 border-slate-300 rounded-full bg-white peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded-full bg-white peer-checked:border-emerald-600 transition-all flex items-center justify-center">
                     {visibilityMode === 'everyone' && (
-                      <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />
+                      <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
                     )}
                   </div>
                 </div>
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 group-hover:text-blue-900 transition-colors">
+                  <span className="text-sm font-medium text-slate-900 group-hover:text-emerald-900 transition-colors">
                     Visible to Everyone
                   </span>
                   <p className="text-xs text-slate-500 mt-0.5">All athletes can search for you</p>
@@ -123,14 +123,14 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
                     onChange={() => setVisibilityMode('filtered')}
                     className="sr-only peer"
                   />
-                  <div className="w-5 h-5 border-2 border-slate-300 rounded-full bg-white peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded-full bg-white peer-checked:border-emerald-600 transition-all flex items-center justify-center">
                     {visibilityMode === 'filtered' && (
-                      <div className="w-2.5 h-2.5 bg-blue-600 rounded-full" />
+                      <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
                     )}
                   </div>
                 </div>
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 group-hover:text-blue-900 transition-colors">
+                  <span className="text-sm font-medium text-slate-900 group-hover:text-emerald-900 transition-colors">
                     Filtered Visibility
                   </span>
                   <p className="text-xs text-slate-500 mt-0.5">
@@ -173,7 +173,7 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
               </div>
 
               {allowedLevels.length === 0 && (
-                <p className="text-xs text-blue-700 mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-emerald-700 mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
                   No levels selected — any skill level can find you
                 </p>
               )}
@@ -212,7 +212,7 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
               </div>
 
               {allowedSports.length === 0 && (
-                <p className="text-xs text-blue-700 mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-xs text-emerald-700 mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-3">
                   No sports selected — any sport can find you
                 </p>
               )}
@@ -276,13 +276,13 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20 hover:shadow-xl active:scale-[0.98] disabled:opacity-60"
+            className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:shadow-xl active:scale-[0.98] disabled:opacity-60"
           >
             {saving ? 'Saving…' : 'Save Preferences'}
           </button>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <p className="text-xs text-blue-900 leading-relaxed">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+            <p className="text-xs text-emerald-900 leading-relaxed">
               <strong>Privacy Note:</strong> These settings control who can search for and view your athletic profile. Your posted sessions are always visible to athletes who meet the session criteria.
             </p>
           </div>

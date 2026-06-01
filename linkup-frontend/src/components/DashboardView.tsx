@@ -217,7 +217,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
       <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 px-6 pt-4 pb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="text-blue-200 text-sm">Welcome back,</p>
+            <p className="text-emerald-200 text-sm">Welcome back,</p>
             <h2 className="text-white">{user?.name?.split(' ')[0] || 'Athlete'}</h2>
           </div>
         </div>
@@ -245,14 +245,14 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
       <div className="px-6 mt-6 mb-6" ref={upcomingSessionsRef}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-slate-900">Upcoming Sessions</h3>
-          <button onClick={() => onNavigate?.('mySessions')} className="text-sm text-blue-600 hover:text-blue-700">
+          <button onClick={() => onNavigate?.('mySessions')} className="text-sm text-emerald-600 hover:text-emerald-700">
             View All
           </button>
         </div>
 
         {loading && (
           <div className="flex justify-center py-6">
-            <span className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <span className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
@@ -260,7 +260,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
           {!loading && displayedSessions.length === 0 && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 text-center">
               <p className="text-slate-500 text-sm">No upcoming sessions.</p>
-              <button onClick={() => onTabChange('post')} className="mt-3 text-blue-600 text-sm hover:underline">
+              <button onClick={() => onTabChange('post')} className="mt-3 text-emerald-600 text-sm hover:underline">
                 Post or find a session →
               </button>
             </div>
@@ -274,7 +274,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
             const isOnRoster = otherId ? rosterIds.has(otherId) : false;
 
             return (
-            <div key={session._id} className="bg-white rounded-2xl p-4 shadow-xl border border-slate-200 hover:border-blue-300 transition-all">
+            <div key={session._id} className="bg-white rounded-2xl p-4 shadow-xl border border-slate-200 hover:border-emerald-300 transition-all">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -293,7 +293,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                   {/* Other person's name + roster badge */}
                   {otherPerson ? (
                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
-                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center flex-shrink-0">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
                         <span className="text-white text-[8px] font-bold">
                           {getInitialsDash(otherPerson.name || '?')}
                         </span>
@@ -312,7 +312,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                     <p className="text-xs text-slate-400 mb-2 italic">Your session · awaiting partner</p>
                   ) : null}
 
-                  <div className="flex items-center gap-2 text-blue-600 bg-blue-50 rounded-lg px-2 py-1 inline-flex border border-blue-100">
+                  <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 rounded-lg px-2 py-1 inline-flex border border-blue-100">
                     <Users className="w-3 h-3" />
                     <span className="text-xs">{session.posterRole || session.position}</span>
                   </div>
@@ -334,8 +334,8 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                 </div>
                 {session.location && (
                   <div className="flex items-center gap-2 text-sm">
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-3 h-3 text-blue-600" />
+                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-3 h-3 text-emerald-600" />
                     </div>
                     <span className="text-slate-700">{session.location}</span>
                   </div>
@@ -360,7 +360,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsCreatePostDialogOpen(true)}
-              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+              className="flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700"
             >
               <PlusCircle className="w-4 h-4" />
               Post
@@ -368,7 +368,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
             {combinedFeed.length > 0 && (
               <button
                 onClick={() => onNavigate?.('lockerRoom')}
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className="text-sm text-emerald-600 hover:text-emerald-700"
               >
                 See All
               </button>
@@ -379,9 +379,9 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
         {/* Quick post bar */}
         <button
           onClick={() => setIsCreatePostDialogOpen(true)}
-          className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 flex items-center gap-3 hover:border-blue-400 transition-all mb-4"
+          className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 flex items-center gap-3 hover:border-emerald-400 transition-all mb-4"
         >
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
+          <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
             {user ? getInitialsDash(user.name) : '?'}
           </div>
           <span className="text-slate-400 text-sm">Share thoughts or a session update…</span>
@@ -389,7 +389,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
 
         {isAnyLoading && (
           <div className="flex justify-center py-8">
-            <span className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <span className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
@@ -407,15 +407,15 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                 <div
                   key={`activity-${item.id}`}
                   onClick={() => handleActivityClick(item)}
-                  className="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:border-blue-300 hover:shadow-md active:scale-[0.99] transition-all cursor-pointer"
+                  className="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:border-emerald-300 hover:shadow-md active:scale-[0.99] transition-all cursor-pointer"
                 >
                   <div className="px-4 py-4">
                     <div className="flex items-start gap-3">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        item.type === 'roster_addition' ? 'bg-blue-100' : 'bg-amber-100'
+                        item.type === 'roster_addition' ? 'bg-emerald-100' : 'bg-amber-100'
                       }`}>
                         {item.type === 'roster_addition'
-                          ? <Users className="w-5 h-5 text-blue-600" />
+                          ? <Users className="w-5 h-5 text-emerald-600" />
                           : <Star className="w-5 h-5 text-amber-500" />}
                       </div>
                       <div className="flex-1">
@@ -433,7 +433,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                                 e.stopPropagation();
                                 onNavigate?.('userProfile', { ...item.userProfile, isRosterRequest: true });
                               }}
-                              className="w-full py-2.5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2"
+                              className="w-full py-2.5 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl text-sm transition-all shadow-sm flex items-center justify-center gap-2"
                             >
                               <Users className="w-4 h-4" />
                               View Profile & Respond
@@ -458,11 +458,11 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
               <div
                 key={`post-${item.id}`}
                 onClick={() => onNavigate?.('lockerRoom')}
-                className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:border-blue-300 hover:shadow-md active:scale-[0.99] transition-all cursor-pointer"
+                className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:border-emerald-300 hover:shadow-md active:scale-[0.99] transition-all cursor-pointer"
               >
                 {/* Author */}
                 <div className="px-4 pt-4 pb-2 flex items-center gap-3">
-                  <div className="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-[10px] font-medium flex-shrink-0 overflow-hidden">
+                  <div className="w-7 h-7 bg-gradient-to-br from-emerald-400 to-purple-600 rounded-full flex items-center justify-center text-white text-[10px] font-medium flex-shrink-0 overflow-hidden">
                     {author?.avatar
                       ? <img src={avatarThumb(author.avatar, 40)!} alt={author.name} className="w-full h-full rounded-full object-cover" />
                       : initials}
@@ -496,7 +496,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                     <div>
                       {post.content && <p className="text-sm text-slate-800 mb-2">{post.content}</p>}
                       {post.sharedUrl && (
-                        <div className="border border-slate-200 rounded-xl px-3 py-2 text-xs text-blue-600 truncate">
+                        <div className="border border-slate-200 rounded-xl px-3 py-2 text-xs text-emerald-600 truncate">
                           {post.articleTitle || post.sharedUrl}
                         </div>
                       )}
@@ -518,7 +518,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                   </button>
                   <button
                     onClick={() => onNavigate?.('lockerRoom', { postId: post._id })}
-                    className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-blue-500 transition-colors"
+                    className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-emerald-500 transition-colors"
                   >
                     <MessageCircle className="w-4 h-4" />
                     {post.comments.length > 0 && <span>{post.comments.length}</span>}

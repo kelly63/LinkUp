@@ -86,7 +86,7 @@ export function CoachProfileSetup({ onBack }: CoachProfileSetupProps) {
                 value={hourlyRate}
                 onChange={(e) => setHourlyRate(e.target.value)}
                 placeholder="0"
-                className="w-full pl-8 pr-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full pl-8 pr-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
             <p className="text-xs text-slate-500 mt-1.5 ml-1">Set your hourly coaching rate</p>
@@ -102,7 +102,7 @@ export function CoachProfileSetup({ onBack }: CoachProfileSetupProps) {
               value={yearsExperience}
               onChange={(e) => setYearsExperience(e.target.value)}
               placeholder="e.g., 5"
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
             />
           </div>
 
@@ -116,7 +116,7 @@ export function CoachProfileSetup({ onBack }: CoachProfileSetupProps) {
               onChange={(e) => setCertifications(e.target.value)}
               placeholder="e.g., NASM Certified, Former D1 Coach, USA Baseball Certified..."
               rows={3}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors resize-none"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors resize-none"
             />
           </div>
 
@@ -130,12 +130,12 @@ export function CoachProfileSetup({ onBack }: CoachProfileSetupProps) {
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tell athletes about your coaching style, experience, and what makes you unique..."
               rows={4}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors resize-none"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors resize-none"
             />
           </div>
 
           {/* Save Button */}
-          <button className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-blue-600/20 hover:shadow-xl active:scale-[0.98]">
+          <button className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-emerald-500/20 hover:shadow-xl active:scale-[0.98]">
             SAVE COACH PROFILE
           </button>
         </div>

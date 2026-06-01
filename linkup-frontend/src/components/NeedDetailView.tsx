@@ -29,8 +29,8 @@ export function NeedDetailView({ onBack }: NeedDetailViewProps) {
           <div className="space-y-4">
             {/* Seeking */}
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Users className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-emerald-600" />
               </div>
               <div className="flex-1">
                 <p className="text-sm text-slate-500 mb-0.5">Seeking</p>
@@ -87,7 +87,7 @@ export function NeedDetailView({ onBack }: NeedDetailViewProps) {
           
           <div className="flex items-start gap-4 mb-4">
             {/* Avatar */}
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white flex-shrink-0 text-xl">
+            <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-purple-600 rounded-full flex items-center justify-center text-white flex-shrink-0 text-xl">
               PR
             </div>
             

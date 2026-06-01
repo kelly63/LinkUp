@@ -52,23 +52,23 @@ export function ReceivedRatingsView({ onBack, onNavigate }: ReceivedRatingsViewP
           </button>
           <div className="flex-1">
             <h2 className="text-white">My Ratings</h2>
-            <p className="text-blue-200 text-sm">Ratings received from others</p>
+            <p className="text-emerald-200 text-sm">Ratings received from others</p>
           </div>
         </div>
 
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-200 text-sm mb-1">Overall Rating</p>
+              <p className="text-emerald-200 text-sm mb-1">Overall Rating</p>
               <div className="flex items-center gap-2">
                 <Star className="w-6 h-6 text-amber-400 fill-amber-400" />
                 <span className="text-3xl text-white font-semibold">{averageRating}</span>
-                <span className="text-blue-200 text-sm">/ 5.0</span>
+                <span className="text-emerald-200 text-sm">/ 5.0</span>
               </div>
             </div>
             <div className="text-right">
               <div className="text-2xl text-white font-semibold">{approvedCount}</div>
-              <p className="text-blue-200 text-sm">Approved Reviews</p>
+              <p className="text-emerald-200 text-sm">Approved Reviews</p>
             </div>
           </div>
         </div>
@@ -85,7 +85,7 @@ export function ReceivedRatingsView({ onBack, onNavigate }: ReceivedRatingsViewP
                 filterTab === tab
                   ? tab === 'pending' ? 'bg-amber-600 text-white shadow-sm'
                     : tab === 'all' ? 'bg-slate-700 text-white shadow-sm'
-                    : 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-emerald-500 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -111,9 +111,9 @@ export function ReceivedRatingsView({ onBack, onNavigate }: ReceivedRatingsViewP
         </div>
       )}
       {filterTab === 'pending' && (
-        <div className="mx-6 mt-4 flex items-start gap-2 px-3 py-2.5 bg-blue-50 border border-blue-200 rounded-xl">
-          <Info className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-blue-800">
+        <div className="mx-6 mt-4 flex items-start gap-2 px-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+          <Info className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-emerald-800">
             These ratings are being reviewed by our admin team before appearing on your public profile. This usually takes less than 24 hours.
           </p>
         </div>
@@ -146,7 +146,7 @@ export function ReceivedRatingsView({ onBack, onNavigate }: ReceivedRatingsViewP
                   {/* Reviewer Header */}
                   <div className="px-4 py-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-200">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
                         {initials}
                       </div>
                       <div className="flex-1">
@@ -154,9 +154,9 @@ export function ReceivedRatingsView({ onBack, onNavigate }: ReceivedRatingsViewP
                         {position && <p className="text-sm text-slate-600">{position}</p>}
                       </div>
                       {sport && (
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg">
-                          <Trophy className="w-3.5 h-3.5 text-blue-600" />
-                          <span className="text-xs text-blue-700 font-medium">{sport}</span>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-lg">
+                          <Trophy className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="text-xs text-emerald-700 font-medium">{sport}</span>
                         </div>
                       )}
                     </div>

@@ -32,21 +32,21 @@ function getInitials(name: string): string {
 
 export function NeedCard({ need, onClick, onPosterClick }: NeedCardProps) {
   return (
-    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 hover:border-blue-400 transition-all shadow-sm hover:shadow-md">
+    <div className="bg-white border-2 border-slate-200 rounded-2xl p-4 hover:border-emerald-400 transition-all shadow-sm hover:shadow-md">
 
       {/* Poster row — tappable to view profile */}
       <button
         onClick={(e) => { e.stopPropagation(); onPosterClick?.(); }}
         className="w-full flex items-center gap-3 mb-3 text-left group"
       >
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
           <span className="text-white text-xs font-bold">
             {need.posterName ? getInitials(need.posterName) : '?'}
           </span>
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
+            <span className="text-sm font-semibold text-slate-900 group-hover:text-emerald-600 transition-colors">
               {need.posterName || 'Unknown'}
             </span>
             {need.isOnRoster && (
@@ -62,7 +62,7 @@ export function NeedCard({ need, onClick, onPosterClick }: NeedCardProps) {
               </span>
             )}
             {need.teamType === 'mens' && (
-              <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full border border-blue-200">
+              <span className="inline-flex items-center px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full border border-emerald-200">
                 Men's
               </span>
             )}
@@ -72,16 +72,16 @@ export function NeedCard({ need, onClick, onPosterClick }: NeedCardProps) {
               </span>
             )}
           </div>
-          <p className="text-xs text-blue-500 group-hover:underline">View profile</p>
+          <p className="text-xs text-emerald-500 group-hover:underline">View profile</p>
         </div>
       </button>
 
       {/* Seeking Status */}
-      <div className="flex items-center gap-2 mb-3 bg-blue-50 rounded-xl p-3">
-        <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
+      <div className="flex items-center gap-2 mb-3 bg-emerald-50 rounded-xl p-3">
+        <Users className="w-4 h-4 text-emerald-600 flex-shrink-0" />
         <div>
-          <p className="text-xs text-blue-600">Seeking</p>
-          <p className="text-sm text-blue-900">{need.seeking}</p>
+          <p className="text-xs text-emerald-600">Seeking</p>
+          <p className="text-sm text-emerald-900">{need.seeking}</p>
         </div>
       </div>
 
@@ -130,7 +130,7 @@ export function NeedCard({ need, onClick, onPosterClick }: NeedCardProps) {
 
       <button
         onClick={onClick}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition-colors active:scale-[0.98]"
+        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl transition-colors active:scale-[0.98]"
       >
         VIEW & ACCEPT
       </button>

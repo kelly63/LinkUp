@@ -89,7 +89,7 @@ export function RatingModal({ isOpen, onClose, userName, onSubmit }: RatingModal
               value={review}
               onChange={(e) => setReview(e.target.value)}
               placeholder="Share your experience with this athlete..."
-              className="w-full h-24 px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
+              className="w-full h-24 px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none text-sm"
               maxLength={500}
             />
             <p className="text-xs text-slate-500 mt-1">{review.length}/500 characters</p>
@@ -109,7 +109,7 @@ export function RatingModal({ isOpen, onClose, userName, onSubmit }: RatingModal
             disabled={rating === 0}
             className={`flex-1 py-3 px-4 rounded-xl transition-colors font-medium ${
               rating > 0
-                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20'
+                ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/20'
                 : 'bg-slate-200 text-slate-400 cursor-not-allowed'
             }`}
           >

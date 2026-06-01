@@ -121,15 +121,15 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
           </button>
           <div>
             <h2 className="text-white">{session.title || session.sport}</h2>
-            <p className="text-blue-200 text-sm">{session.sport}{location ? ` • ${location}` : ''}</p>
+            <p className="text-emerald-200 text-sm">{session.sport}{location ? ` • ${location}` : ''}</p>
           </div>
         </div>
 
         {/* Seeking Badge */}
         <div className="flex justify-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/20 border border-blue-400/30">
-            <Users className="w-4 h-4 text-blue-300" />
-            <span className="text-sm font-medium text-blue-200">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-400/20 border border-emerald-400/30">
+            <Users className="w-4 h-4 text-emerald-300" />
+            <span className="text-sm font-medium text-emerald-200">
               Seeking: {seeking}
             </span>
           </div>
@@ -145,12 +145,12 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
             onClick={() => poster?._id && (onViewProfile?.(poster._id) ?? onNavigate?.('userProfile', { _id: poster._id, ...poster }))}
             className="flex items-start gap-4 mb-4 w-full text-left group"
           >
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-xl flex-shrink-0">
+            <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-xl flex-shrink-0">
               {poster?.avatar || posterInitials}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-slate-900 font-medium group-hover:text-blue-600 transition-colors">{posterName}</h3>
+                <h3 className="text-slate-900 font-medium group-hover:text-emerald-600 transition-colors">{posterName}</h3>
                 {isOnRoster && (
                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200">
                     <Shield className="w-2.5 h-2.5" />
@@ -159,7 +159,7 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
                 )}
               </div>
               <p className="text-sm text-slate-600 mb-1">{posterPosition}</p>
-              <p className="text-xs text-blue-500 group-hover:underline">View profile</p>
+              <p className="text-xs text-emerald-500 group-hover:underline">View profile</p>
               <div className="flex items-center gap-3 mt-1">
                 {posterRating !== null && (
                   <>
@@ -174,9 +174,9 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
               </div>
             </div>
             {posterLevel && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg self-start">
-                <Trophy className="w-3.5 h-3.5 text-blue-600" />
-                <span className="text-xs text-blue-700 font-medium">{posterLevel}</span>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-lg self-start">
+                <Trophy className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-xs text-emerald-700 font-medium">{posterLevel}</span>
               </div>
             )}
           </button>
@@ -186,10 +186,10 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={openChat}
-                className="flex items-center justify-center gap-2 py-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                className="flex items-center justify-center gap-2 py-3 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors"
               >
-                <MessageCircle className="w-4 h-4 text-blue-600" />
-                <span className="text-sm text-blue-700 font-medium">Message</span>
+                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                <span className="text-sm text-emerald-700 font-medium">Message</span>
               </button>
               <button
                 onClick={() => poster._id && (onViewProfile?.(poster._id) ?? onNavigate?.('userProfile', { _id: poster._id, ...poster }))}
@@ -220,8 +220,8 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
 
             {location && (
               <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <MapPin className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-slate-500 mb-0.5">Location</p>
@@ -230,7 +230,7 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                    className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700"
                   >
                     <Navigation className="w-4 h-4" />
                     Get Directions
@@ -326,7 +326,7 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
             <button
               onClick={() => setShowAcceptConfirmation(true)}
               disabled={accepting}
-              className="w-full py-4 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-60 text-white rounded-xl font-medium transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
+              className="w-full py-4 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-60 text-white rounded-xl font-medium transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98] flex items-center justify-center gap-2"
             >
               {accepting ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 'REQUEST TO JOIN'}
             </button>

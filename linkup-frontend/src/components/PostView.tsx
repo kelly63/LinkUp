@@ -393,7 +393,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   setSelectedPartnerRoles([]);
                   setPosterRole('');
                 }}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
               >
                 {userSports.length > 0 ? (
                   <>
@@ -434,8 +434,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     onClick={() => setSelectedTeamType(selectedTeamType === val ? '' : val)}
                     className={`py-3 rounded-xl border-2 text-sm font-medium transition-all ${
                       selectedTeamType === val
-                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                        : 'border-slate-300 bg-white text-slate-700 hover:border-blue-300'
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-300'
                     }`}
                   >
                     {label}
@@ -453,7 +453,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               <select
                 value={posterRole || (selectedSport !== 'Conditioning / Lifting' ? user?.position || '' : '')}
                 onChange={(e) => setPosterRole(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
               >
                 <option value="">
                   {selectedSport === 'Conditioning / Lifting' ? 'Select your role…' : 'Select your position…'}
@@ -498,14 +498,14 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 <input
                   type="date"
                   value={dateInputValue}
-                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
                   onChange={(e) => setDateInputValue(e.target.value)}
                 />
                 <button
                   type="button"
                   onClick={() => { if (dateInputValue) { handleDateAdd(dateInputValue); setDateInputValue(''); } }}
                   disabled={!dateInputValue}
-                  className="px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl font-semibold transition-colors text-sm"
+                  className="px-4 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 text-white rounded-xl font-semibold transition-colors text-sm"
                 >
                   Add
                 </button>
@@ -515,7 +515,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   {selectedDates.map((date) => (
                     <div
                       key={date}
-                      className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-900 rounded-lg border border-blue-200"
+                      className="flex items-center gap-2 px-3 py-2 bg-emerald-100 text-emerald-900 rounded-lg border border-emerald-200"
                     >
                       <span className="text-sm font-medium">{formatDate(date)}</span>
                       <button
@@ -538,7 +538,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     onChange={() => setIsDateFlexible(!isDateFlexible)}
                     className="sr-only peer"
                   />
-                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-emerald-500 peer-checked:border-emerald-600 transition-all flex items-center justify-center">
                     {isDateFlexible && (
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -561,14 +561,14 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 <input
                   type="time"
                   value={timeInputValue}
-                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
                   onChange={(e) => setTimeInputValue(e.target.value)}
                 />
                 <button
                   type="button"
                   onClick={() => { if (timeInputValue) { handleTimeAdd(timeInputValue); setTimeInputValue(''); } }}
                   disabled={!timeInputValue}
-                  className="px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white rounded-xl font-semibold transition-colors text-sm"
+                  className="px-4 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 text-white rounded-xl font-semibold transition-colors text-sm"
                 >
                   Add
                 </button>
@@ -578,7 +578,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   {selectedTimes.map((time) => (
                     <div
                       key={time}
-                      className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-900 rounded-lg border border-blue-200"
+                      className="flex items-center gap-2 px-3 py-2 bg-emerald-100 text-emerald-900 rounded-lg border border-emerald-200"
                     >
                       <span className="text-sm font-medium">{formatTime(time)}</span>
                       <button
@@ -601,7 +601,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     onChange={() => setIsTimeFlexible(!isTimeFlexible)}
                     className="sr-only peer"
                   />
-                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-emerald-500 peer-checked:border-emerald-600 transition-all flex items-center justify-center">
                     {isTimeFlexible && (
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -620,7 +620,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 <Clock className="w-4 h-4" />
                 Duration
               </label>
-              <select ref={durationRef} className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors">
+              <select ref={durationRef} className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors">
                 <option>1 hr</option>
                 <option>90 mins</option>
                 <option>2 hr</option>
@@ -693,7 +693,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 ref={notesRef}
                 placeholder="e.g., Need frame and block work, or focusing on curveball mechanics..."
                 rows={4}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors resize-none"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors resize-none"
               />
             </div>
 
@@ -771,7 +771,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 placeholder="Search sessions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
 
@@ -812,14 +812,14 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               onClick={() => setShowFilters(!showFilters)}
               className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-colors ${
                 showFilters
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
                   : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
               }`}
             >
               <Filter className="w-4 h-4" />
               <span>Filters</span>
               {activeFilterCount > 0 && (
-                <span className="ml-1 px-2 py-0.5 bg-blue-600 text-white text-xs rounded-full">
+                <span className="ml-1 px-2 py-0.5 bg-emerald-500 text-white text-xs rounded-full">
                   {activeFilterCount}
                 </span>
               )}
@@ -835,7 +835,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     {filterSport.length > 0 && (
                       <button 
                         onClick={() => setFilterSport([])}
-                        className="text-xs text-blue-600 hover:text-blue-700"
+                        className="text-xs text-emerald-600 hover:text-emerald-700"
                       >
                         Clear
                       </button>
@@ -848,7 +848,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                         onClick={() => toggleFilterSport(sport)}
                         className={`px-3 py-2 rounded-lg text-sm transition-all ${
                           filterSport.includes(sport)
-                            ? 'bg-blue-600 text-white border-2 border-blue-500'
+                            ? 'bg-emerald-500 text-white border-2 border-emerald-500'
                             : 'bg-slate-50 text-slate-700 border-2 border-slate-200 hover:border-slate-300'
                         }`}
                       >
@@ -865,7 +865,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     {filterPositions.length > 0 && (
                       <button 
                         onClick={() => setFilterPositions([])}
-                        className="text-xs text-blue-600 hover:text-blue-700"
+                        className="text-xs text-emerald-600 hover:text-emerald-700"
                       >
                         Clear
                       </button>
@@ -878,7 +878,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                         onClick={() => toggleFilterPosition(position)}
                         className={`px-3 py-2 rounded-lg text-sm transition-all ${
                           filterPositions.includes(position)
-                            ? 'bg-blue-600 text-white border-2 border-blue-500'
+                            ? 'bg-emerald-500 text-white border-2 border-emerald-500'
                             : 'bg-slate-50 text-slate-700 border-2 border-slate-200 hover:border-slate-300'
                         }`}
                       >
@@ -895,7 +895,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     {filterSkillLevels.length > 0 && (
                       <button 
                         onClick={() => setFilterSkillLevels([])}
-                        className="text-xs text-blue-600 hover:text-blue-700"
+                        className="text-xs text-emerald-600 hover:text-emerald-700"
                       >
                         Clear
                       </button>
@@ -908,7 +908,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                         onClick={() => toggleFilterSkillLevel(level)}
                         className={`px-3 py-2 rounded-lg text-sm transition-all ${
                           filterSkillLevels.includes(level)
-                            ? 'bg-blue-600 text-white border-2 border-blue-500'
+                            ? 'bg-emerald-500 text-white border-2 border-emerald-500'
                             : 'bg-slate-50 text-slate-700 border-2 border-slate-200 hover:border-slate-300'
                         }`}
                       >
@@ -960,7 +960,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
             <div className="space-y-3 pb-4">
               {loadingFind && (
                 <div className="flex justify-center py-8">
-                  <span className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                  <span className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
               {!loadingFind && filteredNeeds.map((need) => (
@@ -999,12 +999,12 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   clearFilters();
                   setShowFilters(false);
                 }}
-                className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 hover:border-blue-300 text-blue-900 py-4 px-6 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex flex-col items-center gap-1"
+                className="w-full bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-emerald-200 hover:border-emerald-300 text-emerald-900 py-4 px-6 rounded-xl transition-all shadow-sm hover:shadow-md active:scale-[0.98] flex flex-col items-center gap-1"
               >
                 <span className="font-medium">
                   Unlock {totalSessionCount - filteredNeeds.length} more session{totalSessionCount - filteredNeeds.length !== 1 ? 's' : ''}
                 </span>
-                <span className="text-sm text-blue-700">Clear filters to see all available sessions</span>
+                <span className="text-sm text-emerald-700">Clear filters to see all available sessions</span>
               </button>
             )}
           </div>

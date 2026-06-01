@@ -50,8 +50,8 @@ function SessionContent({ post }: { post: Post }) {
       <div className="bg-white rounded-xl p-4 space-y-2">
         {post.sessionPartner && typeof post.sessionPartner === 'object' && (
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Users className="w-4 h-4 text-blue-600" />
+            <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Users className="w-4 h-4 text-emerald-600" />
             </div>
             <div>
               <p className="text-sm text-slate-900 font-medium">
@@ -84,13 +84,13 @@ function ArticleContent({ post }: { post: Post }) {
           href={post.sharedUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="block border-2 border-slate-200 rounded-xl overflow-hidden hover:border-blue-400 transition-colors"
+          className="block border-2 border-slate-200 rounded-xl overflow-hidden hover:border-emerald-400 transition-colors"
         >
           <div className="p-4">
             <h4 className="text-slate-900 text-sm font-medium mb-1 line-clamp-2">
               {post.articleTitle || post.sharedUrl}
             </h4>
-            <div className="flex items-center gap-2 text-xs text-blue-600">
+            <div className="flex items-center gap-2 text-xs text-emerald-600">
               <ExternalLink className="w-3.5 h-3.5" />
               <span className="truncate">{new URL(post.sharedUrl).hostname}</span>
             </div>
@@ -141,7 +141,7 @@ function PostCard({
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden">
+            <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden">
               {author?.avatar
                 ? <img src={avatarThumb(author.avatar, 40)!} alt={author.name} className="w-full h-full rounded-full object-cover" />
                 : initials}
@@ -211,7 +211,7 @@ function PostCard({
         <button
           onClick={onToggleComments}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-            isCommentsOpen ? 'text-blue-600 bg-blue-50' : 'text-slate-600 hover:bg-slate-50'
+            isCommentsOpen ? 'text-emerald-600 bg-emerald-50' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
           <MessageCircle className={`w-4 h-4 ${isCommentsOpen ? 'fill-blue-100' : ''}`} />
@@ -229,7 +229,7 @@ function PostCard({
             <div className="space-y-3">
               {comments.map((c) => (
                 <div key={c._id} className="flex gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
                     {c.author?.avatar
                       ? <img src={avatarThumb(c.author.avatar, 80)!} alt={c.author.name} className="w-full h-full object-cover" />
                       : getInitials(c.author?.name || '?')}
@@ -247,7 +247,7 @@ function PostCard({
           )}
 
           <div className="flex gap-2 items-center pt-1">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
               {userAvatar
                 ? <img src={avatarThumb(userAvatar, 80)!} alt="me" className="w-full h-full object-cover" />
                 : userInitials}
@@ -265,10 +265,10 @@ function PostCard({
               <button
                 onClick={onSubmitComment}
                 disabled={!draft.trim() || isSubmitting}
-                className="text-blue-600 disabled:text-slate-300 transition-colors"
+                className="text-emerald-600 disabled:text-slate-300 transition-colors"
               >
                 {isSubmitting
-                  ? <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin block" />
+                  ? <span className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin block" />
                   : <Send className="w-4 h-4" />}
               </button>
             </div>
@@ -464,7 +464,7 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId }: { onBack?: 
           </div>
           <button
             onClick={() => setIsCreatePostDialogOpen(true)}
-            className="p-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-colors"
+            className="p-2 bg-emerald-500 hover:bg-emerald-600 rounded-full transition-colors"
           >
             <PlusCircle className="w-5 h-5 text-white" />
           </button>
@@ -476,8 +476,8 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId }: { onBack?: 
               onClick={() => setActiveFilter(f.id)}
               className={`px-4 py-1.5 rounded-full text-sm flex-shrink-0 transition-colors ${
                 activeFilter === f.id
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white border border-slate-200 text-slate-700 hover:border-blue-400'
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:border-emerald-400'
               }`}
             >
               {f.label}
@@ -490,9 +490,9 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId }: { onBack?: 
       <div className="px-6 pt-4 pb-3">
         <button
           onClick={() => setIsCreatePostDialogOpen(true)}
-          className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 flex items-center gap-3 hover:border-blue-400 transition-all"
+          className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3 flex items-center gap-3 hover:border-emerald-400 transition-all"
         >
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
+          <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
             {userInitials}
           </div>
           <span className="text-slate-400 text-sm">Share thoughts or a session update…</span>
@@ -503,7 +503,7 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId }: { onBack?: 
       <div className="px-6 space-y-4 pb-6">
         {loading && (
           <div className="flex justify-center py-12">
-            <span className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <span className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 

@@ -183,7 +183,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     open: { label: 'Open – Awaiting Partner', Icon: AlertCircle, color: 'text-amber-200', bg: 'bg-amber-500/20 border-amber-400/30' },
     pending: { label: 'Inquiry Pending', Icon: AlertCircle, color: 'text-orange-200', bg: 'bg-orange-500/20 border-orange-400/30' },
     confirmed: { label: 'Confirmed Session', Icon: CheckCircle, color: 'text-green-200', bg: 'bg-green-500/20 border-green-400/30' },
-    completed: { label: 'Completed', Icon: Trophy, color: 'text-blue-200', bg: 'bg-blue-500/20 border-blue-400/30' },
+    completed: { label: 'Completed', Icon: Trophy, color: 'text-emerald-200', bg: 'bg-emerald-400/20 border-emerald-400/30' },
     cancelled: { label: 'Cancelled', Icon: XCircle, color: 'text-red-200', bg: 'bg-red-500/20 border-red-400/30' },
   };
   const { label: statusLabel, Icon: StatusIcon, color: statusColor, bg: statusBg } =
@@ -204,17 +204,17 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-white">Session Details</h2>
               {(localSession as any).teamType === 'mens' && (
-                <span className="px-2 py-0.5 bg-blue-500/60 border border-blue-300/40 text-white text-[10px] font-bold rounded-full">Men's</span>
+                <span className="px-2 py-0.5 bg-emerald-400/60 border border-emerald-300/40 text-white text-[10px] font-bold rounded-full">Men's</span>
               )}
               {(localSession as any).teamType === 'womens' && (
                 <span className="px-2 py-0.5 bg-pink-500/60 border border-pink-300/40 text-white text-[10px] font-bold rounded-full">Women's</span>
               )}
             </div>
-            <p className="text-blue-200 text-sm">{localSession.title || `${localSession.sport} Practice`}</p>
+            <p className="text-emerald-200 text-sm">{localSession.title || `${localSession.sport} Practice`}</p>
             {!isPostedByMe && localSession.postedBy && typeof localSession.postedBy === 'object' && (
               <button
                 onClick={() => onNavigate && onNavigate('userProfile', { _id: (localSession.postedBy as any)._id, ...(localSession.postedBy as any) })}
-                className="text-blue-300 text-xs mt-0.5 hover:text-white transition-colors hover:underline"
+                className="text-emerald-300 text-xs mt-0.5 hover:text-white transition-colors hover:underline"
               >
                 Posted by {(localSession.postedBy as any).name}
               </button>
@@ -235,7 +235,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
         {partner && typeof partner === 'object' && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
             <div className="flex items-start gap-4 mb-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white font-semibold text-xl flex-shrink-0">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-xl flex-shrink-0">
                 {partner.avatar
                   ? <img src={partner.avatar} alt={partner.name} className="w-full h-full rounded-full object-cover" />
                   : partnerInitials}
@@ -259,9 +259,9 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                 </div>
               </div>
               {partner.skillLevel && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-lg">
-                  <Trophy className="w-3.5 h-3.5 text-blue-600" />
-                  <span className="text-xs text-blue-700 font-medium">{partner.skillLevel}</span>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-lg">
+                  <Trophy className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-xs text-emerald-700 font-medium">{partner.skillLevel}</span>
                 </div>
               )}
             </div>
@@ -288,10 +288,10 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                     });
                   }
                 }}
-                className="flex flex-col items-center gap-1.5 py-3 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors"
+                className="flex flex-col items-center gap-1.5 py-3 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors"
               >
-                <MessageCircle className="w-5 h-5 text-blue-600" />
-                <span className="text-xs text-blue-700 font-medium">Message</span>
+                <MessageCircle className="w-5 h-5 text-emerald-600" />
+                <span className="text-xs text-emerald-700 font-medium">Message</span>
               </button>
               <button
                 onClick={() => onNavigate && onNavigate('userProfile', { _id: partner._id, ...partner })}
@@ -306,10 +306,10 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
 
         {/* Pending Partner Banner — shown to the poster when someone requests to join */}
         {isPostedByMe && localSession.pendingPartner && typeof localSession.pendingPartner === 'object' && (
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4">
             <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <UserCheck className="w-4 h-4 text-blue-600" />
+              <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <UserCheck className="w-4 h-4 text-emerald-600" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-900 mb-0.5">Join Request — Pending Your Approval</p>
@@ -437,8 +437,8 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
             </div>
 
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <MapPin className="w-5 h-5 text-blue-600" />
+              <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-5 h-5 text-emerald-600" />
               </div>
               <div className="flex-1">
                 <p className="text-sm text-slate-500 mb-0.5">Location</p>
@@ -447,7 +447,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                   href={`https://www.openstreetmap.org/search?query=${encodeURIComponent(localSession.location)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
+                  className="flex items-center gap-2 text-sm text-emerald-600 hover:text-emerald-700"
                 >
                   <Navigation className="w-4 h-4" />
                   Get Directions
@@ -496,8 +496,8 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
             <div className="space-y-2">
               {localSession.equipment.map((item, i) => (
                 <div key={i} className="flex items-center gap-2">
-                  <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <CheckCircle className="w-3.5 h-3.5 text-blue-600" />
+                  <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
                   </div>
                   <span className="text-sm text-slate-700">{item}</span>
                 </div>
@@ -526,7 +526,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                 {isPostedByMe && (
                   <button
                     onClick={() => onNavigate && onNavigate('editSession', localSession)}
-                    className="w-full py-3.5 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl font-medium transition-all flex items-center justify-center gap-2"
                   >
                     <RefreshCw className="w-4 h-4" />
                     Reschedule
@@ -564,7 +564,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
 
                 <button
                   onClick={handleAddToCalendar}
-                  className="w-full py-3.5 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl font-medium transition-all shadow-sm"
+                  className="w-full py-3.5 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl font-medium transition-all shadow-sm"
                 >
                   Add to Calendar
                 </button>

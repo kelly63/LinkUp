@@ -330,7 +330,7 @@ export function ChatView({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search conversations..."
-            className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border-2 border-transparent focus:border-blue-400 focus:outline-none transition-colors"
+            className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 border-2 border-transparent focus:border-emerald-400 focus:outline-none transition-colors"
           />
         </div>
       </div>
@@ -339,7 +339,7 @@ export function ChatView({
       <div className="flex-1 overflow-y-auto">
         {loading && (
           <div className="flex justify-center py-12">
-            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+            <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
 
@@ -398,7 +398,7 @@ export function ChatView({
                     <h4 className="text-slate-900 flex items-center gap-2">
                       {conv.partner.name}
                       {conv.unread > 0 && (
-                        <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                        <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
                           {conv.unread}
                         </span>
                       )}
@@ -476,7 +476,7 @@ export function ChatView({
                   >
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                           {athlete.avatar || getInitials(athlete.name)}
                         </div>
                         <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
@@ -487,7 +487,7 @@ export function ChatView({
                         <h4 className="text-slate-900 font-semibold">{athlete.name}</h4>
                         <p className="text-sm text-slate-600">{athlete.position}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
+                          <span className="text-xs px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded">
                             {athlete.skillLevel}
                           </span>
                           <span className="text-xs text-slate-500">{athlete.sport}</span>

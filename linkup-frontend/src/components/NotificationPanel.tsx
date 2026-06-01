@@ -15,8 +15,8 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color:
   roster_request: {
     label: 'Connection Request',
     Icon: UserPlus,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50',
   },
   roster_accepted: {
     label: 'Connection Accepted',
@@ -51,8 +51,8 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color:
   session_updated: {
     label: 'Session Updated',
     Icon: CalendarClock,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50',
   },
   change_proposed: {
     label: 'Review Changes',
@@ -81,8 +81,8 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color:
   session_inquiry: {
     label: 'Session Inquiry',
     Icon: UserSearch,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50',
   },
   partner_approved: {
     label: 'Request Approved',
@@ -241,7 +241,7 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, 
             {unread > 0 && (
               <button
                 onClick={handleMarkAllRead}
-                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 px-2 py-1 rounded-md hover:bg-blue-50 transition-colors"
+                className="flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-700 px-2 py-1 rounded-md hover:bg-emerald-50 transition-colors"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
                 Mark all read
@@ -276,7 +276,7 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, 
                   onClick={() => handleClick(n)}
                   className={`w-full flex items-start gap-3 px-4 py-3 border-b border-slate-50
                     text-left transition-colors hover:bg-slate-50
-                    ${!n.read ? 'bg-blue-50/40' : 'bg-white'}`}
+                    ${!n.read ? 'bg-emerald-50/40' : 'bg-white'}`}
                 >
                   <div className={`mt-0.5 w-8 h-8 rounded-full ${bg} flex items-center justify-center flex-shrink-0`}>
                     <Icon className={`w-4 h-4 ${color}`} />
@@ -290,7 +290,7 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, 
                   </div>
 
                   {!n.read && (
-                    <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0 mt-1.5" />
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0 mt-1.5" />
                   )}
                 </button>
               );

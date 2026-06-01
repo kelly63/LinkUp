@@ -346,7 +346,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <button
               onClick={handleCameraButtonClick}
               disabled={uploadingAvatar}
-              className="absolute bottom-0 right-0 w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-colors border-2 border-white disabled:opacity-60"
+              className="absolute bottom-0 right-0 w-8 h-8 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center cursor-pointer shadow-lg transition-colors border-2 border-white disabled:opacity-60"
             >
               {uploadingAvatar
                 ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -386,7 +386,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <div className="bg-white rounded-2xl shadow-lg p-5">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-slate-900">Athlete Profile</h4>
-                <button className="text-sm text-blue-600 hover:text-blue-700" onClick={handleOpenAthleteEdit}>Edit</button>
+                <button className="text-sm text-emerald-600 hover:text-emerald-700" onClick={handleOpenAthleteEdit}>Edit</button>
               </div>
               
               {/* Athlete Info Grid */}
@@ -492,14 +492,14 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <div className="bg-white rounded-2xl shadow-lg p-5">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-slate-900">External Profiles & Media</h4>
-                <button onClick={handleOpenLinksEdit} className="text-sm text-blue-600 hover:text-blue-700">Edit</button>
+                <button onClick={handleOpenLinksEdit} className="text-sm text-emerald-600 hover:text-emerald-700">Edit</button>
               </div>
               <div className="space-y-3">
                 <LinkRow icon={<Shield className="w-5 h-5 text-emerald-600" />} bg="bg-emerald-100" label="College Roster Page" value={rosterUrl} placeholder="Add your team roster link" />
                 <LinkRow icon={<ExternalLink className="w-5 h-5 text-orange-600" />} bg="bg-orange-100" label="Hudl Profile" value={hudlUrl} placeholder="Add your Hudl link" />
                 <LinkRow icon={<Instagram className="w-5 h-5 text-pink-600" />} bg="bg-pink-100" label="Instagram" value={instagramUrl} placeholder="Add your Instagram" />
                 <LinkRow icon={<Link className="w-5 h-5 text-sky-600" />} bg="bg-sky-100" label="Twitter / X" value={twitterUrl} placeholder="Add your Twitter/X" />
-                <LinkRow icon={<Link className="w-5 h-5 text-blue-700" />} bg="bg-blue-100" label="LinkedIn" value={linkedinUrl} placeholder="Add your LinkedIn" />
+                <LinkRow icon={<Link className="w-5 h-5 text-emerald-700" />} bg="bg-emerald-100" label="LinkedIn" value={linkedinUrl} placeholder="Add your LinkedIn" />
               </div>
             </div>
           </div>
@@ -509,7 +509,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <div className="bg-white rounded-2xl shadow-lg p-5">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-slate-900">About Me</h4>
-                <button className="text-sm text-blue-600 hover:text-blue-700" onClick={handleOpenAboutMeEdit}>Edit</button>
+                <button className="text-sm text-emerald-600 hover:text-emerald-700" onClick={handleOpenAboutMeEdit}>Edit</button>
               </div>
               <p className="text-slate-700 text-sm leading-relaxed">
                 {aboutMe}
@@ -526,7 +526,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 <h4 className="text-slate-900">Coach Profile</h4>
                 <button 
                   onClick={() => onNavigate('coachSetup')}
-                  className="text-sm text-blue-600 hover:text-blue-700">
+                  className="text-sm text-emerald-600 hover:text-emerald-700">
                   Edit
                 </button>
               </div>
@@ -591,7 +591,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           <div className="px-6 mb-3">
             <button 
               onClick={() => onNavigate('athleteSearch')}
-              className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-5 rounded-2xl flex items-center justify-between transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]"
+              className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white p-5 rounded-2xl flex items-center justify-between transition-all shadow-lg shadow-emerald-500/20 active:scale-[0.98]"
             >
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
@@ -630,13 +630,13 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <div className="bg-white rounded-2xl shadow-lg p-5">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-slate-900">External Profiles & Media</h4>
-                <button onClick={handleOpenLinksEdit} className="text-sm text-blue-600 hover:text-blue-700">Edit</button>
+                <button onClick={handleOpenLinksEdit} className="text-sm text-emerald-600 hover:text-emerald-700">Edit</button>
               </div>
               <div className="space-y-3">
                 <LinkRow icon={<ExternalLink className="w-5 h-5 text-orange-600" />} bg="bg-orange-100" label="Hudl Profile" value={hudlUrl} placeholder="Add your Hudl link" />
                 <LinkRow icon={<Instagram className="w-5 h-5 text-pink-600" />} bg="bg-pink-100" label="Instagram" value={instagramUrl} placeholder="Add your Instagram" />
                 <LinkRow icon={<Link className="w-5 h-5 text-sky-600" />} bg="bg-sky-100" label="Twitter / X" value={twitterUrl} placeholder="Add your Twitter/X" />
-                <LinkRow icon={<Link className="w-5 h-5 text-blue-700" />} bg="bg-blue-100" label="LinkedIn" value={linkedinUrl} placeholder="Add your LinkedIn" />
+                <LinkRow icon={<Link className="w-5 h-5 text-emerald-700" />} bg="bg-emerald-100" label="LinkedIn" value={linkedinUrl} placeholder="Add your LinkedIn" />
               </div>
             </div>
           </div>
@@ -646,7 +646,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <div className="bg-white rounded-2xl shadow-lg p-5">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-slate-900">Coaching Philosophy</h4>
-                <button className="text-sm text-blue-600 hover:text-blue-700" onClick={handleOpenPhilosophyEdit}>Edit</button>
+                <button className="text-sm text-emerald-600 hover:text-emerald-700" onClick={handleOpenPhilosophyEdit}>Edit</button>
               </div>
               <p className="text-slate-700 text-sm leading-relaxed">
                 {philosophy}
@@ -751,8 +751,8 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                       onClick={() => setTempTeamType(val)}
                       className={`py-3 rounded-xl border-2 text-sm font-medium transition-all ${
                         tempTeamType === val
-                          ? 'border-blue-600 bg-blue-50 text-blue-700'
-                          : 'border-slate-300 bg-white text-slate-700 hover:border-blue-300'
+                          ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-300'
                       }`}
                     >
                       {label}
@@ -767,7 +767,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 <select
                   value={tempSport}
                   onChange={(e) => { setTempSport(e.target.value); setTempPosition(''); }}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
                 >
                   <option value="">Select sport</option>
                   {sports.map(sport => (
@@ -782,7 +782,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 <select
                   value={tempPosition}
                   onChange={(e) => setTempPosition(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
                 >
                   <option value="">Select position</option>
                   {(sportPositions[tempSport] || []).map(position => (
@@ -797,7 +797,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 <select
                   value={tempLevel}
                   onChange={(e) => setTempLevel(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
                 >
                   <option value="">Select level</option>
                   {levels.map(level => (
@@ -814,7 +814,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   value={tempLocation}
                   onChange={(e) => setTempLocation(e.target.value)}
                   placeholder="e.g. Boston, MA"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               </div>
 
@@ -828,7 +828,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 </button>
                 <button
                   onClick={handleSaveAthleteProfile}
-                  className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-3 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
                 >
                   Save Changes
                 </button>
@@ -860,7 +860,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   onChange={(e) => setTempAboutMe(e.target.value)}
                   rows={6}
                   placeholder="Tell other athletes about yourself, your goals, and what you're looking for..."
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors resize-none"
                 />
                 <p className="text-xs text-slate-500 mt-1">{tempAboutMe.length} characters</p>
               </div>
@@ -875,7 +875,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 </button>
                 <button
                   onClick={handleSaveAboutMe}
-                  className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-3 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
                 >
                   Save Changes
                 </button>
@@ -907,7 +907,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   onChange={(e) => setTempPhilosophy(e.target.value)}
                   rows={6}
                   placeholder="Describe your coaching approach, experience, and what athletes can expect working with you..."
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors resize-none"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors resize-none"
                 />
                 <p className="text-xs text-slate-500 mt-1">{tempPhilosophy.length} characters</p>
               </div>
@@ -922,7 +922,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 </button>
                 <button
                   onClick={handleSavePhilosophy}
-                  className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-3 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-colors"
                 >
                   Save Changes
                 </button>
@@ -948,7 +948,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   value={tempLinks.rosterUrl}
                   onChange={(e) => setTempLinks(prev => ({ ...prev, rosterUrl: e.target.value }))}
                   placeholder="https://goterps.com/sports/baseball/roster/..."
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               </div>
               <div>
@@ -958,7 +958,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   value={tempLinks.hudlUrl}
                   onChange={(e) => setTempLinks(prev => ({ ...prev, hudlUrl: e.target.value }))}
                   placeholder="https://www.hudl.com/profile/..."
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               </div>
               <div>
@@ -968,7 +968,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   value={tempLinks.instagramUrl}
                   onChange={(e) => setTempLinks(prev => ({ ...prev, instagramUrl: e.target.value }))}
                   placeholder="https://www.instagram.com/username"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               </div>
               <div>
@@ -978,7 +978,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   value={tempLinks.twitterUrl}
                   onChange={(e) => setTempLinks(prev => ({ ...prev, twitterUrl: e.target.value }))}
                   placeholder="https://x.com/username"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               </div>
               <div>
@@ -988,7 +988,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   value={tempLinks.linkedinUrl}
                   onChange={(e) => setTempLinks(prev => ({ ...prev, linkedinUrl: e.target.value }))}
                   placeholder="https://www.linkedin.com/in/username"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               </div>
               <div className="flex gap-3 pt-2">
@@ -1001,7 +1001,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 <button
                   onClick={handleSaveLinks}
                   disabled={savingLinks}
-                  className="flex-1 px-4 py-3 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  className="flex-1 px-4 py-3 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
                 >
                   {savingLinks ? 'Saving…' : 'Save Changes'}
                 </button>

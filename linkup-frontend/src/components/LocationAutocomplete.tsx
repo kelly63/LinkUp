@@ -92,11 +92,11 @@ export function LocationAutocomplete({
         onChange={handleChange}
         onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
         placeholder={placeholder}
-        className={`w-full pl-9 pr-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors ${className}`}
+        className={`w-full pl-9 pr-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors ${className}`}
         autoComplete="off"
       />
       {loading && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       )}
       {showSuggestions && suggestions.length > 0 && (
         <ul className="absolute z-20 left-0 right-0 top-full mt-1 bg-white border-2 border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto">
@@ -105,9 +105,9 @@ export function LocationAutocomplete({
               <button
                 type="button"
                 onClick={() => handleSelect(s)}
-                className="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-blue-50 transition-colors flex items-start gap-2 border-b border-slate-100 last:border-b-0"
+                className="w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-emerald-50 transition-colors flex items-start gap-2 border-b border-slate-100 last:border-b-0"
               >
-                <MapPin className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                <MapPin className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                 <span className="leading-snug">{s.display_name}</span>
               </button>
             </li>

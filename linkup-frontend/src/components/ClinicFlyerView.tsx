@@ -71,7 +71,7 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
               placeholder="e.g., Elite Pitching Mechanics Clinic"
               value={clinicTitle}
               onChange={(e) => setClinicTitle(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
             />
           </div>
 
@@ -83,7 +83,7 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
             <select 
               value={selectedSport}
               onChange={(e) => setSelectedSport(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
             >
               {sports.map(sport => (
                 <option key={sport}>{sport}</option>
@@ -105,7 +105,7 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
                   onClick={() => toggleSkillLevel(level)}
                   className={`px-3 py-2 rounded-lg text-sm transition-all ${
                     selectedSkillLevels.includes(level)
-                      ? 'bg-blue-600 text-white border-2 border-blue-600 shadow-sm'
+                      ? 'bg-emerald-500 text-white border-2 border-emerald-600 shadow-sm'
                       : 'bg-white text-slate-700 border-2 border-slate-300 hover:border-slate-400'
                   }`}
                 >
@@ -125,10 +125,10 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
             />
             {selectedDate && (
-              <p className="text-sm text-blue-600 mt-2 ml-1">{formatDate(selectedDate)}</p>
+              <p className="text-sm text-emerald-600 mt-2 ml-1">{formatDate(selectedDate)}</p>
             )}
           </div>
 
@@ -143,7 +143,7 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
               />
               {startTime && (
                 <p className="text-xs text-slate-600 mt-1 ml-1">{formatTime(startTime)}</p>
@@ -158,7 +158,7 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
               />
               {endTime && (
                 <p className="text-xs text-slate-600 mt-1 ml-1">{formatTime(endTime)}</p>
@@ -177,7 +177,7 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
               placeholder="e.g., Lincoln High School Baseball Field"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
             />
             <p className="text-xs text-slate-500 mt-1.5 ml-1">Include full address if needed</p>
           </div>
@@ -193,7 +193,7 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
               placeholder="e.g., 20"
               value={maxParticipants}
               onChange={(e) => setMaxParticipants(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
             />
           </div>
 
@@ -210,7 +210,7 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
                 placeholder="75"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full pl-8 pr-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors"
+                className="w-full pl-8 pr-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
             <p className="text-xs text-slate-500 mt-1.5 ml-1">Enter 0 for free clinics</p>
@@ -226,30 +226,30 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
               rows={5}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none transition-colors resize-none"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors resize-none"
             />
             <p className="text-xs text-slate-500 mt-1 ml-1">{description.length} characters</p>
           </div>
 
           {/* Preview Section */}
           {clinicTitle && selectedDate && (
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-2xl p-5">
-              <p className="text-xs text-blue-600 mb-2 font-semibold uppercase tracking-wide">Preview</p>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-emerald-200 rounded-2xl p-5">
+              <p className="text-xs text-emerald-600 mb-2 font-semibold uppercase tracking-wide">Preview</p>
               <h3 className="text-slate-900 font-semibold mb-2">{clinicTitle}</h3>
               <div className="space-y-1 text-sm text-slate-700">
                 <p className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-blue-600" />
+                  <Calendar className="w-4 h-4 text-emerald-600" />
                   {formatDate(selectedDate)}
                 </p>
                 {startTime && endTime && (
                   <p className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-blue-600" />
+                    <Clock className="w-4 h-4 text-emerald-600" />
                     {formatTime(startTime)} - {formatTime(endTime)}
                   </p>
                 )}
                 {price && (
                   <p className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-blue-600" />
+                    <DollarSign className="w-4 h-4 text-emerald-600" />
                     ${price} per athlete
                   </p>
                 )}
@@ -258,7 +258,7 @@ export function ClinicFlyerView({ onBack }: ClinicFlyerViewProps) {
           )}
 
           {/* Action Button */}
-          <button className="w-full bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-blue-600/20 hover:shadow-xl active:scale-[0.98]">
+          <button className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-emerald-500/20 hover:shadow-xl active:scale-[0.98]">
             POST CLINIC FLYER
           </button>
         </div>
