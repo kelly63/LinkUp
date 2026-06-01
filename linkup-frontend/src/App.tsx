@@ -6,10 +6,11 @@ import { Capacitor } from '@capacitor/core';
 import { useState } from 'react';
 import { Sentry } from './lib/sentry';
 
-function CrashFallback() {
+function CrashFallback({ error }: { error?: any }) {
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 p-8 text-center">
       <p className="text-white font-semibold text-lg">Something went wrong</p>
+      {error && <p className="text-red-400 text-xs font-mono break-all max-w-sm">{String(error)}</p>}
       <p className="text-zinc-400 text-sm">Please restart the app. If it keeps happening, contact support.</p>
       <button
         onClick={() => window.location.reload()}
@@ -26,7 +27,7 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false);
 
   return (
-    <Sentry.ErrorBoundary fallback={<CrashFallback />}>
+    <Sentry.ErrorBoundary fallback={({ error }: any) => <CrashFallback error={error} />}>
       <AuthProvider>
         {!splashDone && <SplashOverlay onDone={() => setSplashDone(true)} />}
         {isNative ? (
