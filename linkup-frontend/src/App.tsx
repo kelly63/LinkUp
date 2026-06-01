@@ -7,12 +7,15 @@ import { useState } from 'react';
 import { Sentry } from './lib/sentry';
 
 function CrashFallback({ error, componentStack }: any) {
-  const msg = error?.stack || error?.message || (typeof error === 'string' ? error : null) || JSON.stringify(error) || 'no error info';
+  const name = error?.name || 'Error';
+  const message = error?.message || '(no message)';
+  const stack = error?.stack || '(no stack)';
   return (
-    <div style={{ minHeight: '100vh', background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 32, textAlign: 'center' }}>
-      <p style={{ color: '#fff', fontWeight: 700, fontSize: 18 }}>DEBUG BUILD v4</p>
-      <p style={{ color: 'red', fontSize: 12, fontFamily: 'monospace', wordBreak: 'break-all', maxWidth: 320 }}>{msg}</p>
-      {componentStack && <p style={{ color: '#aaa', fontSize: 10, fontFamily: 'monospace', wordBreak: 'break-all', maxWidth: 320 }}>{componentStack.slice(0, 400)}</p>}
+    <div style={{ minHeight: '100vh', background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 32, textAlign: 'center' }}>
+      <p style={{ color: '#fff', fontWeight: 700, fontSize: 18 }}>DEBUG BUILD v5</p>
+      <p style={{ color: 'yellow', fontSize: 14, fontWeight: 700 }}>{name}</p>
+      <p style={{ color: 'orange', fontSize: 13, wordBreak: 'break-all', maxWidth: 320 }}>{message}</p>
+      <p style={{ color: 'red', fontSize: 10, fontFamily: 'monospace', wordBreak: 'break-all', maxWidth: 320 }}>{stack.slice(0, 500)}</p>
       <button onClick={() => window.location.reload()} style={{ marginTop: 8, padding: '10px 24px', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 12, fontSize: 16, fontWeight: 600 }}>Reload</button>
     </div>
   );
