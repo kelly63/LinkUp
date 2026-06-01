@@ -83,8 +83,8 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
       toast.error('New passwords do not match');
       return;
     }
-    if (cpNewPw.length < 6) {
-      toast.error('New password must be at least 6 characters');
+    if (cpNewPw.length < 8 || !/[A-Z]/.test(cpNewPw) || !/[0-9]/.test(cpNewPw) || !/[^A-Za-z0-9]/.test(cpNewPw)) {
+      toast.error('Password must be 8+ characters with an uppercase letter, number, and special character');
       return;
     }
     if (!token) return;

@@ -13,6 +13,14 @@ const generateToken = (id) =>
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 
+function validatePassword(password) {
+  if (!password || password.length < 8) return 'Password must be at least 8 characters';
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter';
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number';
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Password must contain at least one special character';
+  return null;
+}
+
 // POST /api/auth/register
 const register = async (req, res) => {
   try {
@@ -63,6 +71,8 @@ const register = async (req, res) => {
     if (!displayName || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
+    const pwError = validatePassword(password);
+    if (pwError) return res.status(400).json({ message: pwError });
 
     const incomingRole = userType || role || 'athlete';
     const existing = await User.findOne({ email, role: incomingRole });
@@ -246,8 +256,9 @@ const changePassword = async (req, res) => {
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ message: 'currentPassword and newPassword are required' });
     }
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    const pwError = validatePassword(newPassword);
+    if (pwError) {
+      return res.status(400).json({ message: pwError });
     }
     const user = await User.findById(req.user._id).select('+password');
     if (!user.password) {
@@ -307,9 +318,8 @@ const resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
-    if (!password || password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
-    }
+    const pwError = validatePassword(password);
+    if (pwError) return res.status(400).json({ message: pwError });
 
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     const user = await User.findOne({

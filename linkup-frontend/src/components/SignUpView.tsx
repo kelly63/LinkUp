@@ -433,6 +433,23 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 placeholder="Create a strong password"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
+              {formData.password.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {[
+                    { ok: formData.password.length >= 8,        label: '8+ characters' },
+                    { ok: /[A-Z]/.test(formData.password),      label: 'One uppercase letter' },
+                    { ok: /[0-9]/.test(formData.password),      label: 'One number' },
+                    { ok: /[^A-Za-z0-9]/.test(formData.password), label: 'One special character (!@#$…)' },
+                  ].map(({ ok, label }) => (
+                    <div key={label} className="flex items-center gap-2 text-xs">
+                      <span className={ok ? 'text-emerald-500' : 'text-slate-400'}>
+                        {ok ? '✓' : '○'}
+                      </span>
+                      <span className={ok ? 'text-emerald-600' : 'text-slate-400'}>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Confirm Password */}
