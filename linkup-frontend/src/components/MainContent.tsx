@@ -60,6 +60,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   // When navigating to userProfile from within a session, store where to return
   const [profileReturnState, setProfileReturnState] = useState<{ view: string; data: any } | null>(null);
   const [lockerRoomInitPostId, setLockerRoomInitPostId] = useState<string | null>(null);
+  const [chatReturnTab, setChatReturnTab] = useState<string | null>(null);
 
   // When the user taps a bottom tab, dismiss any open sub-view so the tab content shows
   useEffect(() => {
@@ -128,6 +129,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
     level: string;
     sessionContext?: { sessionTitle: string; date: string; time: string; location: string };
   }) => {
+    setChatReturnTab(activeTab !== 'chat' ? activeTab : null);
     setSelectedAthleteForChat({ ...athlete, id: String(athlete.id) });
     onTabChange('chat');
   };
@@ -366,6 +368,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
           onChatOpenChange={onChatOpenChange}
           onViewProfile={(userId) => handleNavigate('userProfile', { _id: userId })}
           onViewSession={handleViewChatSession}
+          onBack={chatReturnTab ? () => { setChatReturnTab(null); onTabChange(chatReturnTab); } : undefined}
         />
       )}
       {activeTab === 'profile' && (

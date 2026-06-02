@@ -2,6 +2,7 @@ import {
   ArrowLeft, Send, Calendar, MapPin, CheckCircle, Edit3,
   MessageCircle, UserCheck, X, ChevronRight, Heart,
 } from 'lucide-react';
+import { avatarThumb } from '../lib/api';
 import { useState, useRef, useEffect } from 'react';
 import { useMessages } from '../hooks/useMessages';
 import { messages as messagesApi } from '../lib/api';
@@ -141,8 +142,10 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
             onClick={() => onViewProfile?.(chat.id)}
             className="flex items-center gap-3 flex-1 min-w-0 text-left"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
-              {chat.avatar}
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white flex-shrink-0 overflow-hidden">
+              {avatarThumb(chat.avatar, 40)
+                ? <img src={avatarThumb(chat.avatar, 40)!} alt={chat.name} className="w-full h-full object-cover rounded-full" />
+                : chat.avatar}
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-slate-900 hover:text-emerald-600 transition-colors">{chat.name}</h3>

@@ -69,6 +69,7 @@ interface ChatViewProps {
   onChatOpenChange?: (open: boolean) => void;
   onViewProfile?: (userId: string) => void;
   onViewSession?: (sessionId: string) => void;
+  onBack?: () => void;
   apiUrl?: string;
 }
 
@@ -105,6 +106,7 @@ export function ChatView({
   onChatOpenChange,
   onViewProfile,
   onViewSession,
+  onBack,
   apiUrl = API_URL,
 }: ChatViewProps) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -303,7 +305,11 @@ export function ChatView({
         onBack={() => {
           setSelectedChat(null);
           if (onClearSelectedAthlete) onClearSelectedAthlete();
-          fetchInbox();
+          if (onBack) {
+            onBack();
+          } else {
+            fetchInbox();
+          }
         }}
         onTabChange={onTabChange}
         onRequestAccepted={() => handleRequestAccepted(selectedChat.id)}
