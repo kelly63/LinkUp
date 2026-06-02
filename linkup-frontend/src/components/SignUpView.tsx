@@ -63,7 +63,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     certifications: '',
     customSportsRequested: [] as string[], // For storing custom sports for coaches
     // Privacy preferences
-    visibilityMode: 'filtered' as 'everyone' | 'filtered',
+    visibilityMode: 'everyone' as 'everyone' | 'filtered',
     allowedLevels: [] as string[],
     allowedSports: [] as string[],
     allowCoaches: true,

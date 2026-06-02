@@ -39,9 +39,10 @@ export function useNativePush(authToken: string | null) {
       setEnabled(false);
     });
 
-    // Check current permission state on mount
+    // Check current permission state on mount — set enabled immediately if already granted
     PushNotifications.checkPermissions().then((status) => {
       if (status.receive === 'granted') {
+        setEnabled(true);
         PushNotifications.register();
       }
     });

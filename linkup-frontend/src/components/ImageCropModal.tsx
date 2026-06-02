@@ -51,11 +51,6 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
 
   const onPointerUp = () => { dragging.current = false; };
 
-  const handleScaleChange = (s: number) => {
-    setScale(s);
-    setOffset(prev => clamp(prev.x, prev.y, s));
-  };
-
   const handleConfirm = () => {
     const canvas = document.createElement('canvas');
     canvas.width = 400;
@@ -76,8 +71,6 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
     };
     img.src = imageUrl;
   };
-
-  const minScale = dims.w > 0 ? CROP_SIZE / Math.min(dims.w, dims.h) : 0.5;
 
   return (
     <div className="fixed inset-0 bg-black/90 z-[60] flex flex-col items-center justify-center">
@@ -131,19 +124,8 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
           </div>
         </div>
 
-        {/* Zoom slider */}
         <div className="px-6 pb-6">
-          <input
-            type="range"
-            min={minScale}
-            max={minScale * 4}
-            step={0.005}
-            value={scale}
-            onChange={e => handleScaleChange(parseFloat(e.target.value))}
-            className="w-full accent-blue-500"
-            style={{ touchAction: 'none' }}
-          />
-          <p className="text-xs text-slate-500 text-center mt-1">Slide to zoom · Drag to reposition</p>
+          <p className="text-xs text-slate-500 text-center">Drag to reposition</p>
         </div>
       </div>
     </div>
