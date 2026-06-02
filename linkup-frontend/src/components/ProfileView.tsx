@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { useNativePush } from '../hooks/useNativePush';
 import { users as usersApi, auth as authApi } from '../lib/api';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
@@ -63,7 +64,17 @@ interface ProfileViewProps {
 
 export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: ProfileViewProps) {
   const { token, user, updateUser } = useAuth();
-  const { supported: pushSupported, permission, subscribed, loading: pushLoading, enable: enablePush, disable: disablePush } = usePushNotifications(token);
+  const isNativePlatform = Capacitor.isNativePlatform();
+  const { enabled: nativePushEnabled, loading: nativePushLoading, enable: enableNativePush, disable: disableNativePush } = useNativePush(token);
+  const { supported: webPushSupported, permission: webPushPermission, subscribed: webPushSubscribed, loading: webPushLoading, enable: enableWebPush, disable: disableWebPush } = usePushNotifications(token);
+  const pushEnabled = isNativePlatform ? nativePushEnabled : webPushSubscribed;
+  const pushLoading = isNativePlatform ? nativePushLoading : webPushLoading;
+  const pushSupported = isNativePlatform ? true : webPushSupported;
+  const pushBlocked = !isNativePlatform && webPushPermission === 'denied';
+  const togglePush = () => {
+    if (isNativePlatform) { pushEnabled ? disableNativePush() : enableNativePush(); }
+    else { pushEnabled ? disableWebPush() : enableWebPush(); }
+  };
 
   // Edit modal states
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -700,7 +711,39 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
       </div>
 
       {/* Settings */}
-      <div className="px-6 pb-6">
+      <div className="px-6 pb-6 space-y-3">
+        {/* Push Notifications toggle */}
+        {pushSupported && (
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-5 py-4 flex items-center gap-4">
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Bell className="w-5 h-5 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-slate-900">Push Notifications</h4>
+                <p className="text-sm text-slate-500 mt-0.5">
+                  {pushBlocked ? 'Blocked — enable in iPhone Settings' :
+                   pushEnabled ? "You'll get alerts for messages & requests" :
+                   'Get notified about messages & requests'}
+                </p>
+              </div>
+              {!pushBlocked && (
+                <button
+                  onClick={togglePush}
+                  disabled={pushLoading}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                    pushEnabled ? 'bg-purple-600' : 'bg-slate-300'
+                  } ${pushLoading ? 'opacity-50' : ''}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    pushEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <button
             onClick={() => onNavigate('settings')}
@@ -711,7 +754,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             </div>
             <div className="flex-1 text-left">
               <h4 className="text-slate-900">Settings</h4>
-              <p className="text-sm text-slate-500">Notifications, privacy, password</p>
+              <p className="text-sm text-slate-500">Privacy, password & more</p>
             </div>
             <ChevronRight className="w-5 h-5 text-slate-400" />
           </button>

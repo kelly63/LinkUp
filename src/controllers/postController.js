@@ -1,7 +1,7 @@
 const Post = require('../models/Post');
 const Connection = require('../models/Connection');
 
-const USER_FIELDS = 'name avatar role sport position skillLevel averageRating ratingCount';
+const USER_FIELDS = 'name avatar role sport position skillLevel averageRating ratingCount verificationStatus';
 
 // GET /api/posts — feed (posts from roster + self)
 const getFeed = async (req, res) => {

@@ -190,7 +190,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   }
 
   // ── Sub-views ────────────────────────────────────────────────────────────────
-  if (currentView === 'lockerRoom') return <LockerRoomView onBack={handleBack} initialOpenCommentPostId={lockerRoomInitPostId} />;
+  if (currentView === 'lockerRoom') return <LockerRoomView onBack={handleBack} initialOpenCommentPostId={lockerRoomInitPostId} onNavigate={handleNavigate} />;
 
   if (currentView === 'coachSetup') return <CoachProfileSetup onBack={handleBack} />;
 

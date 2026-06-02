@@ -40,6 +40,7 @@ export interface User {
   allowedLevels: string[];
   allowedSports: string[];
   searchRadius: number;
+  verificationStatus?: 'pending' | 'approved' | 'rejected';
 }
 
 export interface Session {

@@ -14,6 +14,7 @@ import {
   Trash2,
   Flag,
   ArrowLeft,
+  BadgeCheck,
 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
@@ -124,16 +125,18 @@ interface PostCardProps {
   onReport: () => void;
   onMenuToggle: () => void;
   onDraftChange: (value: string) => void;
+  onAuthorClick: (userId: string) => void;
 }
 
 function PostCard({
   post, isLiked, likeCount, commentCount, comments, isCommentsOpen,
   draft, isSubmitting, isMenuOpen, isOwner, userInitials, userAvatar,
   menuRef, onLike, onToggleComments, onSubmitComment, onDelete, onReport,
-  onMenuToggle, onDraftChange,
+  onMenuToggle, onDraftChange, onAuthorClick,
 }: PostCardProps) {
   const author = post.author;
   const initials = author ? getInitials(author.name) : '??';
+  const isVerified = (author as any)?.verificationStatus === 'approved';
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -141,13 +144,22 @@ function PostCard({
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden">
+            <button
+              onClick={() => author?._id && onAuthorClick(author._id)}
+              className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 overflow-hidden"
+            >
               {author?.avatar
                 ? <img src={avatarThumb(author.avatar, 40)!} alt={author.name} className="w-full h-full rounded-full object-cover" />
                 : initials}
-            </div>
+            </button>
             <div>
-              <h4 className="text-slate-900 text-sm font-medium">{author?.name}</h4>
+              <button
+                onClick={() => author?._id && onAuthorClick(author._id)}
+                className="flex items-center gap-1 text-left"
+              >
+                <h4 className="text-slate-900 text-sm font-medium hover:text-emerald-600 transition-colors">{author?.name}</h4>
+                {isVerified && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />}
+              </button>
               <div className="flex items-center gap-1.5 text-xs text-slate-500">
                 {author?.position && <span>{author.position}</span>}
                 {author?.position && author?.sport && <span>•</span>}
@@ -227,20 +239,32 @@ function PostCard({
         <div className="border-t border-slate-100 px-4 pb-4 pt-3 space-y-3">
           {comments.length > 0 ? (
             <div className="space-y-3">
-              {comments.map((c) => (
-                <div key={c._id} className="flex gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden">
-                    {c.author?.avatar
-                      ? <img src={avatarThumb(c.author.avatar, 80)!} alt={c.author.name} className="w-full h-full object-cover" />
-                      : getInitials(c.author?.name || '?')}
+              {comments.map((c) => {
+                const commentVerified = (c.author as any)?.verificationStatus === 'approved';
+                return (
+                  <div key={c._id} className="flex gap-2.5">
+                    <button
+                      onClick={() => c.author?._id && onAuthorClick(c.author._id)}
+                      className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-purple-600 flex items-center justify-center text-white text-xs flex-shrink-0 overflow-hidden"
+                    >
+                      {c.author?.avatar
+                        ? <img src={avatarThumb(c.author.avatar, 80)!} alt={c.author.name} className="w-full h-full object-cover" />
+                        : getInitials(c.author?.name || '?')}
+                    </button>
+                    <div className="flex-1 bg-slate-50 rounded-xl px-3 py-2">
+                      <button
+                        onClick={() => c.author?._id && onAuthorClick(c.author._id)}
+                        className="inline-flex items-center gap-1 text-left"
+                      >
+                        <span className="text-xs font-medium text-slate-900 hover:text-emerald-600 transition-colors">{c.author?.name}</span>
+                        {commentVerified && <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />}
+                      </button>
+                      <span className="text-xs text-slate-700 ml-1">{c.text}</span>
+                      <p className="text-xs text-slate-400 mt-0.5">{timeAgo(c.createdAt)}</p>
+                    </div>
                   </div>
-                  <div className="flex-1 bg-slate-50 rounded-xl px-3 py-2">
-                    <span className="text-xs font-medium text-slate-900">{c.author?.name} </span>
-                    <span className="text-xs text-slate-700">{c.text}</span>
-                    <p className="text-xs text-slate-400 mt-0.5">{timeAgo(c.createdAt)}</p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-xs text-slate-400 text-center py-1">No comments yet — be the first!</p>
@@ -281,7 +305,7 @@ function PostCard({
 
 // ── LockerRoomView ─────────────────────────────────────────────────────────
 
-export function LockerRoomView({ onBack, initialOpenCommentPostId }: { onBack?: () => void; initialOpenCommentPostId?: string | null }) {
+export function LockerRoomView({ onBack, initialOpenCommentPostId, onNavigate }: { onBack?: () => void; initialOpenCommentPostId?: string | null; onNavigate?: (view: string, data?: any) => void }) {
   const { token, user } = useAuth();
   const [feedPosts, setFeedPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -440,6 +464,10 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId }: { onBack?: 
     toast.success("Post reported. We'll review it shortly.");
   }, []);
 
+  const handleAuthorClick = useCallback((userId: string) => {
+    onNavigate?.('userProfile', { _id: userId });
+  }, [onNavigate]);
+
   const filters: { id: Filter; label: string }[] = [
     { id: 'all', label: 'All' },
     { id: 'session_completion', label: 'Sessions' },
@@ -538,6 +566,7 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId }: { onBack?: 
             onReport={() => handleReportPost(post._id)}
             onMenuToggle={() => setOpenMenuPostId(openMenuPostId === post._id ? null : post._id)}
             onDraftChange={(val) => setCommentDrafts((prev) => ({ ...prev, [post._id]: val }))}
+            onAuthorClick={handleAuthorClick}
           />
           </div>
         ))}
