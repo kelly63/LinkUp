@@ -8,6 +8,7 @@ const {
   declineMessageRequest,
   postSessionLink,
   respondToBooking,
+  likeMessage,
 } = require('../controllers/messageController');
 const { protect } = require('../middleware/auth');
 
@@ -19,6 +20,7 @@ router.post('/session-link', postSessionLink);
 router.put('/requests/:userId/accept', acceptMessageRequest);
 router.put('/requests/:userId/decline', declineMessageRequest);
 router.put('/:messageId/booking', respondToBooking);
+router.put('/:messageId/like', likeMessage);
 router.get('/:userId', getConversation);
 router.post('/:userId', sendMessage);
 

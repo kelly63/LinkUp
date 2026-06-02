@@ -36,7 +36,7 @@ function formatSessionTime(dateStr: string) {
 }
 
 export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [availableSessions, setAvailableSessions] = useState<any[]>([]);
   const [rosterIds, setRosterIds] = useState<Set<string>>(new Set());
@@ -46,6 +46,7 @@ export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
     if (!token) return;
     const params: Record<string, string> = {};
     if (filters.skillLevel && filters.skillLevel !== 'all') params.skillLevel = filters.skillLevel;
+    if (user?.location) params.location = user.location;
     Promise.all([
       sessionsApi.getAvailable(token, params),
       connectionsApi.getAll(token),
@@ -56,7 +57,7 @@ export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
       setRosterIds(ids);
     }).catch(() => setAvailableSessions([]))
       .finally(() => setLoading(false));
-  }, [token, filters.skillLevel]);
+  }, [token, filters.skillLevel, user?.location]);
 
   const needs = availableSessions.map((s) => {
     const posterId = s.postedBy?._id ?? '';

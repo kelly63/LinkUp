@@ -267,31 +267,64 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
           )}
           {displayedSessions.map((session) => {
             const isMySession = session.postedBy?._id === user?._id || session.postedBy === user?._id;
+            const confirmedPartner: any = session.partner ?? null;
+            const pendingRequester: any = session.pendingPartner ?? null;
             const otherPerson: any = isMySession
-              ? (session.partner ?? session.pendingPartner ?? null)
+              ? (confirmedPartner ?? pendingRequester ?? null)
               : session.postedBy ?? null;
+            const isPendingRequest = isMySession && !confirmedPartner && !!pendingRequester;
+            const iAmRequester = !isMySession && !!pendingRequester &&
+              (pendingRequester?._id === user?._id || session.pendingPartner === user?._id);
             const otherId: string | null = otherPerson?._id ?? null;
             const isOnRoster = otherId ? rosterIds.has(otherId) : false;
 
             return (
-            <div key={session._id} className="bg-white rounded-2xl p-4 shadow-xl border border-slate-200 hover:border-emerald-300 transition-all">
+            <div key={session._id} className={`bg-white rounded-2xl p-4 shadow-xl border transition-all ${
+              isPendingRequest ? 'border-amber-300 hover:border-amber-400' : 'border-slate-200 hover:border-emerald-300'
+            }`}>
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h4 className="text-slate-900">{session.title || session.sport}</h4>
+                    {isMySession && (
+                      <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                        My Session
+                      </span>
+                    )}
                     <div className={`px-2 py-0.5 rounded-full text-xs border ${
                       session.status === 'confirmed'
                         ? 'bg-green-100 text-green-700 border-green-200'
-                        : session.pendingPartner
-                          ? 'bg-orange-100 text-orange-700 border-orange-200'
-                          : 'bg-amber-100 text-amber-700 border-amber-200'
+                        : isPendingRequest
+                          ? 'bg-amber-100 text-amber-700 border-amber-200'
+                          : iAmRequester
+                            ? 'bg-orange-100 text-orange-700 border-orange-200'
+                            : session.pendingPartner
+                              ? 'bg-orange-100 text-orange-700 border-orange-200'
+                              : 'bg-amber-100 text-amber-700 border-amber-200'
                     }`}>
-                      {session.status === 'confirmed' ? 'Confirmed' : session.pendingPartner ? 'Pending' : 'Open'}
+                      {session.status === 'confirmed' ? 'Confirmed' : iAmRequester ? 'Pending' : isPendingRequest ? 'Action Needed' : session.pendingPartner ? 'Pending' : 'Open'}
                     </div>
                   </div>
 
                   {/* Other person's name + roster badge */}
-                  {otherPerson ? (
+                  {isPendingRequest ? (
+                    <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-[8px] font-bold">
+                          {getInitialsDash(otherPerson?.name || '?')}
+                        </span>
+                      </div>
+                      <span className="text-xs font-medium text-amber-700">
+                        {otherPerson?.name} wants to join
+                      </span>
+                      {isOnRoster && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200">
+                          <Shield className="w-2.5 h-2.5" />
+                          Roster
+                        </span>
+                      )}
+                    </div>
+                  ) : otherPerson ? (
                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                       <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center flex-shrink-0">
                         <span className="text-white text-[8px] font-bold">

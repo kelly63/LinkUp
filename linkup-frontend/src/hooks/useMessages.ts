@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getActiveSocket } from '../lib/socket';
+import { messages as messagesApi } from '../lib/api';
 import { toast } from 'sonner';
 
 export interface Message {
@@ -11,6 +12,7 @@ export interface Message {
   type?: 'user' | 'system';
   sessionId?: string;
   createdAt: string;
+  likes?: string[];
 }
 
 interface UseMessagesOptions {
@@ -93,10 +95,17 @@ export function useMessages({
       }
     };
 
+    const handleLike = ({ messageId, likes }: { messageId: string; likes: string[] }) => {
+      setMessages((prev) =>
+        prev.map((m) => (m._id === messageId ? { ...m, likes } : m))
+      );
+    };
+
     socket.on('message:new', handleNewMessage);
     socket.on('typing:start', handleTypingStart);
     socket.on('typing:stop', handleTypingStop);
     socket.on('message:read', handleRead);
+    socket.on('message:like', handleLike);
 
     // Mark messages as read when opening the conversation
     socket.emit('message:read', { senderId: partnerId });
@@ -106,6 +115,7 @@ export function useMessages({
       socket.off('typing:start', handleTypingStart);
       socket.off('typing:stop', handleTypingStop);
       socket.off('message:read', handleRead);
+      socket.off('message:like', handleLike);
     };
   }, [partnerId, currentUserId]);
 
@@ -176,11 +186,43 @@ export function useMessages({
     socket?.emit('typing:stop', { recipientId: partnerId });
   }, [partnerId]);
 
+  // ── Toggle like on a message ─────────────────────────────────────────────────
+  const toggleLike = useCallback(
+    async (messageId: string): Promise<void> => {
+      // Optimistic update
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m._id !== messageId) return m;
+          const likes = m.likes ?? [];
+          const alreadyLiked = likes.includes(currentUserId);
+          return { ...m, likes: alreadyLiked ? likes.filter((id) => id !== currentUserId) : [...likes, currentUserId] };
+        })
+      );
+      try {
+        const { likes } = await messagesApi.like(token, messageId);
+        setMessages((prev) => prev.map((m) => (m._id === messageId ? { ...m, likes } : m)));
+      } catch {
+        // Revert on error
+        setMessages((prev) =>
+          prev.map((m) => {
+            if (m._id !== messageId) return m;
+            const likes = m.likes ?? [];
+            const wasAdded = likes.includes(currentUserId);
+            return { ...m, likes: wasAdded ? likes.filter((id) => id !== currentUserId) : [...likes, currentUserId] };
+          })
+        );
+        toast.error('Could not update like');
+      }
+    },
+    [currentUserId, token]
+  );
+
   return {
     messages,
     loading,
     isPartnerTyping,
     sendMessage,
+    toggleLike,
     sendTypingStart,
     sendTypingStop,
   };

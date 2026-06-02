@@ -3,6 +3,7 @@ import { useState, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { auth as authApi, users as usersApi } from '../lib/api';
+import { ImageCropModal } from './ImageCropModal';
 
 interface SignUpViewProps {
   onComplete: (token?: string, user?: any) => void;
@@ -38,6 +39,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
   const [regUser, setRegUser] = useState<any>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [cropSource, setCropSource] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
@@ -271,7 +273,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
           source: CameraSource.Photos,
           correctOrientation: true,
         });
-        if (photo.dataUrl) setAvatarPreview(photo.dataUrl);
+        if (photo.dataUrl) setCropSource(photo.dataUrl);
       } catch (err: any) {
         if (err?.message !== 'User cancelled photos app') console.error(err);
       }
@@ -284,9 +286,16 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => { if (ev.target?.result) setAvatarPreview(ev.target.result as string); };
+    reader.onload = (ev) => { if (ev.target?.result) setCropSource(ev.target.result as string); };
     reader.readAsDataURL(file);
     e.target.value = '';
+  };
+
+  const handleCropConfirm = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => { if (ev.target?.result) setAvatarPreview(ev.target.result as string); };
+    reader.readAsDataURL(file);
+    setCropSource(null);
   };
 
   const handlePhotoUploadAndContinue = async () => {
@@ -1369,49 +1378,58 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
   // Step 7: Profile Photo
   if (step === 7) {
     return (
-      <div className="h-full overflow-y-auto bg-slate-50">
-        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-3">
-          <h2 className="text-slate-900">Profile Photo</h2>
-        </div>
-        <div className="p-6">
-          <div className="max-w-md mx-auto space-y-6">
-            <div className="text-center">
-              <p className="text-sm text-slate-600 mt-1">Add a photo so other athletes and coaches can recognize you</p>
-            </div>
+      <>
+        <div className="h-full overflow-y-auto bg-slate-50">
+          <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-3">
+            <h2 className="text-slate-900">Profile Photo</h2>
+          </div>
+          <div className="p-6">
+            <div className="max-w-md mx-auto space-y-6">
+              <div className="text-center">
+                <p className="text-sm text-slate-600 mt-1">Add a photo so other athletes and coaches can recognize you</p>
+              </div>
 
-            {/* Avatar preview / picker */}
-            <div className="flex flex-col items-center gap-4">
-              <button
-                onClick={handlePhotoSelect}
-                className="relative w-32 h-32 rounded-full overflow-hidden bg-emerald-100 border-4 border-emerald-200 flex items-center justify-center"
-              >
-                {avatarPreview ? (
-                  <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
-                ) : (
-                  <Camera className="w-12 h-12 text-emerald-400" />
-                )}
-              </button>
-              <button
-                onClick={handlePhotoSelect}
-                className="px-5 py-2 border-2 border-emerald-500 text-emerald-600 rounded-xl text-sm font-medium"
-              >
-                {avatarPreview ? 'Change Photo' : 'Choose Photo'}
-              </button>
-              <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoInputChange} />
-            </div>
+              {/* Avatar preview / picker */}
+              <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={handlePhotoSelect}
+                  className="relative w-32 h-32 rounded-full overflow-hidden bg-emerald-100 border-4 border-emerald-200 flex items-center justify-center"
+                >
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <Camera className="w-12 h-12 text-emerald-400" />
+                  )}
+                </button>
+                <button
+                  onClick={handlePhotoSelect}
+                  className="px-5 py-2 border-2 border-emerald-500 text-emerald-600 rounded-xl text-sm font-medium"
+                >
+                  {avatarPreview ? 'Change Photo' : 'Choose Photo'}
+                </button>
+                <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoInputChange} />
+              </div>
 
-            <div className="space-y-3 pt-2">
-              <button
-                onClick={handlePhotoUploadAndContinue}
-                disabled={avatarUploading}
-                className="w-full bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white py-4 rounded-xl font-medium flex items-center justify-center gap-2"
-              >
-                {avatarUploading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : avatarPreview ? 'Save Photo & Continue' : 'Skip for Now'}
-              </button>
+              <div className="space-y-3 pt-2">
+                <button
+                  onClick={handlePhotoUploadAndContinue}
+                  disabled={avatarUploading}
+                  className="w-full bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white py-4 rounded-xl font-medium flex items-center justify-center gap-2"
+                >
+                  {avatarUploading ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : avatarPreview ? 'Save Photo & Continue' : 'Skip for Now'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+        {cropSource && (
+          <ImageCropModal
+            imageUrl={cropSource}
+            onConfirm={handleCropConfirm}
+            onCancel={() => setCropSource(null)}
+          />
+        )}
+      </>
     );
   }
 

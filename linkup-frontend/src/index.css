@@ -3240,6 +3240,10 @@
   }
   .group-hover\:text-emerald-600:is(:where(.group):hover *) { color: var(--color-emerald-600); }
   .group-hover\:text-emerald-900:is(:where(.group):hover *) { color: var(--color-emerald-900); }
+
+  /* message like button */
+  .fill-red-500 { fill: var(--color-red-500); }
+  .active\:opacity-100:active { opacity: 1; }
 }
 
 

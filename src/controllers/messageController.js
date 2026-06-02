@@ -382,6 +382,42 @@ const postSessionLink = async (req, res) => {
   }
 };
 
+// PUT /api/messages/:messageId/like — toggle like on a message
+const likeMessage = async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.messageId);
+    if (!message) return res.status(404).json({ message: 'Message not found' });
+
+    const userId = req.user._id;
+    // Only allow participants of the conversation to like
+    if (!message.sender.equals(userId) && !message.recipient.equals(userId)) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    const idx = message.likes.findIndex((id) => id.equals(userId));
+    if (idx === -1) {
+      message.likes.push(userId);
+    } else {
+      message.likes.splice(idx, 1);
+    }
+    await message.save();
+
+    const likesArr = message.likes.map((id) => id.toString());
+    const otherId = message.sender.equals(userId) ? message.recipient : message.sender;
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user:${otherId.toString()}`).emit('message:like', {
+        messageId: message._id.toString(),
+        likes: likesArr,
+      });
+    }
+
+    res.json({ messageId: message._id.toString(), likes: likesArr });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   sendMessage,
   getConversation,
@@ -390,4 +426,5 @@ module.exports = {
   declineMessageRequest,
   postSessionLink,
   respondToBooking,
+  likeMessage,
 };

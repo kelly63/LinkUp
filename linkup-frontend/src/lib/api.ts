@@ -91,6 +91,7 @@ export interface Message {
   type?: 'user' | 'system';
   sessionId?: string;
   createdAt: string;
+  likes?: string[];
 }
 
 export interface Post {
@@ -357,6 +358,9 @@ export const messages = {
       method: 'POST',
       body: JSON.stringify(data),
     }, token),
+
+  like: (token: string, messageId: string) =>
+    request<{ messageId: string; likes: string[] }>(`/api/messages/${messageId}/like`, { method: 'PUT' }, token),
 };
 
 // ─── Ratings ─────────────────────────────────────────────────────────────────

@@ -26,15 +26,23 @@ export function HeaderBar({
       {showNotifications && (
         <button
           onClick={onBellClick}
-          className={`relative p-2 rounded-full transition-colors ${
-            panelOpen ? 'bg-zinc-700/70' : 'hover:bg-zinc-800/50'
+          className={`relative p-2 rounded-full transition-all duration-200 ${
+            panelOpen
+              ? 'bg-zinc-700/70'
+              : unreadCount > 0
+                ? 'bg-emerald-400/20'
+                : 'hover:bg-zinc-800/50'
           }`}
           aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : 'Notifications'}
           aria-expanded={panelOpen}
         >
-          <Bell className={`w-5 h-5 ${panelOpen ? 'text-white' : 'text-gray-300'}`} />
+          <Bell
+            className={`w-5 h-5 transition-colors ${
+              panelOpen ? 'text-white' : unreadCount > 0 ? 'text-emerald-400' : 'text-gray-300'
+            }`}
+          />
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full shadow-md shadow-red-500/60 ring-2 ring-zinc-900" />
+            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-md shadow-red-500/60 ring-2 ring-zinc-900" />
           )}
         </button>
       )}

@@ -1,6 +1,6 @@
 import {
   ArrowLeft, Send, Calendar, MapPin, CheckCircle, Edit3,
-  MessageCircle, UserCheck, X, ChevronRight,
+  MessageCircle, UserCheck, X, ChevronRight, Heart,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useMessages } from '../hooks/useMessages';
@@ -55,6 +55,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
     loading,
     isPartnerTyping,
     sendMessage,
+    toggleLike,
     sendTypingStart,
     sendTypingStop,
   } = useMessages({
@@ -271,19 +272,39 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
           }
 
           const isMe = msg.sender === currentUserId;
+          const likeCount = msg.likes?.length ?? 0;
+          const iLiked = msg.likes?.includes(currentUserId) ?? false;
+          const canLike = !isMe; // only like messages from the other person
           return (
-            <div key={msg._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+            <div key={msg._id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
               <div className={`max-w-[75%] ${isMe ? 'order-2' : 'order-1'}`}>
-                <div
-                  className={`rounded-2xl px-4 py-2.5 ${
-                    isMe
-                      ? 'bg-emerald-500 text-white rounded-br-sm'
-                      : 'bg-white text-slate-900 rounded-bl-sm shadow-sm'
-                  }`}
-                >
-                  <p className="text-sm">{msg.text}</p>
+                <div className="relative">
+                  <div
+                    className={`rounded-2xl px-4 py-2.5 ${
+                      isMe
+                        ? 'bg-emerald-500 text-white rounded-br-sm'
+                        : 'bg-white text-slate-900 rounded-bl-sm shadow-sm'
+                    }`}
+                  >
+                    <p className="text-sm">{msg.text}</p>
+                  </div>
+                  {/* Like button — appears on hover (web) or when tapped; always visible when liked */}
+                  {canLike && (
+                    <button
+                      onClick={() => toggleLike(msg._id)}
+                      className={`absolute -bottom-3 -right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-all
+                        ${iLiked
+                          ? 'bg-red-100 border border-red-200 text-red-500 opacity-100'
+                          : 'bg-white border border-slate-200 text-slate-400 opacity-0 group-hover:opacity-100 active:opacity-100'
+                        }`}
+                      aria-label={iLiked ? 'Unlike' : 'Like'}
+                    >
+                      <Heart className={`w-3 h-3 ${iLiked ? 'fill-red-500 text-red-500' : ''}`} />
+                      {likeCount > 0 && <span>{likeCount}</span>}
+                    </button>
+                  )}
                 </div>
-                <p className={`text-xs text-slate-500 mt-1 px-1 ${isMe ? 'text-right' : 'text-left'}`}>
+                <p className={`text-xs text-slate-500 mt-1 px-1 ${likeCount > 0 ? 'mt-4' : 'mt-1'} ${isMe ? 'text-right' : 'text-left'}`}>
                   {formatTime(msg.createdAt)}
                   {isMe && msg.read && (
                     <span className="ml-1 text-emerald-400">✓✓</span>

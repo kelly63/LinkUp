@@ -39,6 +39,7 @@ const messageSchema = new mongoose.Schema(
       ref: 'Session',
       default: null,
     },
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }
 );

@@ -102,18 +102,73 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
 
   const partnerInitials = partner ? getInitials(partner.name) : '??';
 
-  const handleAddToCalendar = () => {
+  const [showCalendarMenu, setShowCalendarMenu] = useState(false);
+
+  const buildEventDates = () => {
+    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    let startDate: Date;
+    if (session.date && session.date !== 'Flexible') {
+      startDate = new Date(session.date);
+      if (session.time) {
+        const match = session.time.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+        if (match) {
+          let h = parseInt(match[1]);
+          const m = parseInt(match[2]);
+          const ampm = match[3]?.toUpperCase();
+          if (ampm === 'PM' && h !== 12) h += 12;
+          if (ampm === 'AM' && h === 12) h = 0;
+          startDate.setHours(h, m, 0, 0);
+        } else {
+          startDate.setHours(14, 0, 0, 0);
+        }
+      } else {
+        startDate.setHours(14, 0, 0, 0);
+      }
+    } else {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() + 1);
+      startDate.setHours(14, 0, 0, 0);
+    }
+    const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+    return { startDate, endDate, fmt };
+  };
+
+  const handleAddToGoogleCalendar = () => {
     const eventTitle = `${session.sport} Practice${partner ? ` with ${partner.name}` : ''}`;
     const eventDescription = session.notes || session.goals || '';
-    const now = new Date();
-    const startDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    startDate.setHours(14, 0, 0, 0);
-    const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
-    const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    const { startDate, endDate, fmt } = buildEventDates();
     window.open(
       `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&dates=${fmt(startDate)}/${fmt(endDate)}&details=${encodeURIComponent(eventDescription)}&location=${encodeURIComponent(session.location)}`,
       '_blank'
     );
+    setShowCalendarMenu(false);
+  };
+
+  const handleAddToAppleCalendar = () => {
+    const eventTitle = `${session.sport} Practice${partner ? ` with ${partner.name}` : ''}`;
+    const eventDescription = session.notes || session.goals || '';
+    const { startDate, endDate, fmt } = buildEventDates();
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//LinkUp Athletics//EN',
+      'BEGIN:VEVENT',
+      `DTSTART:${fmt(startDate)}`,
+      `DTEND:${fmt(endDate)}`,
+      `SUMMARY:${eventTitle.replace(/,/g, '\\,')}`,
+      `DESCRIPTION:${eventDescription.replace(/\n/g, '\\n').replace(/,/g, '\\,')}`,
+      `LOCATION:${session.location.replace(/,/g, '\\,')}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'session.ics';
+    a.click();
+    URL.revokeObjectURL(url);
+    setShowCalendarMenu(false);
   };
 
   const handleAccept = async () => {
@@ -562,12 +617,32 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                   </button>
                 )}
 
-                <button
-                  onClick={handleAddToCalendar}
-                  className="w-full py-3.5 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl font-medium transition-all shadow-sm"
-                >
-                  Add to Calendar
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowCalendarMenu((v) => !v)}
+                    className="w-full py-3.5 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl font-medium transition-all shadow-sm"
+                  >
+                    Add to Calendar
+                  </button>
+                  {showCalendarMenu && (
+                    <div className="absolute bottom-full mb-2 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-10">
+                      <button
+                        onClick={handleAddToGoogleCalendar}
+                        className="w-full px-4 py-3 text-left text-sm font-medium text-slate-900 hover:bg-slate-50 flex items-center gap-3 border-b border-slate-100"
+                      >
+                        <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
+                        Google Calendar
+                      </button>
+                      <button
+                        onClick={handleAddToAppleCalendar}
+                        className="w-full px-4 py-3 text-left text-sm font-medium text-slate-900 hover:bg-slate-50 flex items-center gap-3"
+                      >
+                        <span className="text-base">🍎</span>
+                        Apple Calendar
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 {isPostedByMe && (
                   <button
