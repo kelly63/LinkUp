@@ -1,6 +1,6 @@
 import { Search, Edit } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { messages as messagesApi } from '../lib/api';
+import { messages as messagesApi, avatarThumb } from '../lib/api';
 import { ChatScreen } from './ChatScreen';
 import { X, Shield, Users, Trash2 } from 'lucide-react';
 import { getActiveSocket } from '../lib/socket';
@@ -88,6 +88,12 @@ function timeAgo(iso: string): string {
 
 function getInitials(name: string): string {
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function Avatar({ url, name, size = 48 }: { url: string | null; name: string; size?: number }) {
+  const thumb = avatarThumb(url, size);
+  if (thumb) return <img src={thumb} alt={name} className="w-full h-full object-cover rounded-full" />;
+  return <>{getInitials(name)}</>;
 }
 
 export function ChatView({
@@ -357,8 +363,8 @@ export function ChatView({
                 onClick={() => handleOpenConversation(conv)}
                 className="px-4 py-4 border-b border-amber-100 bg-amber-50/50 hover:bg-amber-50 transition-colors cursor-pointer flex items-center gap-3"
               >
-                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-                  {conv.partner.avatar || getInitials(conv.partner.name)}
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 overflow-hidden">
+                  <Avatar url={conv.partner.avatar} name={conv.partner.name} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-slate-900 font-semibold text-sm">{conv.partner.name}</h4>
@@ -385,8 +391,8 @@ export function ChatView({
                 className="flex items-center gap-3 cursor-pointer"
               >
                 <div className="relative flex-shrink-0">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
-                    {conv.partner.avatar || getInitials(conv.partner.name)}
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold overflow-hidden">
+                    <Avatar url={conv.partner.avatar} name={conv.partner.name} />
                   </div>
                   {isOnline && (
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
@@ -476,8 +482,8 @@ export function ChatView({
                   >
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                          {athlete.avatar || getInitials(athlete.name)}
+                        <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold overflow-hidden">
+                          <Avatar url={athlete.avatar} name={athlete.name} />
                         </div>
                         <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
                           <Shield className="w-3.5 h-3.5 text-white fill-white" />
