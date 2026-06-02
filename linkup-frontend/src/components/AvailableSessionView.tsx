@@ -2,6 +2,7 @@ import { ChevronLeft, Calendar, MapPin, Clock, Users, Trophy, MessageCircle, Sta
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, Session } from '../lib/api';
+import { UserAvatar } from './UserAvatar';
 
 function firstLastInitial(fullName: string): string {
   if (!fullName) return '';
@@ -145,8 +146,8 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
             onClick={() => poster?._id && (onViewProfile?.(poster._id) ?? onNavigate?.('userProfile', { _id: poster._id, ...poster }))}
             className="flex items-start gap-4 mb-4 w-full text-left group"
           >
-            <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-xl flex-shrink-0">
-              {poster?.avatar || posterInitials}
+            <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-xl flex-shrink-0 overflow-hidden">
+              <UserAvatar avatar={poster?.avatar} name={posterFullName} size={64} />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">

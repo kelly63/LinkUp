@@ -2,6 +2,7 @@ import { ChevronLeft, Star, Trophy, Calendar, MapPin, Clock } from 'lucide-react
 import { useState, useEffect } from 'react';
 import { ratings as ratingsApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { UserAvatar } from './UserAvatar';
 
 interface ReviewsViewProps {
   onBack: () => void;
@@ -57,7 +58,7 @@ export function ReviewsView({ onBack, onNavigate }: ReviewsViewProps) {
           <div className="space-y-4">
             {sessionReviews.map((review) => {
               const ratee = review.ratee || {};
-              const initials = ratee.avatar || getInitials(ratee.name || '?');
+              const initials = getInitials(ratee.name || '?');
               const sport = ratee.sport || ratee.sportsCoached?.[0] || review.sport || '';
               const position = ratee.role === 'coach' ? 'Coach' : (ratee.position || '');
               const sessionDate = review.session?.date
@@ -70,8 +71,8 @@ export function ReviewsView({ onBack, onNavigate }: ReviewsViewProps) {
                   {/* Partner Header */}
                   <div className="px-4 py-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-200">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-                        {initials}
+                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 overflow-hidden">
+                        <UserAvatar avatar={ratee.avatar} name={ratee.name || '?'} size={48} />
                       </div>
                       <div className="flex-1">
                         <h3 className="text-slate-900 font-medium">{ratee.name}</h3>

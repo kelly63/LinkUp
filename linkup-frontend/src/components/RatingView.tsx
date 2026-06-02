@@ -1,6 +1,7 @@
 import { Star, X, CheckCircle, ThumbsUp, Clock, MessageCircle, Target, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { UserAvatar } from './UserAvatar';
 
 interface RatingViewProps {
   sessionPartner: {
@@ -121,8 +122,8 @@ export function RatingView({ sessionPartner, sessionDetails, onBack, onSubmit }:
         {/* Partner Info Card */}
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0">
-              {sessionPartner.avatar}
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0 overflow-hidden">
+              <UserAvatar avatar={sessionPartner.avatar} name={sessionPartner.name} size={56} />
             </div>
             <div className="flex-1">
               <h3 className="text-white font-semibold">{sessionPartner.name}</h3>

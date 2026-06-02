@@ -2,6 +2,7 @@ import { ChevronLeft, Star, Trophy, Calendar, MapPin, Clock, AlertCircle, Info }
 import { useState, useEffect } from 'react';
 import { ratings as ratingsApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { UserAvatar } from './UserAvatar';
 
 interface ReceivedRatingsViewProps {
   onBack: () => void;
@@ -133,7 +134,7 @@ export function ReceivedRatingsView({ onBack, onNavigate }: ReceivedRatingsViewP
           <div className="space-y-4">
             {filteredRatings.map((rating) => {
               const rater = rating.rater || {};
-              const initials = rater.avatar || getInitials(rater.name || '?');
+              const initials = getInitials(rater.name || '?');
               const sport = rater.sport || rater.sportsCoached?.[0] || '';
               const position = rater.role === 'coach' ? 'Coach' : (rater.position || '');
               const sessionDate = rating.session?.date
@@ -146,8 +147,8 @@ export function ReceivedRatingsView({ onBack, onNavigate }: ReceivedRatingsViewP
                   {/* Reviewer Header */}
                   <div className="px-4 py-4 bg-gradient-to-br from-slate-50 to-white border-b border-slate-200">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
-                        {initials}
+                      <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 overflow-hidden">
+                        <UserAvatar avatar={rater.avatar} name={rater.name || '?'} size={48} />
                       </div>
                       <div className="flex-1">
                         <h3 className="text-slate-900 font-medium">{rater.name}</h3>

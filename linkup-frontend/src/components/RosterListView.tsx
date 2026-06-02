@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { connections as connectionsApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { avatarThumb } from '../lib/api';
+import { UserAvatar } from './UserAvatar';
 import { toast } from 'sonner';
 
 interface RosterListViewProps {
@@ -204,7 +205,7 @@ export function RosterListView({ onBack, onNavigate, onOpenChat }: RosterListVie
           <div className="space-y-3">
             {connections.map((connection) => {
               const u = connection.user;
-              const initials = u.avatar || getInitials(u.name);
+              const initials = getInitials(u.name);
               const sport = u.sport || u.sportsCoached?.[0] || '';
               const position = u.role === 'coach' ? 'Coach' : (u.position || '');
               const level = u.skillLevel || '';
@@ -219,8 +220,8 @@ export function RosterListView({ onBack, onNavigate, onOpenChat }: RosterListVie
                   className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:border-emerald-300 hover:shadow-md transition-all cursor-pointer active:scale-[0.99]"
                 >
                   <div className="flex items-start gap-3 mb-3">
-                    <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0 shadow-md">
-                      {initials}
+                    <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0 shadow-md overflow-hidden">
+                      <UserAvatar avatar={u.avatar} name={u.name} size={56} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-1">
