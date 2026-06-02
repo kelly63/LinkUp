@@ -1,9 +1,10 @@
-import { Search, Filter, MapPin, Star, Award, Users, Calendar, ArrowLeft, ChevronDown, ChevronUp, X, Shield } from 'lucide-react';
+import { Search, Filter, MapPin, Star, Award, Users, Calendar, ArrowLeft, ChevronDown, ChevronUp, X, Shield, UserPlus, UserCheck, Clock } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
-import { QrCode, Camera, UserPlus } from 'lucide-react';
+import { QrCode, Camera } from 'lucide-react';
 import { useAuth } from '../lib/auth';
-import { users as usersApi, User } from '../lib/api';
+import { users as usersApi, connections as connectionsApi, User, avatarThumb } from '../lib/api';
 import { LocationAutocomplete } from './LocationAutocomplete';
+import { toast } from 'sonner';
 
 interface AthleteSearchViewProps {
   onBack?: () => void;
@@ -24,9 +25,12 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
   const [searchNorthAmerica, setSearchNorthAmerica] = useState(true);
   const [showLocationSearch, setShowLocationSearch] = useState(false);
 
-  const { token } = useAuth();
+  const { token, user: me } = useAuth();
   const [athletes, setAthletes] = useState<User[]>([]);
   const [loadingAthletes, setLoadingAthletes] = useState(true);
+  // Map of userId -> roster status
+  const [rosterStatus, setRosterStatus] = useState<Record<string, 'accepted' | 'pending' | 'none'>>({});
+  const [sendingRequest, setSendingRequest] = useState<Record<string, boolean>>({});
 
   const fetchAthletes = useCallback(async () => {
     if (!token) return;
@@ -51,6 +55,34 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
     const t = setTimeout(fetchAthletes, 300);
     return () => clearTimeout(t);
   }, [fetchAthletes]);
+
+  // Load roster statuses once on mount
+  useEffect(() => {
+    if (!token) return;
+    Promise.all([
+      connectionsApi.getAll(token),
+      connectionsApi.getPending(token),
+    ]).then(([{ connections: accepted }, { requests: pending }]) => {
+      const map: Record<string, 'accepted' | 'pending'> = {};
+      accepted.forEach((c) => { map[c.user._id] = 'accepted'; });
+      pending.forEach((c) => { map[c.user._id] = 'pending'; });
+      setRosterStatus(map);
+    }).catch(() => {});
+  }, [token]);
+
+  const handleAddToRoster = async (athleteId: string) => {
+    if (!token) return;
+    setSendingRequest((prev) => ({ ...prev, [athleteId]: true }));
+    try {
+      await connectionsApi.sendRequest(token, athleteId);
+      setRosterStatus((prev) => ({ ...prev, [athleteId]: 'pending' }));
+      toast.success('Roster request sent!');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not send request');
+    } finally {
+      setSendingRequest((prev) => ({ ...prev, [athleteId]: false }));
+    }
+  };
 
 
   const sports = ['All Sports', 'Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Wrestling', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis', 'Swimming'];
@@ -295,93 +327,123 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
             <span className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
-        {!loadingAthletes && filteredAthletes.map((athlete) => (
-          <div
-            key={athlete._id}
-            className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
-          >
-            <div className="flex gap-3">
-              {/* Avatar */}
-              <div className="relative w-14 h-14 flex-shrink-0">
-                <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                  {athlete.avatar || athlete.name.split(' ').map(n => n[0]).join('').slice(0,2)}
+        {!loadingAthletes && filteredAthletes.filter(a => a._id !== me?._id).map((athlete) => {
+          const status = rosterStatus[athlete._id] ?? 'none';
+          const isSending = sendingRequest[athlete._id] ?? false;
+          const thumb = avatarThumb(athlete.avatar, 56);
+          return (
+            <div
+              key={athlete._id}
+              className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 hover:shadow-md transition-shadow"
+            >
+              <div className="flex gap-3">
+                {/* Avatar */}
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 overflow-hidden">
+                  {thumb
+                    ? <img src={thumb} alt={athlete.name} className="w-full h-full object-cover" />
+                    : athlete.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
-              </div>
 
-              {/* Athlete Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between mb-1">
-                  <div>
-                    <h3 className="text-slate-900 font-semibold">{athlete.name}</h3>
-                    <p className="text-sm text-slate-600">{athlete.position}</p>
+                {/* Athlete Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between mb-1">
+                    <div>
+                      <h3 className="text-slate-900 font-semibold">{athlete.name}</h3>
+                      <p className="text-sm text-slate-600">{athlete.position}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {status === 'accepted' && (
+                        <span className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
+                          <UserCheck className="w-3.5 h-3.5" />
+                          Roster
+                        </span>
+                      )}
+                      {status === 'pending' && (
+                        <span className="flex items-center gap-1 text-xs text-amber-600 font-medium">
+                          <Clock className="w-3.5 h-3.5" />
+                          Pending
+                        </span>
+                      )}
+                      {athlete.averageRating > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                          <span className="text-sm font-semibold text-slate-900">
+                            {athlete.averageRating.toFixed(1)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  {athlete.averageRating > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
-                      <span className="text-sm font-semibold text-slate-900">
-                        {athlete.averageRating.toFixed(1)}
+
+                  {/* Sport & Level Badge */}
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {athlete.skillLevel && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-lg">
+                        <Award className="w-3 h-3" />
+                        {athlete.skillLevel}
                       </span>
+                    )}
+                    {athlete.sport && (
+                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded-lg">
+                        {athlete.sport}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Location */}
+                  {athlete.location && (
+                    <div className="flex items-center gap-1 text-xs text-slate-500 mb-3">
+                      <MapPin className="w-3 h-3" />
+                      <span>{athlete.location}</span>
                     </div>
                   )}
-                </div>
 
-                {/* Sport & Level Badge */}
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {athlete.skillLevel && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-lg">
-                      <Award className="w-3 h-3" />
-                      {athlete.skillLevel}
-                    </span>
-                  )}
-                  {athlete.sport && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded-lg">
-                      {athlete.sport}
-                    </span>
-                  )}
-                </div>
-
-                {/* Location */}
-                {athlete.location && (
-                  <div className="flex items-center gap-1 text-xs text-slate-500 mb-3">
-                    <MapPin className="w-3 h-3" />
-                    <span>{athlete.location}</span>
+                  {/* Action Buttons */}
+                  <div className="flex gap-2">
+                    {status === 'accepted' ? (
+                      <button
+                        className="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-2.5 rounded-xl text-sm transition-all shadow-sm active:scale-[0.98]"
+                        onClick={() => onOpenChat && onOpenChat({
+                          id: athlete._id,
+                          name: athlete.name,
+                          avatar: athlete.avatar || '',
+                          sport: athlete.sport,
+                          position: athlete.position,
+                          level: athlete.skillLevel,
+                        })}
+                      >
+                        Message
+                      </button>
+                    ) : status === 'pending' ? (
+                      <button
+                        disabled
+                        className="flex-1 flex items-center justify-center gap-2 bg-amber-50 border-2 border-amber-200 text-amber-600 py-2.5 rounded-xl text-sm cursor-default"
+                      >
+                        <Clock className="w-4 h-4" />
+                        Request Sent
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleAddToRoster(athlete._id)}
+                        disabled={isSending}
+                        className="flex-1 flex items-center justify-center gap-2 bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-2.5 rounded-xl text-sm transition-all shadow-sm active:scale-[0.98] disabled:opacity-60"
+                      >
+                        <UserPlus className="w-4 h-4" />
+                        {isSending ? 'Sending…' : 'Add to Roster'}
+                      </button>
+                    )}
+                    <button
+                      className="px-4 bg-white border-2 border-slate-300 hover:border-slate-400 text-slate-700 py-2.5 rounded-xl text-sm transition-all"
+                      onClick={() => onViewProfile && onViewProfile(athlete._id, athlete.role)}
+                    >
+                      Profile
+                    </button>
                   </div>
-                )}
-
-                {/* Ratings count */}
-                {athlete.ratingCount > 0 && (
-                  <div className="flex items-center gap-1 text-xs text-slate-600 mb-3">
-                    <Calendar className="w-3 h-3" />
-                    <span>{athlete.ratingCount} rating{athlete.ratingCount !== 1 ? 's' : ''}</span>
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <button
-                    className="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-2.5 rounded-xl text-sm transition-all shadow-sm active:scale-[0.98]"
-                    onClick={() => onOpenChat && onOpenChat({
-                      id: athlete._id,
-                      name: athlete.name,
-                      avatar: athlete.avatar || athlete.name.split(' ').map(n => n[0]).join('').slice(0,2),
-                      sport: athlete.sport,
-                      position: athlete.position,
-                      level: athlete.skillLevel,
-                    })}
-                  >
-                    Contact
-                  </button>
-                  <button
-                    className="px-4 bg-white border-2 border-slate-300 hover:border-slate-400 text-slate-700 py-2.5 rounded-xl text-sm transition-all"
-                    onClick={() => onViewProfile && onViewProfile(athlete._id, athlete.role)}
-                  >
-                    Profile
-                  </button>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {filteredAthletes.length === 0 && (
           <div className="text-center py-12">
