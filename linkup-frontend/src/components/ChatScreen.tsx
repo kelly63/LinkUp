@@ -304,7 +304,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                     </button>
                   )}
                 </div>
-                <p className={`text-xs text-slate-500 mt-1 px-1 ${likeCount > 0 ? 'mt-4' : 'mt-1'} ${isMe ? 'text-right' : 'text-left'}`}>
+                <p className={`text-xs text-slate-500 px-1 ${canLike ? 'mt-4' : 'mt-1'} ${isMe ? 'text-right' : 'text-left'}`}>
                   {formatTime(msg.createdAt)}
                   {isMe && msg.read && (
                     <span className="ml-1 text-emerald-400">✓✓</span>
