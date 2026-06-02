@@ -6,3 +6,6 @@ ios/App/DerivedData/
 android/app/build/
 android/.gradle/
 *.xcworkspace/xcuserdata/
+
+# node_modules
+node_modules/
