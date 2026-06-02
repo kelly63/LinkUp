@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { approveRating, rejectRating, getAdminDashboard } = require('../controllers/ratingController');
+const { sendVerifiedEmail } = require('../utils/email');
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'linkup-admin-secret';
 const router = express.Router();
@@ -43,6 +44,7 @@ router.get('/verify/:userId/approve', async (req, res) => {
     user.verificationStatus = 'approved';
     user.verifiedAt = new Date();
     await user.save({ validateBeforeSave: false });
+    sendVerifiedEmail({ user }).catch((err) => console.error('[verified email]', err.message));
     return res.send(adminPage(`${user.name} is now a Verified Athlete on LinkUp.`, true));
   } catch (error) {
     return res.status(500).send(adminPage('Server error', false));

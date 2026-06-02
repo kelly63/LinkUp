@@ -274,4 +274,43 @@ async function sendClarificationEmail({ user, message }) {
   });
 }
 
-module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail };
+async function sendVerifiedEmail({ user }) {
+  const transport = createTransport();
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+    <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:28px 32px">
+      <h1 style="color:#fff;margin:0;font-size:20px">🎉 You're a Verified Athlete!</h1>
+      <p style="color:rgba(255,255,255,.8);margin:6px 0 0;font-size:14px">LinkUp Athletics</p>
+    </div>
+    <div style="padding:28px 32px">
+      <p style="color:#374151;margin-bottom:16px">Hi ${user.name},</p>
+      <p style="color:#374151;margin-bottom:20px">
+        Great news — your college athlete status has been <strong>verified</strong>!
+        A verified badge now appears on your LinkUp Athletics profile.
+      </p>
+      <div style="background:#f0fdf4;border-left:3px solid #16a34a;border-radius:0 8px 8px 0;padding:16px;margin-bottom:24px">
+        <p style="margin:0;color:#166534;font-weight:600">✅ Verified Athlete</p>
+        <p style="margin:4px 0 0;color:#166534;font-size:14px">Your profile is now verified on LinkUp Athletics</p>
+      </div>
+      <p style="color:#6b7280;font-size:13px">Open the app to see your verified badge. Questions? Reply to this email.</p>
+    </div>
+    <div style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb">
+      <p style="color:#9ca3af;font-size:12px;margin:0;text-align:center">LinkUp Athletics</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  await transport.sendMail({
+    from: `"LinkUp Athletics" <${process.env.SMTP_USER}>`,
+    to: user.email,
+    subject: '🎉 You\'re now a Verified Athlete on LinkUp!',
+    html,
+  });
+}
+
+module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail, sendVerifiedEmail };

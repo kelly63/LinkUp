@@ -30,10 +30,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { token: null, user: null, isAuthenticated: false };
   });
 
-  // Reconnect socket if we restored a token from localStorage
+  // Reconnect socket if we restored a token from localStorage,
+  // and refresh user data so verification status / profile changes are always current
   useEffect(() => {
     if (state.token) {
       getSocket(state.token);
+      authApi.getMe(state.token)
+        .then(({ user }) => {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: state.token, user }));
+          setState((prev) => ({ ...prev, user }));
+        })
+        .catch(() => {}); // silently ignore — stale cached data is still usable
     }
   }, []);
 
