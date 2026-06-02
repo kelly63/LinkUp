@@ -288,14 +288,14 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                   >
                     <p className="text-sm">{msg.text}</p>
                   </div>
-                  {/* Like button — appears on hover (web) or when tapped; always visible when liked */}
+                  {/* Like button — always visible on touch, subtle when not liked */}
                   {canLike && (
                     <button
                       onClick={() => toggleLike(msg._id)}
                       className={`absolute -bottom-3 -right-2 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-all
                         ${iLiked
-                          ? 'bg-red-100 border border-red-200 text-red-500 opacity-100'
-                          : 'bg-white border border-slate-200 text-slate-400 opacity-0 group-hover:opacity-100 active:opacity-100'
+                          ? 'bg-red-100 border border-red-200 text-red-500'
+                          : 'bg-white border border-slate-200 text-slate-300 hover:text-slate-400'
                         }`}
                       aria-label={iLiked ? 'Unlike' : 'Like'}
                     >
