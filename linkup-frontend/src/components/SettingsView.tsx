@@ -91,12 +91,12 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
             <div className="flex-1">
               <h4 className="text-slate-900">Push Notifications</h4>
               <p className="text-sm text-slate-500 mt-0.5">
-                {pushBlocked ? 'Blocked — enable in iPhone Settings' :
+                {pushBlocked ? 'Blocked — enable in iPhone Settings → Notifications → LinkUp' :
                  pushEnabled ? 'You\'ll get alerts for messages & requests' :
                  'Get notified about messages & requests'}
               </p>
             </div>
-            {pushSupported && !pushBlocked && (
+            {!pushBlocked && (
               <button
                 onClick={togglePush}
                 disabled={pushLoading}
