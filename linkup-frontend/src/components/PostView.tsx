@@ -1,4 +1,4 @@
-import { Calendar, Award, MapPin, Clock, ArrowLeft, Users, X, Search, Filter, Plane } from 'lucide-react';
+import { Calendar, Award, MapPin, Clock, ArrowLeft, Users, X, Search, Filter, Plane, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { NeedCard } from './NeedCard';
 import { AvailableSessionView } from './AvailableSessionView';
@@ -32,6 +32,96 @@ interface PostViewProps {
       location: string;
     };
   }) => void;
+}
+
+function MonthCalendar({
+  selectedDates,
+  onToggle,
+}: {
+  selectedDates: string[];
+  onToggle: (date: string) => void;
+}) {
+  const [viewDate, setViewDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    return d;
+  });
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const cells: (Date | null)[] = [
+    ...Array(firstDow).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1)),
+  ];
+
+  const monthLabel = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const canGoPrev = new Date(year, month, 1) > new Date(today.getFullYear(), today.getMonth(), 1);
+
+  return (
+    <div className="bg-white rounded-xl border-2 border-slate-200 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <button
+          type="button"
+          onClick={() => setViewDate(new Date(year, month - 1, 1))}
+          disabled={!canGoPrev}
+          className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-30"
+        >
+          <ChevronLeft className="w-4 h-4 text-slate-600" />
+        </button>
+        <span className="text-sm font-semibold text-slate-800">{monthLabel}</span>
+        <button
+          type="button"
+          onClick={() => setViewDate(new Date(year, month + 1, 1))}
+          className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+        >
+          <ChevronRight className="w-4 h-4 text-slate-600" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 mb-1">
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+          <div key={d} className="text-center text-[10px] font-medium text-slate-400 py-1">{d}</div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-y-1">
+        {cells.map((date, i) => {
+          if (!date) return <div key={`e-${i}`} />;
+          const val = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+          const isPast = date < today;
+          const isToday = date.getTime() === today.getTime();
+          const isSelected = selectedDates.includes(val);
+          return (
+            <button
+              key={val}
+              type="button"
+              disabled={isPast}
+              onClick={() => onToggle(val)}
+              className={`mx-auto w-9 h-9 rounded-full text-sm font-medium transition-all flex items-center justify-center ${
+                isSelected
+                  ? 'bg-emerald-500 text-white shadow-sm'
+                  : isToday
+                    ? 'border-2 border-emerald-400 text-emerald-700 font-bold'
+                    : isPast
+                      ? 'text-slate-300 cursor-not-allowed'
+                      : 'text-slate-700 hover:bg-slate-100 active:bg-emerald-100'
+              }`}
+            >
+              {date.getDate()}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }: PostViewProps) {
@@ -359,7 +449,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Post a Need
+            Post a Session
           </button>
           <button
             onClick={() => setViewMode('find')}
@@ -490,68 +580,22 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Date <span className="text-xs text-slate-400 font-normal">— tap a day to select it</span>
+                Date <span className="text-xs text-slate-400 font-normal">— tap dates to select</span>
               </label>
 
-              {/* Quick-pick: next 14 days as a 7-column grid (2 rows, no horizontal scroll) */}
-              <div className="grid grid-cols-7 gap-1.5">
-                {Array.from({ length: 14 }, (_, i) => {
-                  const d = new Date();
-                  d.setDate(d.getDate() + i);
-                  const val = d.toISOString().split('T')[0];
-                  const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-                  const dayNum = d.getDate();
-                  const isSelected = selectedDates.includes(val);
-                  return (
-                    <button
-                      key={val}
-                      type="button"
-                      onClick={() => isSelected ? handleDateRemove(val) : handleDateAdd(val)}
-                      className={`flex flex-col items-center py-2 rounded-xl border-2 transition-all ${
-                        isSelected
-                          ? 'bg-emerald-500 border-emerald-600 text-white shadow-sm'
-                          : 'bg-white border-slate-200 text-slate-700 active:border-emerald-500'
-                      }`}
-                    >
-                      <span className="text-[9px] font-medium uppercase tracking-wide leading-none mb-0.5">{dayName}</span>
-                      <span className="text-sm font-bold leading-tight">{dayNum}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <MonthCalendar
+                selectedDates={selectedDates}
+                onToggle={(val) => selectedDates.includes(val) ? handleDateRemove(val) : handleDateAdd(val)}
+              />
 
-              {/* Custom date — auto-adds when picker closes, no Add button */}
-              <div className="mt-3">
-                <p className="text-xs text-slate-500 mb-1">Further out? Pick a date:</p>
-                <input
-                  type="date"
-                  min={new Date().toISOString().split('T')[0]}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      handleDateAdd(e.target.value);
-                      e.target.value = '';
-                    }
-                  }}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
-                />
-              </div>
-
-              {/* Show any custom dates outside the 14-day chip window */}
-              {selectedDates.filter(d => {
-                const cutoff = new Date();
-                cutoff.setDate(cutoff.getDate() + 14);
-                return new Date(d) >= cutoff;
-              }).length > 0 && (
+              {/* Selected dates summary */}
+              {selectedDates.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {selectedDates.filter(d => {
-                    const cutoff = new Date();
-                    cutoff.setDate(cutoff.getDate() + 14);
-                    return new Date(d) >= cutoff;
-                  }).map((date) => (
-                    <div key={date} className="flex items-center gap-2 px-3 py-2 bg-emerald-100 text-emerald-900 rounded-lg border border-emerald-200">
+                  {[...selectedDates].sort().map((date) => (
+                    <div key={date} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-900 rounded-lg border border-emerald-200">
                       <span className="text-sm font-medium">{formatDate(date)}</span>
-                      <button onClick={() => handleDateRemove(date)} className="hover:bg-emerald-200 rounded-full p-0.5 transition-colors">
-                        <X className="w-4 h-4" />
+                      <button type="button" onClick={() => handleDateRemove(date)} className="hover:bg-emerald-200 rounded-full p-0.5 transition-colors">
+                        <X className="w-3 h-3" />
                       </button>
                     </div>
                   ))}
