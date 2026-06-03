@@ -47,8 +47,6 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
   const [isDateFlexible, setIsDateFlexible] = useState(false);
   const [isTimeFlexible, setIsTimeFlexible] = useState(false);
-  const [dateInputValue, setDateInputValue] = useState('');
-  const [timeInputValue, setTimeInputValue] = useState('');
   
   // Find Sessions filters
   const [showFilters, setShowFilters] = useState(false);
@@ -488,47 +486,80 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               </div>
             </div>
 
-            {/* Date & Time & Duration */}
+            {/* Date */}
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Date
+                Date <span className="text-xs text-slate-400 font-normal">— tap a day to select it</span>
               </label>
-              <div className="flex gap-2">
+
+              {/* Quick-pick: next 14 days as tappable chips */}
+              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                {Array.from({ length: 14 }, (_, i) => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + i);
+                  const val = d.toISOString().split('T')[0];
+                  const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+                  const dayNum = d.getDate();
+                  const mon = d.toLocaleDateString('en-US', { month: 'short' });
+                  const isSelected = selectedDates.includes(val);
+                  return (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => isSelected ? handleDateRemove(val) : handleDateAdd(val)}
+                      className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border-2 transition-all ${
+                        isSelected
+                          ? 'bg-emerald-500 border-emerald-600 text-white shadow-sm'
+                          : 'bg-white border-slate-300 text-slate-700 hover:border-emerald-400 active:border-emerald-500'
+                      }`}
+                    >
+                      <span className="text-[10px] font-medium uppercase tracking-wide">{dayName}</span>
+                      <span className="text-base font-bold leading-tight">{dayNum}</span>
+                      <span className="text-[10px]">{mon}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Custom date — auto-adds when picker closes, no Add button */}
+              <div className="mt-3">
+                <p className="text-xs text-slate-500 mb-1">Further out? Pick a date:</p>
                 <input
                   type="date"
-                  value={dateInputValue}
-                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
-                  onChange={(e) => setDateInputValue(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleDateAdd(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
-                <button
-                  type="button"
-                  onClick={() => { if (dateInputValue) { handleDateAdd(dateInputValue); setDateInputValue(''); } }}
-                  disabled={!dateInputValue}
-                  className="px-4 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 text-white rounded-xl font-semibold transition-colors text-sm"
-                >
-                  Add
-                </button>
               </div>
-              {selectedDates.length > 0 && (
+
+              {/* Show any custom dates outside the 14-day chip window */}
+              {selectedDates.filter(d => {
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() + 14);
+                return new Date(d) >= cutoff;
+              }).length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {selectedDates.map((date) => (
-                    <div
-                      key={date}
-                      className="flex items-center gap-2 px-3 py-2 bg-emerald-100 text-emerald-900 rounded-lg border border-emerald-200"
-                    >
+                  {selectedDates.filter(d => {
+                    const cutoff = new Date();
+                    cutoff.setDate(cutoff.getDate() + 14);
+                    return new Date(d) >= cutoff;
+                  }).map((date) => (
+                    <div key={date} className="flex items-center gap-2 px-3 py-2 bg-emerald-100 text-emerald-900 rounded-lg border border-emerald-200">
                       <span className="text-sm font-medium">{formatDate(date)}</span>
-                      <button
-                        onClick={() => handleDateRemove(date)}
-                        className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
-                      >
+                      <button onClick={() => handleDateRemove(date)} className="hover:bg-emerald-200 rounded-full p-0.5 transition-colors">
                         <X className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
-              
+
               {/* Flexible Date Option */}
               <label className="flex items-center gap-2 mt-3 cursor-pointer group">
                 <div className="relative">
@@ -552,46 +583,61 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               </label>
             </div>
 
+            {/* Time */}
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                Time
+                Time <span className="text-xs text-slate-400 font-normal">— tap a slot to select it</span>
               </label>
-              <div className="flex gap-2">
+
+              {/* Quick-pick time slots */}
+              {(['Morning', 'Afternoon', 'Evening'] as const).map((period) => {
+                const slots: Record<string, string[]> = {
+                  Morning:   ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00'],
+                  Afternoon: ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
+                  Evening:   ['18:00', '19:00', '20:00', '21:00'],
+                };
+                return (
+                  <div key={period} className="mb-2">
+                    <p className="text-xs text-slate-500 mb-1.5">{period}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {slots[period].map((t) => {
+                        const isSelected = selectedTimes.includes(t);
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => isSelected ? handleTimeRemove(t) : handleTimeAdd(t)}
+                            className={`px-3 py-2 rounded-xl border-2 text-sm transition-all ${
+                              isSelected
+                                ? 'bg-emerald-500 border-emerald-600 text-white shadow-sm'
+                                : 'bg-white border-slate-300 text-slate-700 hover:border-emerald-400 active:border-emerald-500'
+                            }`}
+                          >
+                            {formatTime(t)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Custom time — auto-adds when picker closes, no Add button */}
+              <div className="mt-2">
+                <p className="text-xs text-slate-500 mb-1">Or pick a specific time:</p>
                 <input
                   type="time"
-                  value={timeInputValue}
-                  className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
-                  onChange={(e) => setTimeInputValue(e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleTimeAdd(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
                 />
-                <button
-                  type="button"
-                  onClick={() => { if (timeInputValue) { handleTimeAdd(timeInputValue); setTimeInputValue(''); } }}
-                  disabled={!timeInputValue}
-                  className="px-4 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 text-white rounded-xl font-semibold transition-colors text-sm"
-                >
-                  Add
-                </button>
               </div>
-              {selectedTimes.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {selectedTimes.map((time) => (
-                    <div
-                      key={time}
-                      className="flex items-center gap-2 px-3 py-2 bg-emerald-100 text-emerald-900 rounded-lg border border-emerald-200"
-                    >
-                      <span className="text-sm font-medium">{formatTime(time)}</span>
-                      <button
-                        onClick={() => handleTimeRemove(time)}
-                        className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
+
               {/* Flexible Time Option */}
               <label className="flex items-center gap-2 mt-3 cursor-pointer group">
                 <div className="relative">
@@ -738,8 +784,6 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   setSelectedTeamType(user?.teamType || '');
                   setSelectedDates([]);
                   setSelectedTimes([]);
-                  setDateInputValue('');
-                  setTimeInputValue('');
                   setSelectedSkillLevels([]);
                   setLocationValue('');
                   setIsPostTraveling(false);
