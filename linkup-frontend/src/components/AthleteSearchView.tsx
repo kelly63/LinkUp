@@ -24,6 +24,7 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
   const [searchRadius, setSearchRadius] = useState(25);
   const [searchNorthAmerica, setSearchNorthAmerica] = useState(true);
   const [showLocationSearch, setShowLocationSearch] = useState(false);
+  const [rosterFilter, setRosterFilter] = useState<'all' | 'on_roster' | 'not_on_roster'>('all');
 
   const { token, user: me } = useAuth();
   const [athletes, setAthletes] = useState<User[]>([]);
@@ -96,8 +97,12 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
     }
   };
 
-  // Filtering is handled server-side; just use athletes directly
-  const filteredAthletes = athletes;
+  // Apply roster filter client-side on top of server results
+  const filteredAthletes = athletes.filter((a) => {
+    if (rosterFilter === 'on_roster') return rosterStatus[a._id] === 'accepted';
+    if (rosterFilter === 'not_on_roster') return rosterStatus[a._id] !== 'accepted';
+    return true;
+  });
 
   const handleOpenQRScanner = () => {
     setShowQRScanner(true);
@@ -313,11 +318,30 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
         )}
       </div>
 
-      {/* Results Count */}
-      <div className="px-6 py-3 bg-slate-100 border-b border-slate-200">
-        <p className="text-sm text-slate-600">
-          {filteredAthletes.length} athlete{filteredAthletes.length !== 1 ? 's' : ''} found
-        </p>
+      {/* Roster Filter Pills */}
+      <div className="px-6 py-3 bg-white border-b border-slate-200 flex items-center gap-2">
+        {(['all', 'on_roster', 'not_on_roster'] as const).map((f) => {
+          const labels = { all: 'All', on_roster: 'On Roster', not_on_roster: 'Not Added' };
+          const active = rosterFilter === f;
+          return (
+            <button
+              key={f}
+              onClick={() => setRosterFilter(f)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                active
+                  ? f === 'on_roster'
+                    ? 'bg-emerald-500 text-white border-emerald-600'
+                    : 'bg-blue-500 text-white border-blue-600'
+                  : 'bg-white text-slate-600 border-slate-300 hover:border-slate-400'
+              }`}
+            >
+              {labels[f]}
+            </button>
+          );
+        })}
+        <span className="ml-auto text-xs text-slate-500">
+          {filteredAthletes.filter(a => a._id !== me?._id).length} found
+        </span>
       </div>
 
       {/* Athletes List */}
@@ -401,19 +425,28 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
                   {/* Action Buttons */}
                   <div className="flex gap-2">
                     {status === 'accepted' ? (
-                      <button
-                        className="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-2.5 rounded-xl text-sm transition-all shadow-sm active:scale-[0.98]"
-                        onClick={() => onOpenChat && onOpenChat({
-                          id: athlete._id,
-                          name: athlete.name,
-                          avatar: athlete.avatar || '',
-                          sport: athlete.sport,
-                          position: athlete.position,
-                          level: athlete.skillLevel,
-                        })}
-                      >
-                        Message
-                      </button>
+                      <>
+                        <button
+                          disabled
+                          className="flex-1 flex items-center justify-center gap-1.5 bg-emerald-50 border-2 border-emerald-300 text-emerald-700 py-2.5 rounded-xl text-sm cursor-default"
+                        >
+                          <Shield className="w-4 h-4" />
+                          On Roster
+                        </button>
+                        <button
+                          className="px-4 bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-2.5 rounded-xl text-sm transition-all shadow-sm active:scale-[0.98]"
+                          onClick={() => onOpenChat && onOpenChat({
+                            id: athlete._id,
+                            name: athlete.name,
+                            avatar: athlete.avatar || '',
+                            sport: athlete.sport,
+                            position: athlete.position,
+                            level: athlete.skillLevel,
+                          })}
+                        >
+                          Message
+                        </button>
+                      </>
                     ) : status === 'pending' ? (
                       <button
                         disabled
