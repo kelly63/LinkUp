@@ -37,10 +37,25 @@ if (process.env.VAPID_EMAIL && process.env.VAPID_PUBLIC_KEY && process.env.VAPID
 // Track userId → Set of socket IDs (a user can have multiple tabs/devices)
 const onlineUsers = new Map();
 
+const SOCKET_ALLOWED_ORIGINS = [
+  process.env.CLIENT_URL,
+  'capacitor://localhost',  // iOS Capacitor (simulator + device)
+  'ionic://localhost',
+  'http://localhost',
+  'http://localhost:3000',
+  'http://localhost:5173',
+].filter(Boolean);
+
 function getSocketIo(httpServer) {
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL || '*',
+      origin: (origin, callback) => {
+        // Allow no-origin requests (native HTTP, curl) and known origins
+        if (!origin || SOCKET_ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+        // Fall back to permissive if CLIENT_URL not configured
+        if (!process.env.CLIENT_URL) return callback(null, true);
+        callback(new Error(`Socket CORS: origin ${origin} not allowed`));
+      },
       credentials: true,
     },
   });
