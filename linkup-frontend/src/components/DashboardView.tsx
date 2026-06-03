@@ -268,13 +268,13 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
           {displayedSessions.map((session) => {
             const isMySession = session.postedBy?._id === user?._id || session.postedBy === user?._id;
             const confirmedPartner: any = session.partner ?? null;
-            const pendingRequester: any = session.pendingPartner ?? null;
+            const pendingPartners: any[] = session.pendingPartners ?? [];
+            const pendingRequester: any = pendingPartners.length > 0 ? pendingPartners[0] : null;
             const otherPerson: any = isMySession
               ? (confirmedPartner ?? pendingRequester ?? null)
               : session.postedBy ?? null;
-            const isPendingRequest = isMySession && !confirmedPartner && !!pendingRequester;
-            const iAmRequester = !isMySession && !!pendingRequester &&
-              (pendingRequester?._id === user?._id || session.pendingPartner === user?._id);
+            const isPendingRequest = isMySession && !confirmedPartner && pendingPartners.length > 0;
+            const iAmRequester = !isMySession && pendingPartners.some((p: any) => p?._id === user?._id);
             const otherId: string | null = otherPerson?._id ?? null;
             const isOnRoster = otherId ? rosterIds.has(otherId) : false;
 
@@ -298,11 +298,9 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                           ? 'bg-amber-100 text-amber-700 border-amber-200'
                           : iAmRequester
                             ? 'bg-orange-100 text-orange-700 border-orange-200'
-                            : session.pendingPartner
-                              ? 'bg-orange-100 text-orange-700 border-orange-200'
-                              : 'bg-amber-100 text-amber-700 border-amber-200'
+                            : 'bg-amber-100 text-amber-700 border-amber-200'
                     }`}>
-                      {session.status === 'confirmed' ? 'Confirmed' : iAmRequester ? 'Pending' : isPendingRequest ? 'Action Needed' : session.pendingPartner ? 'Pending' : 'Open'}
+                      {session.status === 'confirmed' ? 'Confirmed' : iAmRequester ? 'Pending' : isPendingRequest ? 'Action Needed' : 'Open'}
                     </div>
                   </div>
 
@@ -311,11 +309,13 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                     <div className="flex items-center gap-1.5 mb-2 flex-wrap">
                       <div className="w-5 h-5 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0">
                         <span className="text-white text-[8px] font-bold">
-                          {getInitialsDash(otherPerson?.name || '?')}
+                          {getInitialsDash(pendingRequester?.name || '?')}
                         </span>
                       </div>
                       <span className="text-xs font-medium text-amber-700">
-                        {otherPerson?.name} wants to join
+                        {pendingPartners.length > 1
+                          ? `${pendingPartners.length} people want to join`
+                          : `${pendingRequester?.name} wants to join`}
                       </span>
                       {isOnRoster && (
                         <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200">

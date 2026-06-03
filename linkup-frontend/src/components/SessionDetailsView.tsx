@@ -72,11 +72,11 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     }
   };
 
-  const handleApprovePartner = async () => {
+  const handleApprovePartner = async (partnerId: string) => {
     if (!token) return;
     setActionLoading('approvePartner');
     try {
-      const { session: updated } = await sessionsApi.approvePartner(token, localSession._id);
+      const { session: updated } = await sessionsApi.approvePartner(token, localSession._id, partnerId);
       setLocalSession(updated);
       toast.success('Partner approved — session confirmed!');
     } catch (err: any) {
@@ -86,11 +86,11 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     }
   };
 
-  const handleDeclinePartner = async () => {
+  const handleDeclinePartner = async (partnerId: string) => {
     if (!token) return;
     setActionLoading('declinePartner');
     try {
-      const { session: updated } = await sessionsApi.declinePartner(token, localSession._id);
+      const { session: updated } = await sessionsApi.declinePartner(token, localSession._id, partnerId);
       setLocalSession(updated);
       toast.success('Request declined');
     } catch (err: any) {
@@ -176,7 +176,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     setActionLoading('accept');
     try {
       await sessionsApi.accept(token, session._id);
-      setLocalStatus('confirmed');
+      setLocalSession((s) => ({ ...s, status: 'confirmed' }));
       toast.success('Session confirmed!');
     } catch (err: any) {
       toast.error(err?.message || 'Could not confirm session');
@@ -231,9 +231,10 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     }
   };
 
-  const effectiveStatus = localSession.status === 'open' && localSession.pendingPartner
-    ? 'pending'
-    : localSession.status;
+  const effectiveStatus = localSession.status === 'open' &&
+    localSession.pendingPartners && localSession.pendingPartners.length > 0
+      ? 'pending'
+      : localSession.status;
   const statusConfig = {
     open: { label: 'Open – Awaiting Partner', Icon: AlertCircle, color: 'text-amber-200', bg: 'bg-amber-500/20 border-amber-400/30' },
     pending: { label: 'Inquiry Pending', Icon: AlertCircle, color: 'text-orange-200', bg: 'bg-orange-500/20 border-orange-400/30' },
@@ -359,43 +360,53 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
           </div>
         )}
 
-        {/* Pending Partner Banner — shown to the poster when someone requests to join */}
-        {isPostedByMe && localSession.pendingPartner && typeof localSession.pendingPartner === 'object' && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-4">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <UserCheck className="w-4 h-4 text-emerald-600" />
+        {/* Pending Partners — shown to the poster when someone(s) request to join */}
+        {isPostedByMe && localSession.pendingPartners && localSession.pendingPartners.length > 0 && (
+          <div className="space-y-3 mb-4">
+            {localSession.pendingPartners.length > 1 && (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl px-4 py-2 text-sm text-orange-700 font-medium text-center">
+                {localSession.pendingPartners.length} people want to join this session
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-slate-900 mb-0.5">Join Request — Pending Your Approval</p>
-                <p className="text-sm text-slate-600 mb-3">
-                  <span className="font-medium">{localSession.pendingPartner.name}</span> has requested to join this session.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    disabled={!!actionLoading}
-                    onClick={handleApprovePartner}
-                    className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-60"
-                  >
-                    {actionLoading === 'approvePartner' ? 'Approving…' : 'Approve'}
-                  </button>
-                  <button
-                    disabled={!!actionLoading}
-                    onClick={handleDeclinePartner}
-                    className="flex-1 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-medium transition-colors disabled:opacity-60"
-                  >
-                    {actionLoading === 'declinePartner' ? 'Declining…' : 'Decline'}
-                  </button>
+            )}
+            {localSession.pendingPartners.map((pendingUser) =>
+              typeof pendingUser === 'object' ? (
+                <div key={pendingUser._id} className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <UserCheck className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 mb-0.5">Join Request — Pending Your Approval</p>
+                      <p className="text-sm text-slate-600 mb-3">
+                        <span className="font-medium">{pendingUser.name}</span> has requested to join this session.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          disabled={!!actionLoading}
+                          onClick={() => handleApprovePartner(pendingUser._id)}
+                          className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-60"
+                        >
+                          {actionLoading === 'approvePartner' ? 'Approving…' : 'Approve'}
+                        </button>
+                        <button
+                          disabled={!!actionLoading}
+                          onClick={() => handleDeclinePartner(pendingUser._id)}
+                          className="flex-1 py-2 bg-white hover:bg-red-50 text-red-600 border border-red-200 rounded-lg text-xs font-medium transition-colors disabled:opacity-60"
+                        >
+                          {actionLoading === 'declinePartner' ? 'Declining…' : 'Decline'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              ) : null
+            )}
           </div>
         )}
 
         {/* Pending Partner Status — shown to the requester while awaiting approval */}
-        {!isPostedByMe && localSession.status === 'open' && localSession.pendingPartner &&
-          typeof localSession.pendingPartner === 'object' &&
-          localSession.pendingPartner._id === user?._id && (
+        {!isPostedByMe && localSession.status === 'open' &&
+          localSession.pendingPartners?.some(p => typeof p === 'object' && p._id === user?._id) && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
             <div className="flex items-start gap-3">
               <div className="w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">

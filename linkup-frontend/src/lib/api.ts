@@ -61,7 +61,7 @@ export interface Session {
   skillLevelRequired: string;
   status: 'open' | 'confirmed' | 'completed' | 'cancelled';
   partner: User | null;
-  pendingPartner?: User | null;
+  pendingPartners?: User[];
   sessionType: 'need' | 'clinic';
   isTraveler: boolean;
   createdAt: string;
@@ -301,11 +301,15 @@ export const sessions = {
   declineChange: (token: string, id: string) =>
     request<{ session: Session }>(`/api/sessions/${id}/decline-change`, { method: 'POST' }, token),
 
-  approvePartner: (token: string, id: string) =>
-    request<{ session: Session }>(`/api/sessions/${id}/approve-partner`, { method: 'POST' }, token),
+  approvePartner: (token: string, id: string, partnerId: string) =>
+    request<{ session: Session }>(`/api/sessions/${id}/approve-partner`, {
+      method: 'POST', body: JSON.stringify({ partnerId }),
+    }, token),
 
-  declinePartner: (token: string, id: string) =>
-    request<{ session: Session }>(`/api/sessions/${id}/decline-partner`, { method: 'POST' }, token),
+  declinePartner: (token: string, id: string, partnerId: string) =>
+    request<{ session: Session }>(`/api/sessions/${id}/decline-partner`, {
+      method: 'POST', body: JSON.stringify({ partnerId }),
+    }, token),
 };
 
 // ─── Connections ──────────────────────────────────────────────────────────────

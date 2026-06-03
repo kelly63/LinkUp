@@ -183,7 +183,7 @@ const getMySessions = async (req, res) => {
     const { status } = req.query;
 
     const query = {
-      $or: [{ postedBy: req.user._id }, { partner: req.user._id }, { pendingPartner: req.user._id }],
+      $or: [{ postedBy: req.user._id }, { partner: req.user._id }, { pendingPartners: req.user._id }],
     };
 
     if (status) {
@@ -197,7 +197,7 @@ const getMySessions = async (req, res) => {
     const sessions = await Session.find(query)
       .populate('postedBy', USER_FIELDS)
       .populate('partner', USER_FIELDS)
-      .populate('pendingPartner', USER_FIELDS)
+      .populate('pendingPartners', USER_FIELDS)
       .sort({ createdAt: -1 });
 
     res.json({ sessions });
@@ -212,7 +212,7 @@ const getSessionById = async (req, res) => {
     const session = await Session.findById(req.params.id)
       .populate('postedBy', USER_FIELDS)
       .populate('partner', USER_FIELDS)
-      .populate('pendingPartner', USER_FIELDS)
+      .populate('pendingPartners', USER_FIELDS)
       .populate('participants', USER_FIELDS);
 
     if (!session) return res.status(404).json({ message: 'Session not found' });
@@ -468,21 +468,25 @@ const acceptSession = async (req, res) => {
       return res.status(400).json({ message: 'Cannot join your own session' });
     }
 
-    if (session.pendingPartner && session.pendingPartner.toString() === req.user._id.toString()) {
+    const alreadyPending = session.pendingPartners.some(
+      (id) => id.toString() === req.user._id.toString()
+    );
+    if (alreadyPending) {
       return res.status(400).json({ message: 'You have already requested to join this session' });
     }
 
-    session.pendingPartner = req.user._id;
+    const isAdditionalRequest = session.pendingPartners.length > 0;
+    session.pendingPartners.push(req.user._id);
     await session.save();
     await session.populate('postedBy', USER_FIELDS);
-    await session.populate('pendingPartner', USER_FIELDS);
+    await session.populate('pendingPartners', USER_FIELDS);
 
     const io = req.app.get('io');
     const posterId = session.postedBy._id.toString();
     const sessionLabel = session.title || session.sport;
     const dateLabel = session.date && session.date !== 'Flexible' ? ` on ${session.date}` : '';
+    const totalPending = session.pendingPartners.length;
 
-    // Push notification to poster
     if (io) {
       io.notify(posterId, 'session_inquiry', {
         sessionId: session._id,
@@ -498,17 +502,15 @@ const acceptSession = async (req, res) => {
           sport: req.user.sport,
           position: req.user.position,
         },
+        totalPending,
       });
     }
 
-    // System message in the thread (requester → poster)
-    await postSystemMessage(
-      io,
-      req.user._id,
-      posterId,
-      `${req.user.name} has requested to join your "${sessionLabel}" session${dateLabel}. Tap to review their request.`,
-      session._id
-    );
+    const systemMsg = isAdditionalRequest
+      ? `${req.user.name} also wants to join your "${sessionLabel}" session${dateLabel}. You now have ${totalPending} pending requests.`
+      : `${req.user.name} has requested to join your "${sessionLabel}" session${dateLabel}. Tap to review their request.`;
+
+    await postSystemMessage(io, req.user._id, posterId, systemMsg, session._id);
 
     res.json({ session });
   } catch (error) {
@@ -516,7 +518,8 @@ const acceptSession = async (req, res) => {
   }
 };
 
-// POST /api/sessions/:id/approve-partner — poster approves the pending partner
+// POST /api/sessions/:id/approve-partner — poster approves one pending partner
+// Body: { partnerId } — which requester to approve
 const approvePartner = async (req, res) => {
   try {
     const session = await Session.findById(req.params.id);
@@ -526,13 +529,27 @@ const approvePartner = async (req, res) => {
       return res.status(403).json({ message: 'Only the session poster can approve a partner' });
     }
 
-    if (!session.pendingPartner) {
-      return res.status(400).json({ message: 'No pending partner to approve' });
+    if (!session.pendingPartners || session.pendingPartners.length === 0) {
+      return res.status(400).json({ message: 'No pending requests to approve' });
     }
 
-    const pendingPartnerId = session.pendingPartner.toString();
-    session.partner = session.pendingPartner;
-    session.pendingPartner = null;
+    // If partnerId supplied use it; otherwise default to first requester
+    const partnerId = req.body.partnerId
+      ? req.body.partnerId
+      : session.pendingPartners[0].toString();
+
+    const isInQueue = session.pendingPartners.some((id) => id.toString() === partnerId);
+    if (!isInQueue) {
+      return res.status(400).json({ message: 'That user has not requested to join this session' });
+    }
+
+    // Decline all other requesters
+    const declinedIds = session.pendingPartners
+      .map((id) => id.toString())
+      .filter((id) => id !== partnerId);
+
+    session.partner = partnerId;
+    session.pendingPartners = [];
     session.status = 'confirmed';
     await session.save();
     await session.populate('postedBy', USER_FIELDS);
@@ -542,9 +559,9 @@ const approvePartner = async (req, res) => {
     const sessionLabel = session.title || session.sport;
     const dateLabel = session.date && session.date !== 'Flexible' ? ` on ${session.date}` : '';
 
-    // Push notification to requester
+    // Notify approved partner
     if (io) {
-      io.notify(pendingPartnerId, 'partner_approved', {
+      io.notify(partnerId, 'partner_approved', {
         sessionId: session._id,
         sessionTitle: sessionLabel,
         sport: session.sport,
@@ -554,15 +571,28 @@ const approvePartner = async (req, res) => {
         approvedBy: { _id: req.user._id, name: req.user.name },
       });
     }
-
-    // System message to requester (from poster)
     await postSystemMessage(
-      io,
-      req.user._id,
-      pendingPartnerId,
+      io, req.user._id, partnerId,
       `✓ ${req.user.name} approved your request — your "${sessionLabel}" session${dateLabel} is confirmed!`,
       session._id
     );
+
+    // Notify declined partners
+    for (const declinedId of declinedIds) {
+      if (io) {
+        io.notify(declinedId, 'partner_declined', {
+          sessionId: session._id,
+          sessionTitle: sessionLabel,
+          sport: session.sport,
+          declinedBy: { _id: req.user._id, name: req.user.name },
+        });
+      }
+      await postSystemMessage(
+        io, req.user._id, declinedId,
+        `${req.user.name} wasn't able to accept your request to join "${sessionLabel}" this time.`,
+        session._id
+      );
+    }
 
     res.json({ session });
   } catch (error) {
@@ -570,7 +600,8 @@ const approvePartner = async (req, res) => {
   }
 };
 
-// POST /api/sessions/:id/decline-partner — poster declines the pending partner
+// POST /api/sessions/:id/decline-partner — poster declines one pending requester
+// Body: { partnerId } — which requester to decline
 const declinePartner = async (req, res) => {
   try {
     const session = await Session.findById(req.params.id);
@@ -580,22 +611,27 @@ const declinePartner = async (req, res) => {
       return res.status(403).json({ message: 'Only the session poster can decline a partner' });
     }
 
-    if (!session.pendingPartner) {
-      return res.status(400).json({ message: 'No pending partner to decline' });
+    if (!session.pendingPartners || session.pendingPartners.length === 0) {
+      return res.status(400).json({ message: 'No pending requests to decline' });
     }
 
-    const pendingPartnerId = session.pendingPartner.toString();
-    session.pendingPartner = null;
+    const partnerId = req.body.partnerId
+      ? req.body.partnerId
+      : session.pendingPartners[0].toString();
+
+    session.pendingPartners = session.pendingPartners.filter(
+      (id) => id.toString() !== partnerId
+    );
     await session.save();
     await session.populate('postedBy', USER_FIELDS);
     await session.populate('partner', USER_FIELDS);
+    await session.populate('pendingPartners', USER_FIELDS);
 
     const io = req.app.get('io');
     const sessionLabel = session.title || session.sport;
 
-    // Push notification to requester
     if (io) {
-      io.notify(pendingPartnerId, 'partner_declined', {
+      io.notify(partnerId, 'partner_declined', {
         sessionId: session._id,
         sessionTitle: sessionLabel,
         sport: session.sport,
@@ -603,11 +639,8 @@ const declinePartner = async (req, res) => {
       });
     }
 
-    // System message to requester (from poster)
     await postSystemMessage(
-      io,
-      req.user._id,
-      pendingPartnerId,
+      io, req.user._id, partnerId,
       `${req.user.name} wasn't able to accept your request to join "${sessionLabel}" this time.`,
       session._id
     );
