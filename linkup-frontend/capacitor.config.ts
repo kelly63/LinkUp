@@ -25,6 +25,14 @@ const config: CapacitorConfig = {
       style: 'light',
       backgroundColor: '#1e3a5f',
     },
+    SocialLogin: {
+      providers: {
+        google: true,
+        facebook: false, // not used — excludes Facebook SDK and AD_ID permission
+        apple: true,
+        twitter: false,
+      },
+    },
   },
 };
 
