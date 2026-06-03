@@ -286,7 +286,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6">
         {/* Partner Card (only if there's a partner) */}
         {partner && typeof partner === 'object' && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
@@ -676,7 +676,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
           </div>
         )}
 
-        <div className="h-6" />
+        <div className="h-10" />
       </div>
     </div>
   );

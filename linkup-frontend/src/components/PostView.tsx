@@ -493,30 +493,28 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 Date <span className="text-xs text-slate-400 font-normal">— tap a day to select it</span>
               </label>
 
-              {/* Quick-pick: next 14 days as tappable chips */}
-              <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+              {/* Quick-pick: next 14 days as a 7-column grid (2 rows, no horizontal scroll) */}
+              <div className="grid grid-cols-7 gap-1.5">
                 {Array.from({ length: 14 }, (_, i) => {
                   const d = new Date();
                   d.setDate(d.getDate() + i);
                   const val = d.toISOString().split('T')[0];
                   const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
                   const dayNum = d.getDate();
-                  const mon = d.toLocaleDateString('en-US', { month: 'short' });
                   const isSelected = selectedDates.includes(val);
                   return (
                     <button
                       key={val}
                       type="button"
                       onClick={() => isSelected ? handleDateRemove(val) : handleDateAdd(val)}
-                      className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-xl border-2 transition-all ${
+                      className={`flex flex-col items-center py-2 rounded-xl border-2 transition-all ${
                         isSelected
                           ? 'bg-emerald-500 border-emerald-600 text-white shadow-sm'
-                          : 'bg-white border-slate-300 text-slate-700 hover:border-emerald-400 active:border-emerald-500'
+                          : 'bg-white border-slate-200 text-slate-700 active:border-emerald-500'
                       }`}
                     >
-                      <span className="text-[10px] font-medium uppercase tracking-wide">{dayName}</span>
-                      <span className="text-base font-bold leading-tight">{dayNum}</span>
-                      <span className="text-[10px]">{mon}</span>
+                      <span className="text-[9px] font-medium uppercase tracking-wide leading-none mb-0.5">{dayName}</span>
+                      <span className="text-sm font-bold leading-tight">{dayNum}</span>
                     </button>
                   );
                 })}
