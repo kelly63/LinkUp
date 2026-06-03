@@ -138,7 +138,7 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
+      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6">
         {/* Posted By Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
           <p className="text-xs text-slate-500 mb-3">POSTED BY</p>

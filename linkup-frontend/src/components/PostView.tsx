@@ -999,7 +999,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
             </div>
 
             {/* Sessions List */}
-            <div className="space-y-3 pb-4">
+            <div className="space-y-3 pb-20">
               {loadingFind && (
                 <div className="flex justify-center py-8">
                   <span className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />

@@ -314,7 +314,7 @@ export function MobileFrame() {
         onExternalNavProcessed={() => setPendingNav(null)}
       />
 
-      {isAuthenticated && !chatOpen && (
+      {isAuthenticated && !(activeTab === 'chat' && chatOpen) && (
         <BottomTabBar
           activeTab={activeTab}
           onTabChange={handleTabChange}

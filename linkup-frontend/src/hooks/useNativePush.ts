@@ -59,6 +59,7 @@ export function useNativePush(authToken: string | null) {
     try {
       const status = await PushNotifications.requestPermissions();
       if (status.receive === 'granted') {
+        setEnabled(true);
         await PushNotifications.register();
       }
     } finally {
