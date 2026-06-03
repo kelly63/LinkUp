@@ -464,6 +464,35 @@ router.get('/test-apns', async (req, res) => {
 </div></body></html>`);
 });
 
+// GET /api/admin/sessions-debug?token=<ADMIN_SECRET>
+// Shows all open sessions in the database — for diagnosing visibility issues
+router.get('/sessions-debug', async (req, res) => {
+  const { token } = req.query;
+  if (!token || token !== ADMIN_SECRET) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  const Session = require('../models/Session');
+  const all = await Session.find({ status: 'open' })
+    .populate('postedBy', 'name sport location')
+    .sort({ createdAt: -1 })
+    .limit(50)
+    .lean();
+  res.json({
+    count: all.length,
+    sessions: all.map(s => ({
+      _id: s._id,
+      sport: s.sport,
+      source: s.source ?? '(null/missing)',
+      status: s.status,
+      location: s.location,
+      postedBy: s.postedBy?.name,
+      posterSport: s.postedBy?.sport,
+      createdAt: s.createdAt,
+      expiresAt: s.expiresAt,
+    })),
+  });
+});
+
 // POST /api/admin/reset-password
 // Body: { email, newPassword, adminSecret }
 router.post('/reset-password', async (req, res) => {
