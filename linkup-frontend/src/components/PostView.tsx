@@ -190,7 +190,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     sessionsApi.getAvailable(token, {
       sport: filterSport.length === 1 ? filterSport[0] : undefined,
       skillLevel: filterSkillLevels.length === 1 ? filterSkillLevels[0] : undefined,
-      location: isFindTraveling && findTravelLocation.trim() ? findTravelLocation.trim() : (user?.location || undefined),
+      location: isFindTraveling && findTravelLocation.trim() ? findTravelLocation.trim() : undefined,
       page: 1,
     }).then(({ sessions, total, pages }) => {
       setAvailableSessions(sessions);
@@ -220,7 +220,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     sessionsApi.getAvailable(token, {
       sport: filterSport.length === 1 ? filterSport[0] : undefined,
       skillLevel: filterSkillLevels.length === 1 ? filterSkillLevels[0] : undefined,
-      location: isFindTraveling && findTravelLocation.trim() ? findTravelLocation.trim() : (user?.location || undefined),
+      location: isFindTraveling && findTravelLocation.trim() ? findTravelLocation.trim() : undefined,
       page: nextPage,
     }).then(({ sessions }) => {
       setAvailableSessions((prev) => [...prev, ...sessions]);
