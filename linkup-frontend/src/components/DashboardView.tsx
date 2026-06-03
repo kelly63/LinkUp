@@ -568,7 +568,7 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
             onClick={() => onNavigate?.('lockerRoom')}
             className="w-full mt-4 py-2.5 bg-white border border-slate-200 text-slate-600 text-sm rounded-xl hover:bg-slate-50 transition-colors flex items-center justify-center gap-1"
           >
-            Open full Locker Room
+            Locker Room Chatter
             <ChevronRight className="w-4 h-4" />
           </button>
         )}
