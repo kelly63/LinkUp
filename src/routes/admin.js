@@ -357,6 +357,113 @@ router.get('/test-email', async (req, res) => {
 </div></body></html>`);
 });
 
+// GET /api/admin/test-apns?token=<ADMIN_SECRET>&deviceToken=<optional APNs device token>
+// Verifies APNs env vars and optionally sends a test push notification
+router.get('/test-apns', async (req, res) => {
+  const { token, deviceToken } = req.query;
+  if (!token || token !== ADMIN_SECRET) {
+    return res.status(401).send(adminPage('Invalid or missing admin token', false));
+  }
+
+  const apnKey    = process.env.APN_KEY    || '';
+  const apnKeyId  = process.env.APN_KEY_ID || '';
+  const apnTeamId = process.env.APN_TEAM_ID || '';
+  const nodeEnv   = process.env.NODE_ENV || 'development';
+
+  const cfg = {
+    APN_KEY:     apnKey    ? `${apnKey.slice(0, 27).replace(/\n/g, '\\n')}… (${apnKey.length} chars)` : '(not set)',
+    APN_KEY_ID:  apnKeyId  || '(not set)',
+    APN_TEAM_ID: apnTeamId || '(not set)',
+    NODE_ENV:    nodeEnv,
+    APNs_env:    nodeEnv === 'production' ? 'production gateway' : 'sandbox gateway',
+  };
+
+  let providerOk = false;
+  let providerError = null;
+  let pushResult = null;
+  let pushError = null;
+
+  if (apnKey && apnKeyId && apnTeamId) {
+    try {
+      const apn = require('node-apn');
+      const key = apnKey.replace(/\\n/g, '\n');
+      const testProvider = new apn.Provider({
+        token: { key, keyId: apnKeyId, teamId: apnTeamId },
+        production: nodeEnv === 'production',
+      });
+      providerOk = true;
+
+      if (deviceToken) {
+        try {
+          const note = new apn.Notification();
+          note.expiry = Math.floor(Date.now() / 1000) + 3600;
+          note.badge = 1;
+          note.sound = 'default';
+          note.alert = { title: 'APNs Test', body: 'Push notifications are working!' };
+          note.topic = 'com.linkupathletics.app';
+          const result = await testProvider.send(note, [deviceToken]);
+          if (result.failed?.length) {
+            pushError = `Failed: ${JSON.stringify(result.failed[0].response)}`;
+          } else {
+            pushResult = `Sent successfully to ${result.sent?.length || 1} device(s)`;
+          }
+        } catch (err) {
+          pushError = err.message;
+        }
+      }
+
+      testProvider.shutdown();
+    } catch (err) {
+      providerError = err.message;
+    }
+  }
+
+  const rows = Object.entries(cfg).map(([k, v]) =>
+    `<tr><td style="padding:6px 12px 6px 0;color:#666;white-space:nowrap">${k}</td><td style="font-family:monospace;color:#1e293b;word-break:break-all">${v}</td></tr>`
+  ).join('');
+
+  const missingVars = [
+    !apnKey    && 'APN_KEY (paste .p8 file contents)',
+    !apnKeyId  && 'APN_KEY_ID (10-char ID from Apple Developer)',
+    !apnTeamId && 'APN_TEAM_ID (10-char Team ID from Apple Developer)',
+  ].filter(Boolean);
+
+  res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>APNs Test</title></head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:24px">
+<div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+  <h2 style="margin:0 0 20px;color:#1e3a5f">APNs Push Notification Test</h2>
+
+  <table style="border-collapse:collapse;width:100%;margin-bottom:24px">${rows}</table>
+
+  <div style="padding:16px;border-radius:8px;margin-bottom:16px;${providerOk
+    ? 'background:#d1fae5;border-left:4px solid #16a34a'
+    : 'background:#fee2e2;border-left:4px solid #dc2626'}">
+    <p style="margin:0;font-weight:600;color:${providerOk ? '#065f46' : '#991b1b'}">${providerOk ? '✅ APNs provider initialised successfully' : '❌ Provider init failed'}</p>
+    ${providerError ? `<p style="margin:6px 0 0;font-size:14px;color:#7f1d1d">${providerError}</p>` : ''}
+  </div>
+
+  ${providerOk && deviceToken ? `
+  <div style="padding:16px;border-radius:8px;margin-bottom:16px;${pushResult
+    ? 'background:#d1fae5;border-left:4px solid #16a34a'
+    : 'background:#fee2e2;border-left:4px solid #dc2626'}">
+    <p style="margin:0;font-weight:600;color:${pushResult ? '#065f46' : '#991b1b'}">${pushResult ? '✅ Test push sent' : '❌ Push failed'}</p>
+    <p style="margin:6px 0 0;font-size:14px;color:${pushResult ? '#064e3b' : '#7f1d1d'}">${pushResult || pushError}</p>
+  </div>` : ''}
+
+  ${missingVars.length ? `<div style="margin-top:16px;padding:14px;background:#fffbeb;border-radius:8px;border:1px solid #fde68a">
+    <p style="margin:0 0 8px;font-weight:600;color:#92400e;font-size:14px">Missing environment variables on Render:</p>
+    <ul style="margin:0;padding-left:18px;font-size:13px;color:#78350f;line-height:1.8">
+      ${missingVars.map(v => `<li><code>${v}</code></li>`).join('')}
+    </ul>
+    <p style="margin:10px 0 0;font-size:13px;color:#78350f">Set these in Render → your service → Environment → Add environment variable.</p>
+  </div>` : ''}
+
+  ${providerOk && !deviceToken ? `<div style="margin-top:16px;padding:14px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd">
+    <p style="margin:0;font-size:13px;color:#0c4a6e">To send a test push, append <code>&amp;deviceToken=DEVICE_TOKEN_HERE</code> to this URL.<br>You can find your device token in the app's notification settings or Xcode console logs.</p>
+  </div>` : ''}
+</div></body></html>`);
+});
+
 // POST /api/admin/reset-password
 // Body: { email, newPassword, adminSecret }
 router.post('/reset-password', async (req, res) => {

@@ -4,15 +4,22 @@ let provider = null;
 
 function getProvider() {
   if (provider) return provider;
-  const key = process.env.APN_KEY;        // .p8 file contents as a string
-  const keyId = process.env.APN_KEY_ID;   // 10-char key ID from Apple Developer
-  const teamId = process.env.APN_TEAM_ID; // 10-char team ID from Apple Developer
+  // APN_KEY can be the raw .p8 content (with real newlines) or a single-line
+  // string with literal \n characters — both work after this replace.
+  const key = (process.env.APN_KEY || '').replace(/\\n/g, '\n');
+  const keyId = process.env.APN_KEY_ID;
+  const teamId = process.env.APN_TEAM_ID;
   if (!key || !keyId || !teamId) return null;
-  provider = new apn.Provider({
-    token: { key, keyId, teamId },
-    production: process.env.NODE_ENV === 'production',
-  });
-  return provider;
+  try {
+    provider = new apn.Provider({
+      token: { key, keyId, teamId },
+      production: process.env.NODE_ENV === 'production',
+    });
+    return provider;
+  } catch (err) {
+    console.error('[apn] provider init error:', err.message);
+    return null;
+  }
 }
 
 const BUNDLE_ID = 'com.linkupathletics.app';
