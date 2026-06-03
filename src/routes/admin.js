@@ -386,7 +386,8 @@ router.get('/test-apns', async (req, res) => {
   if (apnKey && apnKeyId && apnTeamId) {
     try {
       const apn = require('node-apn');
-      const key = apnKey.replace(/\\n/g, '\n');
+      const rawKey = apnKey.replace(/\\n/g, '\n').trim();
+      const key = rawKey.includes('-----BEGIN') ? rawKey : `-----BEGIN PRIVATE KEY-----\n${rawKey}\n-----END PRIVATE KEY-----`;
       const testProvider = new apn.Provider({
         token: { key, keyId: apnKeyId, teamId: apnTeamId },
         production: nodeEnv === 'production',

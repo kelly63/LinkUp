@@ -2,11 +2,17 @@ const apn = require('node-apn');
 
 let provider = null;
 
+function normalizePemKey(raw) {
+  const s = (raw || '').replace(/\\n/g, '\n').trim();
+  if (!s) return s;
+  // node-apn treats the key as a file path unless it starts with the PEM header
+  if (s.includes('-----BEGIN')) return s;
+  return `-----BEGIN PRIVATE KEY-----\n${s}\n-----END PRIVATE KEY-----`;
+}
+
 function getProvider() {
   if (provider) return provider;
-  // APN_KEY can be the raw .p8 content (with real newlines) or a single-line
-  // string with literal \n characters — both work after this replace.
-  const key = (process.env.APN_KEY || '').replace(/\\n/g, '\n');
+  const key = normalizePemKey(process.env.APN_KEY);
   const keyId = process.env.APN_KEY_ID;
   const teamId = process.env.APN_TEAM_ID;
   if (!key || !keyId || !teamId) return null;
