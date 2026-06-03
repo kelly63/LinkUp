@@ -28,6 +28,7 @@
     "multer-storage-cloudinary": "^4.0.0",
     "node-apn": "^3.0.0",
     "nodemailer": "^8.0.5",
+    "resend": "^6.12.4",
     "socket.io": "^4.8.3",
     "web-push": "^3.6.7"
   },

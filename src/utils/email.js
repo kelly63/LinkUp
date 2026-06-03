@@ -1,20 +1,13 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-function createTransport() {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT) || 587,
-    secure: process.env.SMTP_SECURE === 'true',
-    family: 4, // force IPv4 — Render cannot route IPv6 SMTP
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY);
 }
 
+const FROM = process.env.EMAIL_FROM || 'LinkUp Athletics <noreply@linkupathletics.com>';
+const ADMIN_TO = process.env.ADMIN_EMAIL || 'kelly@linkupathletics.com';
+
 async function sendAdminRatingReviewEmail({ rating, raterName, rateeName, approveUrl, rejectUrl }) {
-  const transport = createTransport();
   const stars = '★'.repeat(rating.overallRating) + '☆'.repeat(5 - rating.overallRating);
   const categories = rating.categories || {};
   const catRows = Object.entries({
@@ -89,17 +82,16 @@ async function sendAdminRatingReviewEmail({ rating, raterName, rateeName, approv
 </body>
 </html>`;
 
-  await transport.sendMail({
-    from: `"LinkUp Athletics" <${process.env.SMTP_USER}>`,
-    to: process.env.ADMIN_EMAIL || 'kelly@linkupathletics.com',
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: ADMIN_TO,
     subject: `[Review Needed] ${raterName} rated ${rateeName} — ${rating.overallRating}/5 stars`,
     html,
   });
+  if (error) throw new Error(error.message);
 }
 
 async function sendVerificationEmail({ user, approveUrl, clarifyUrl }) {
-  const transport = createTransport();
-
   const html = `
 <!DOCTYPE html>
 <html>
@@ -181,17 +173,16 @@ async function sendVerificationEmail({ user, approveUrl, clarifyUrl }) {
 </body>
 </html>`;
 
-  await transport.sendMail({
-    from: `"LinkUp Athletics" <${process.env.SMTP_USER}>`,
-    to: process.env.ADMIN_EMAIL || 'kelly@linkupathletics.com',
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: ADMIN_TO,
     subject: `[Verify] ${user.name} — ${user.sport || 'Athlete'} (${user.skillLevel || 'Unknown Level'})`,
     html,
   });
+  if (error) throw new Error(error.message);
 }
 
 async function sendPasswordResetEmail({ toEmail, toName, resetUrl }) {
-  const transport = createTransport();
-
   const html = `
 <!DOCTYPE html>
 <html>
@@ -231,16 +222,16 @@ async function sendPasswordResetEmail({ toEmail, toName, resetUrl }) {
 </body>
 </html>`;
 
-  await transport.sendMail({
-    from: `"LinkUp Athletics" <${process.env.SMTP_USER}>`,
+  const { error } = await getResend().emails.send({
+    from: FROM,
     to: toEmail,
     subject: 'Reset your LinkUp Athletics password',
     html,
   });
+  if (error) throw new Error(error.message);
 }
 
 async function sendClarificationEmail({ user, message }) {
-  const transport = createTransport();
   const html = `
 <!DOCTYPE html>
 <html>
@@ -267,16 +258,16 @@ async function sendClarificationEmail({ user, message }) {
 </body>
 </html>`;
 
-  await transport.sendMail({
-    from: `"LinkUp Athletics" <${process.env.SMTP_USER}>`,
+  const { error } = await getResend().emails.send({
+    from: FROM,
     to: user.email,
     subject: 'Action Required — Complete Your LinkUp Athletics Verification',
     html,
   });
+  if (error) throw new Error(error.message);
 }
 
 async function sendVerifiedEmail({ user }) {
-  const transport = createTransport();
   const html = `
 <!DOCTYPE html>
 <html>
@@ -306,12 +297,13 @@ async function sendVerifiedEmail({ user }) {
 </body>
 </html>`;
 
-  await transport.sendMail({
-    from: `"LinkUp Athletics" <${process.env.SMTP_USER}>`,
+  const { error } = await getResend().emails.send({
+    from: FROM,
     to: user.email,
-    subject: '🎉 You\'re now a Verified Athlete on LinkUp!',
+    subject: "🎉 You're now a Verified Athlete on LinkUp!",
     html,
   });
+  if (error) throw new Error(error.message);
 }
 
 module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail, sendVerifiedEmail };
