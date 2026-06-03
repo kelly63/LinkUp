@@ -1,7 +1,7 @@
 import { ArrowLeft, Eye, Shield, Users, Map } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
-import { users as usersApi } from '../lib/api';
+import { users as usersApi, User } from '../lib/api';
 import { toast } from 'sonner';
 
 interface PreferencesViewProps {
@@ -9,7 +9,7 @@ interface PreferencesViewProps {
 }
 
 export function PreferencesView({ onBack }: PreferencesViewProps) {
-  const { token, user } = useAuth();
+  const { token, user, updateUser } = useAuth();
 
   const [visibilityMode, setVisibilityMode] = useState<'everyone' | 'filtered'>(
     (user?.visibilityMode as 'everyone' | 'filtered') || 'everyone'
@@ -46,13 +46,14 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
     if (!token) return;
     setSaving(true);
     try {
-      await usersApi.updateProfile(token, {
+      const { user: updatedUser } = await usersApi.updateProfile(token, {
         visibilityMode,
         allowedLevels,
         allowedSports,
         searchNorthAmerica,
         searchRadius: Number(searchRadius),
       } as any);
+      if (updatedUser) updateUser(updatedUser as User);
       toast.success('Preferences saved');
     } catch (err: any) {
       toast.error(err?.message || 'Could not save preferences');

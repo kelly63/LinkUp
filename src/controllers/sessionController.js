@@ -157,7 +157,7 @@ const getAvailableSessions = async (req, res) => {
     const query = {
       status: 'open',
       postedBy: { $ne: req.user._id },
-      $or: [{ source: targetSource }, { source: { $exists: false } }, { source: null }],
+      source: { $in: [targetSource, null, undefined] },
     };
 
     if (sport) query.sport = { $regex: sport, $options: 'i' };
