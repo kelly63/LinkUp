@@ -100,7 +100,6 @@ export function MobileFrame() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [chatUnread, setChatUnread] = useState(0);
   const [liveQueue, setLiveQueue] = useState<StoredNotification[]>([]);
-  const [chatOpen, setChatOpen] = useState(false);
   const [pendingNav, setPendingNav] = useState<PendingNav>(null);
   const [banner, setBanner] = useState<{ title: string; description: string } | null>(null);
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -309,12 +308,12 @@ export function MobileFrame() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onAuthChange={() => {}}
-        onChatOpenChange={setChatOpen}
+        onChatOpenChange={undefined}
         externalNav={pendingNav}
         onExternalNavProcessed={() => setPendingNav(null)}
       />
 
-      {isAuthenticated && !(activeTab === 'chat' && chatOpen) && (
+      {isAuthenticated && (
         <BottomTabBar
           activeTab={activeTab}
           onTabChange={handleTabChange}
