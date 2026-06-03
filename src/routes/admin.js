@@ -291,6 +291,80 @@ router.post('/verify/:userId/clarify', express.urlencoded({ extended: false }), 
   return res.send(adminPage(`Clarification request sent to ${user.name} at ${user.email}.`, true));
 });
 
+// GET /api/admin/test-email?token=<ADMIN_SECRET>&to=<optional email>
+// Sends a test email and shows the result — use to verify SMTP config on Render
+router.get('/test-email', async (req, res) => {
+  const { token, to } = req.query;
+  if (!token || token !== ADMIN_SECRET) {
+    return res.status(401).send(adminPage('Invalid or missing admin token', false));
+  }
+
+  const nodemailer = require('nodemailer');
+  const cfg = {
+    SMTP_HOST:   process.env.SMTP_HOST   || '(not set)',
+    SMTP_PORT:   process.env.SMTP_PORT   || '(not set)',
+    SMTP_SECURE: process.env.SMTP_SECURE || '(not set)',
+    SMTP_USER:   process.env.SMTP_USER   || '(not set)',
+    SMTP_PASS:   process.env.SMTP_PASS   ? `${process.env.SMTP_PASS.slice(0,4)}****` : '(not set)',
+    ADMIN_EMAIL: process.env.ADMIN_EMAIL || '(not set — fallback: kelly@linkupathletics.com)',
+    APP_URL:     process.env.APP_URL     || '(not set)',
+  };
+
+  const recipient = to || process.env.ADMIN_EMAIL || 'kelly@linkupathletics.com';
+
+  let result, error;
+  try {
+    const transport = nodemailer.createTransport({
+      host:   process.env.SMTP_HOST,
+      port:   Number(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    });
+    await transport.verify();
+    const info = await transport.sendMail({
+      from:    `"LinkUp Athletics" <${process.env.SMTP_USER}>`,
+      to:      recipient,
+      subject: '✅ LinkUp SMTP Test — it works!',
+      text:    'If you receive this, your SMTP configuration on Render is working correctly.',
+    });
+    result = `Email sent! Message ID: ${info.messageId}`;
+  } catch (err) {
+    error = err.message;
+  }
+
+  const rows = Object.entries(cfg).map(([k, v]) =>
+    `<tr><td style="padding:6px 12px 6px 0;color:#666;white-space:nowrap">${k}</td><td style="font-family:monospace;color:#1e293b">${v}</td></tr>`
+  ).join('');
+
+  res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>SMTP Test</title></head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:24px">
+<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+  <h2 style="margin:0 0 20px;color:#1e3a5f">SMTP Configuration Test</h2>
+
+  <table style="border-collapse:collapse;width:100%;margin-bottom:24px">${rows}</table>
+
+  <div style="padding:16px;border-radius:8px;${error
+    ? 'background:#fee2e2;border-left:4px solid #dc2626'
+    : 'background:#d1fae5;border-left:4px solid #16a34a'}">
+    <p style="margin:0;font-weight:600;color:${error ? '#991b1b' : '#065f46'}">${error ? '❌ Failed' : '✅ Success'}</p>
+    <p style="margin:6px 0 0;font-size:14px;color:${error ? '#7f1d1d' : '#064e3b'};word-break:break-all">${error || result}</p>
+    ${!error ? `<p style="margin:6px 0 0;font-size:13px;color:#064e3b">Sent to: <strong>${recipient}</strong> — check your inbox (and spam folder).</p>` : ''}
+  </div>
+
+  ${error ? `<div style="margin-top:20px;padding:14px;background:#fffbeb;border-radius:8px;border:1px solid #fde68a">
+    <p style="margin:0 0 8px;font-weight:600;color:#92400e;font-size:14px">Common fixes:</p>
+    <ul style="margin:0;padding-left:18px;font-size:13px;color:#78350f;line-height:1.8">
+      <li>SMTP_HOST should be <code>smtp.gmail.com</code></li>
+      <li>SMTP_PORT should be <code>587</code></li>
+      <li>SMTP_SECURE should be <code>false</code> (port 587 uses STARTTLS, not SSL)</li>
+      <li>SMTP_USER is the full Gmail address (e.g. kelly@linkupathletics.com)</li>
+      <li>SMTP_PASS must be a Gmail <strong>App Password</strong> (16 chars, no spaces) — not your account password</li>
+      <li>2-Step Verification must be enabled on the Google account first</li>
+    </ul>
+  </div>` : ''}
+</div></body></html>`);
+});
+
 // POST /api/admin/reset-password
 // Body: { email, newPassword, adminSecret }
 router.post('/reset-password', async (req, res) => {
