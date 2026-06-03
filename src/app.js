@@ -32,6 +32,10 @@ if (process.env.NODE_ENV !== 'test') connectDB();
 const app = express();
 const httpServer = http.createServer(app);
 
+// Render (and most cloud platforms) sit behind a reverse proxy — trust the first hop
+// so express-rate-limit and req.ip see the real client IP from X-Forwarded-For.
+app.set('trust proxy', 1);
+
 // Attach Socket.io and export io for use in controllers
 const io = getSocketIo(httpServer);
 app.set('io', io);
