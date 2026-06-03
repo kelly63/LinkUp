@@ -5,6 +5,7 @@ const { approveRating, rejectRating, getAdminDashboard } = require('../controlle
 const { sendVerifiedEmail } = require('../utils/email');
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'linkup-admin-secret';
+const APP_URL = process.env.APP_URL || 'https://linkup-backend-46g1.onrender.com';
 const router = express.Router();
 
 function adminPage(message, success) {
@@ -21,6 +22,164 @@ function adminPage(message, success) {
 
 // Admin dashboard — GET /api/admin/dashboard?token=<ADMIN_SECRET>
 router.get('/dashboard', getAdminDashboard);
+
+// ─── Verification dashboard ───────────────────────────────────────────────────
+// GET /api/admin/verify-dashboard?token=<ADMIN_SECRET>&status=pending|approved|rejected|all
+router.get('/verify-dashboard', async (req, res) => {
+  const { token, status = 'pending' } = req.query;
+  if (!token || token !== ADMIN_SECRET) {
+    return res.status(401).send(adminPage('Invalid or missing admin token', false));
+  }
+
+  try {
+    const validStatuses = ['pending', 'approved', 'rejected', 'all'];
+    const safeStatus = validStatuses.includes(status) ? status : 'pending';
+    const query = safeStatus === 'all'
+      ? { verificationStatus: { $ne: 'unsubmitted' } }
+      : { verificationStatus: safeStatus };
+
+    const [users, pendingCount, approvedCount, rejectedCount] = await Promise.all([
+      User.find(query).sort({ createdAt: -1 }).limit(150),
+      User.countDocuments({ verificationStatus: 'pending' }),
+      User.countDocuments({ verificationStatus: 'approved' }),
+      User.countDocuments({ verificationStatus: 'rejected' }),
+    ]);
+
+    const baseUrl = APP_URL;
+    const dashBase = `${baseUrl}/api/admin/verify-dashboard?token=${encodeURIComponent(token)}`;
+
+    const tabStyle = (s) => safeStatus === s
+      ? 'background:#1e3a5f;color:#fff;padding:8px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px'
+      : 'background:#e2e8f0;color:#475569;padding:8px 20px;border-radius:8px;text-decoration:none;font-size:14px';
+
+    const tabs = `
+      <div style="display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap">
+        <a href="${dashBase}&status=pending"  style="${tabStyle('pending')}">⏳ Pending <span style="opacity:.7">(${pendingCount})</span></a>
+        <a href="${dashBase}&status=approved" style="${tabStyle('approved')}">✅ Approved <span style="opacity:.7">(${approvedCount})</span></a>
+        <a href="${dashBase}&status=rejected" style="${tabStyle('rejected')}">❌ Rejected <span style="opacity:.7">(${rejectedCount})</span></a>
+        <a href="${dashBase}&status=all"      style="${tabStyle('all')}">All <span style="opacity:.7">(${pendingCount + approvedCount + rejectedCount})</span></a>
+      </div>`;
+
+    const statusBadge = (s) => {
+      const map = {
+        pending:  ['#fef3c7','#92400e','⏳ Pending'],
+        approved: ['#d1fae5','#065f46','✅ Approved'],
+        rejected: ['#fee2e2','#991b1b','❌ Rejected'],
+      };
+      const [bg, color, label] = map[s] || ['#f1f5f9','#475569', s];
+      return `<span style="background:${bg};color:${color};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${label}</span>`;
+    };
+
+    const cards = users.length === 0
+      ? `<div style="text-align:center;padding:60px 20px;color:#94a3b8;background:#fff;border-radius:12px;border:1px solid #e2e8f0">
+          <div style="font-size:40px;margin-bottom:12px">🎉</div>
+          <p style="font-size:16px;margin:0">No ${safeStatus === 'all' ? '' : safeStatus + ' '}verification requests</p>
+         </div>`
+      : users.map((u) => {
+          const userIdStr = u._id.toString();
+          const joined = new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+          let actions = '';
+          if (u.verificationStatus === 'pending') {
+            const approveToken  = jwt.sign({ userId: userIdStr, action: 'approve'  }, ADMIN_SECRET, { expiresIn: '30d' });
+            const rejectToken   = jwt.sign({ userId: userIdStr, action: 'reject'   }, ADMIN_SECRET, { expiresIn: '30d' });
+            const clarifyToken  = jwt.sign({ userId: userIdStr, action: 'clarify'  }, ADMIN_SECRET, { expiresIn: '30d' });
+            const approveUrl  = `${baseUrl}/api/admin/verify/${userIdStr}/approve?token=${approveToken}`;
+            const rejectUrl   = `${baseUrl}/api/admin/verify/${userIdStr}/reject?token=${rejectToken}`;
+            const clarifyUrl  = `${baseUrl}/api/admin/verify/${userIdStr}/clarify?token=${clarifyToken}`;
+            actions = `
+              <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+                <a href="${approveUrl}"  style="flex:1;min-width:100px;text-align:center;background:#16a34a;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">✅ Approve</a>
+                <a href="${clarifyUrl}" style="flex:1;min-width:100px;text-align:center;background:#d97706;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">✏️ Clarify</a>
+                <a href="${rejectUrl}"  style="flex:1;min-width:100px;text-align:center;background:#dc2626;color:#fff;padding:10px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">❌ Reject</a>
+              </div>`;
+          }
+
+          return `
+          <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:20px;margin-bottom:14px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+              <div>
+                <div style="font-size:17px;font-weight:700;color:#1e293b;margin-bottom:2px">${u.name}</div>
+                <div style="font-size:13px;color:#64748b">${u.email}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+                ${statusBadge(u.verificationStatus)}
+                <span style="font-size:12px;color:#94a3b8">Joined ${joined}</span>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:8px">
+              ${u.school ? `<div style="background:#f8fafc;border-radius:8px;padding:8px 12px"><div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">School</div><div style="font-size:13px;color:#1e293b;font-weight:500">${u.school}</div></div>` : ''}
+              ${u.sport  ? `<div style="background:#f8fafc;border-radius:8px;padding:8px 12px"><div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Sport</div><div style="font-size:13px;color:#1e293b;font-weight:500">${u.sport}</div></div>` : ''}
+              ${u.skillLevel ? `<div style="background:#f8fafc;border-radius:8px;padding:8px 12px"><div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Level</div><div style="font-size:13px;color:#1e293b;font-weight:500">${u.skillLevel}</div></div>` : ''}
+              ${u.position ? `<div style="background:#f8fafc;border-radius:8px;padding:8px 12px"><div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Position</div><div style="font-size:13px;color:#1e293b;font-weight:500">${u.position}</div></div>` : ''}
+              ${u.location ? `<div style="background:#f8fafc;border-radius:8px;padding:8px 12px"><div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Location</div><div style="font-size:13px;color:#1e293b;font-weight:500">${u.location}</div></div>` : ''}
+              ${u.ngbMemberId ? `<div style="background:#fffbeb;border-radius:8px;padding:8px 12px;border:1px solid #fde68a"><div style="font-size:11px;color:#92400e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">NGB Member ID</div><div style="font-size:13px;color:#92400e;font-weight:600">${u.ngbMemberId}</div></div>` : ''}
+            </div>
+            ${u.verificationRosterUrl ? `
+            <div style="margin-bottom:8px">
+              <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Roster Link</div>
+              <a href="${u.verificationRosterUrl}" target="_blank" rel="noopener" style="color:#2563eb;font-size:13px;word-break:break-all">${u.verificationRosterUrl}</a>
+            </div>` : ''}
+            ${u.verificationNote ? `
+            <div style="background:#f0f9ff;border-left:3px solid #2563eb;border-radius:0 6px 6px 0;padding:10px 12px;margin-bottom:8px;font-size:13px;color:#1e293b;line-height:1.5">
+              <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${u.verificationStatus === 'rejected' ? 'Rejection note' : 'Notes'}</div>
+              ${u.verificationNote.replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+            </div>` : ''}
+            ${actions}
+          </div>`;
+        }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LinkUp — Verification Dashboard</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:0">
+  <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:20px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-size:24px">🔍</div>
+      <div>
+        <h1 style="margin:0;color:#fff;font-size:20px">Verification Dashboard</h1>
+        <p style="margin:2px 0 0;color:rgba(255,255,255,.7);font-size:13px">LinkUp Athletics</p>
+      </div>
+    </div>
+    <a href="${APP_URL}/api/admin/dashboard?token=${encodeURIComponent(token)}" style="color:rgba(255,255,255,.7);font-size:13px;text-decoration:none">← Ratings Dashboard</a>
+  </div>
+
+  <div style="max-width:760px;margin:0 auto;padding:28px 20px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px">
+      <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #e2e8f0;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:#d97706">${pendingCount}</div>
+        <div style="font-size:13px;color:#64748b;margin-top:2px">Pending</div>
+      </div>
+      <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #e2e8f0;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:#16a34a">${approvedCount}</div>
+        <div style="font-size:13px;color:#64748b;margin-top:2px">Approved</div>
+      </div>
+      <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #e2e8f0;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:#dc2626">${rejectedCount}</div>
+        <div style="font-size:13px;color:#64748b;margin-top:2px">Rejected</div>
+      </div>
+    </div>
+
+    ${tabs}
+    ${cards}
+
+    <p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:24px">
+      LinkUp Athletics Admin · Bookmark this page for quick access
+    </p>
+  </div>
+</body>
+</html>`;
+
+    res.send(html);
+  } catch (err) {
+    console.error('[admin] verify-dashboard error:', err);
+    res.status(500).send(adminPage('Server error loading dashboard', false));
+  }
+});
 
 // Rating moderation
 router.get('/ratings/:ratingId/approve', approveRating);
