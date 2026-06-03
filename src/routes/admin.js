@@ -464,32 +464,49 @@ router.get('/test-apns', async (req, res) => {
 </div></body></html>`);
 });
 
-// GET /api/admin/sessions-debug?token=<ADMIN_SECRET>
-// Shows all open sessions in the database — for diagnosing visibility issues
+// GET /api/admin/sessions-debug?token=<ADMIN_SECRET>&sport=Basketball
+// Shows open sessions and simulates the exact getAvailableSessions query
 router.get('/sessions-debug', async (req, res) => {
-  const { token } = req.query;
+  const { token, sport } = req.query;
   if (!token || token !== ADMIN_SECRET) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
   const Session = require('../models/Session');
+
+  // Raw open sessions (no filters)
   const all = await Session.find({ status: 'open' })
     .populate('postedBy', 'name sport location')
     .sort({ createdAt: -1 })
     .limit(50)
     .lean();
+
+  // Simulate the actual getAvailableSessions query for given sport
+  let simulated = null;
+  if (sport) {
+    const simQuery = {
+      status: 'open',
+      $or: [{ source: 'athletics' }, { source: { $exists: false } }, { source: null }],
+      sport: { $regex: sport, $options: 'i' },
+    };
+    const simResults = await Session.find(simQuery)
+      .populate('postedBy', 'name sport')
+      .sort({ createdAt: -1 })
+      .lean();
+    simulated = { query: simQuery, count: simResults.length, sessions: simResults.map(s => ({ _id: s._id, sport: s.sport, source: s.source, postedBy: s.postedBy?.name })) };
+  }
+
   res.json({
-    count: all.length,
+    totalOpen: all.length,
     sessions: all.map(s => ({
       _id: s._id,
       sport: s.sport,
       source: s.source ?? '(null/missing)',
       status: s.status,
-      location: s.location,
       postedBy: s.postedBy?.name,
-      posterSport: s.postedBy?.sport,
       createdAt: s.createdAt,
       expiresAt: s.expiresAt,
     })),
+    ...(simulated ? { simulated } : {}),
   });
 });
 
