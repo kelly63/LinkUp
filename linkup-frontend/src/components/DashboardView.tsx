@@ -25,8 +25,9 @@ interface DashboardViewProps {
   scrollTarget?: string | null;
 }
 
-function getInitialsDash(name: string): string {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+function getInitialsDash(name: string | undefined | null): string {
+  if (!name) return '?';
+  return name.split(' ').map(n => n[0]).filter(Boolean).join('').toUpperCase().slice(0, 2);
 }
 
 function timeAgo(iso: string): string {

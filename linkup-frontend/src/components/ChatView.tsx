@@ -284,7 +284,7 @@ export function ChatView({
     (c) =>
       !hiddenPartnerIds.has(c.partner._id) &&
       (searchQuery === '' ||
-        c.partner.name.toLowerCase().includes(searchQuery.toLowerCase()))
+        (c.partner?.name || '').toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Pending requests where I am the recipient

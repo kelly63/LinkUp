@@ -365,7 +365,7 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
                 <div className="w-14 h-14 bg-gradient-to-br from-emerald-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 overflow-hidden">
                   {thumb
                     ? <img src={thumb} alt={athlete.name} className="w-full h-full object-cover" />
-                    : athlete.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    : (athlete.name || '').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                 </div>
 
                 {/* Athlete Info */}
@@ -570,7 +570,7 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
                   {/* Scanned User Info */}
                   <div className="bg-slate-50 rounded-2xl p-4 mb-4">
                     <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-blue-600 rounded-full mx-auto mb-3 flex items-center justify-center text-white font-semibold text-xl">
-                      {scannedUser.name.split(' ').map(n => n[0]).join('')}
+                      {(scannedUser.name || '').split(' ').map((n: string) => n[0]).join('')}
                     </div>
                     <h4 className="text-slate-900 font-semibold mb-1">{scannedUser.name}</h4>
                     <p className="text-sm text-slate-600">{scannedUser.sport}</p>
