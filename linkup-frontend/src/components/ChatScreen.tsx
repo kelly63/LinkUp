@@ -124,7 +124,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
   };
 
   const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
   return (
     <div className="h-full flex flex-col bg-slate-50">

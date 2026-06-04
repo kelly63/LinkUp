@@ -4,7 +4,7 @@ export function StatusBar() {
   const currentTime = new Date().toLocaleTimeString('en-US', { 
     hour: 'numeric', 
     minute: '2-digit',
-    hour12: false 
+    hour12: true
   });
 
   return (
