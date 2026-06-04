@@ -736,9 +736,8 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
       {/* Settings */}
       <div className="px-6 pb-6">
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          {/* Push notification toggle — visible directly on profile */}
-          {isNative && (
-            <div className="px-5 py-4 flex items-center gap-4 border-b border-slate-100">
+          {/* Push notification toggle */}
+          <div className="px-5 py-4 flex items-center gap-4 border-b border-slate-100">
               <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <Bell className="w-5 h-5 text-purple-600" />
               </div>
@@ -762,6 +761,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   opacity: pushLoading ? 0.5 : 1,
                   border: 'none',
                   cursor: 'pointer',
+                  display: 'inline-block',
                 }}
               >
                 <span style={{
@@ -776,7 +776,6 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 }} />
               </button>
             </div>
-          )}
           <button
             onClick={() => onNavigate('settings')}
             className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors"
