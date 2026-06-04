@@ -535,4 +535,43 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// GET /api/admin/push-debug?token=<ADMIN_SECRET>&email=<email>
+// Shows device tokens for a user and optionally sends a test push
+router.get('/push-debug', async (req, res) => {
+  const { token, email } = req.query;
+  if (!token || token !== ADMIN_SECRET) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  if (!email) {
+    return res.status(400).json({ message: 'email query param required' });
+  }
+  const user = await User.findOne({ email: email.toLowerCase().trim() }).lean();
+  if (!user) return res.status(404).json({ message: 'User not found' });
+
+  const tokens = user.deviceTokens || [];
+  let pushResults = null;
+
+  if (tokens.length > 0) {
+    try {
+      const { sendPush } = require('../utils/pushNotification');
+      pushResults = await sendPush(tokens, {
+        title: 'LinkUp Test',
+        body: 'Push notifications are working!',
+        data: { type: 'test' },
+      });
+    } catch (err) {
+      pushResults = { error: err.message };
+    }
+  }
+
+  res.json({
+    name: user.name,
+    email: user.email,
+    deviceTokenCount: tokens.length,
+    deviceTokens: tokens.map(t => `${t.slice(0, 12)}...${t.slice(-6)}`),
+    pushSent: tokens.length > 0,
+    pushResults,
+  });
+});
+
 module.exports = router;
