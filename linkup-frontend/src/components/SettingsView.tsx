@@ -1,11 +1,10 @@
 import { ArrowLeft, Shield, Bell, KeyRound, LogOut, Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { useAuth } from '../lib/auth';
 import { auth as authApi } from '../lib/api';
 import { toast } from 'sonner';
-import { useNativePush } from '../hooks/useNativePush';
-import { usePushNotifications } from '../hooks/usePushNotifications';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -17,21 +16,39 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
   const { token } = useAuth();
   const isNative = Capacitor.isNativePlatform();
 
-  // Native push (iOS app)
-  const { enabled: nativeEnabled, loading: nativeLoading, enable: enableNative, disable: disableNative } = useNativePush(token);
-  // Web push (browser)
-  const { supported: webSupported, permission, subscribed, loading: webLoading, enable: enableWeb, disable: disableWeb } = usePushNotifications(token);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
 
-  const pushEnabled = isNative ? nativeEnabled : subscribed;
-  const pushLoading = isNative ? nativeLoading : webLoading;
-  const pushSupported = isNative ? true : webSupported;
-  const pushBlocked = !isNative && permission === 'denied';
+  useEffect(() => {
+    if (!isNative) return;
+    PushNotifications.checkPermissions().then((status) => {
+      setPushEnabled(status.receive === 'granted');
+    }).catch(() => {});
+  }, [isNative]);
 
-  const togglePush = () => {
-    if (isNative) {
-      pushEnabled ? disableNative() : enableNative();
-    } else {
-      pushEnabled ? disableWeb() : enableWeb();
+  const togglePush = async () => {
+    if (!isNative) {
+      toast.info('Push notifications are only available in the iOS app');
+      return;
+    }
+    if (pushEnabled) {
+      toast.info('To disable notifications, go to iPhone Settings → Notifications → LinkUp');
+      return;
+    }
+    setPushLoading(true);
+    try {
+      const status = await PushNotifications.requestPermissions();
+      if (status.receive === 'granted') {
+        setPushEnabled(true);
+        await PushNotifications.register();
+        toast.success('Push notifications enabled!');
+      } else {
+        toast.error('Enable in iPhone Settings → Notifications → LinkUp');
+      }
+    } catch {
+      toast.error('Could not request notification permissions');
+    } finally {
+      setPushLoading(false);
     }
   };
 
@@ -91,17 +108,15 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
             <div className="flex-1">
               <h4 className="text-slate-900">Push Notifications</h4>
               <p className="text-sm text-slate-500 mt-0.5">
-                {pushBlocked ? 'Blocked — enable in iPhone Settings → Notifications → LinkUp' :
-                 pushEnabled ? 'You\'ll get alerts for messages & requests' :
-                 'Tap to enable alerts for messages & requests'}
+                {pushEnabled ? "You'll get alerts for messages & requests" : 'Tap to enable alerts for messages & requests'}
               </p>
             </div>
             <button
               onClick={togglePush}
-              disabled={pushLoading || pushBlocked}
+              disabled={pushLoading}
               className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                 pushEnabled ? 'bg-purple-600' : 'bg-slate-300'
-              } ${(pushLoading || pushBlocked) ? 'opacity-50' : ''}`}
+              } ${pushLoading ? 'opacity-50' : ''}`}
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                 pushEnabled ? 'translate-x-6' : 'translate-x-1'

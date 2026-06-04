@@ -190,7 +190,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     setActionLoading('cancel');
     try {
       await sessionsApi.cancel(token, session._id);
-      setLocalStatus('cancelled');
+      setLocalSession((s) => ({ ...s, status: 'cancelled' }));
       toast.success('Session cancelled');
       onBack();
     } catch (err: any) {
@@ -205,7 +205,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     setActionLoading('complete');
     try {
       await sessionsApi.complete(token, session._id);
-      setLocalStatus('completed');
+      setLocalSession((s) => ({ ...s, status: 'completed' }));
       toast.success('Session marked complete!');
       // Navigate to rating view if there's a partner to rate
       if (partner && onNavigate) {
@@ -246,9 +246,9 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     statusConfig[effectiveStatus as keyof typeof statusConfig] ?? statusConfig.open;
 
   return (
-    <div className="h-full flex flex-col bg-slate-50">
+    <div className="h-full overflow-y-auto bg-slate-50">
       {/* Header */}
-      <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 px-6 pt-4 pb-6">
+      <div className="sticky top-0 z-10 bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 px-6 pt-4 pb-6">
         <div className="flex items-center gap-3 mb-3">
           <button
             onClick={onBack}
@@ -286,7 +286,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-6 py-6">
+      <div className="px-6 py-6">
         {/* Partner Card (only if there's a partner) */}
         {partner && typeof partner === 'object' && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
