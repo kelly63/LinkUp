@@ -87,27 +87,41 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     try {
       const status = await PushNotifications.requestPermissions();
       if (status.receive === 'granted') {
-        // Listen for the device token BEFORE calling register()
+        const errListener = await PushNotifications.addListener('registrationError', (err: any) => {
+          errListener.remove();
+          toast.error(`APNs registration failed: ${JSON.stringify(err)}`);
+          setPushLoading(false);
+        });
         const listener = await PushNotifications.addListener('registration', async (tokenData) => {
           listener.remove();
+          errListener.remove();
           setPushEnabled(true);
+          setPushLoading(false);
           if (token) {
             try {
-              await fetch(`${API}/api/notifications/device-token`, {
+              const res = await fetch(`${API}/api/notifications/device-token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ token: tokenData.value }),
               });
-            } catch {}
+              if (res.ok) {
+                toast.success('Push notifications enabled!');
+              } else {
+                toast.error(`Token save failed: ${res.status}`);
+              }
+            } catch (e: any) {
+              toast.error(`Token save error: ${e?.message}`);
+            }
           }
         });
         await PushNotifications.register();
-        toast.success('Push notifications enabled!');
       } else {
         toast.error('Enable in iPhone Settings → Notifications → LinkUp');
+        setPushLoading(false);
       }
-    } catch {
-      toast.error('Could not request notification permissions');
+    } catch (e: any) {
+      toast.error(`Error: ${e?.message}`);
+      setPushLoading(false);
     } finally {
       setPushLoading(false);
     }
