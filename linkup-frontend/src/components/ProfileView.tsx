@@ -73,10 +73,26 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
 
   useEffect(() => {
     if (!isNative) return;
-    PushNotifications.checkPermissions().then((s) => {
-      setPushEnabled(s.receive === 'granted');
+    PushNotifications.checkPermissions().then(async (s) => {
+      if (s.receive === 'granted') {
+        setPushEnabled(true);
+        // Re-register every mount to ensure the token is always saved
+        const listener = await PushNotifications.addListener('registration', async (tokenData) => {
+          listener.remove();
+          if (token) {
+            try {
+              await fetch(`${API}/api/notifications/device-token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ token: tokenData.value }),
+              });
+            } catch {}
+          }
+        });
+        PushNotifications.register().catch(() => {});
+      }
     }).catch(() => {});
-  }, [isNative]);
+  }, [isNative, token]);
 
   const togglePush = async () => {
     if (pushEnabled) {
