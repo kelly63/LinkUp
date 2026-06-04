@@ -93,22 +93,20 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
               <p className="text-sm text-slate-500 mt-0.5">
                 {pushBlocked ? 'Blocked — enable in iPhone Settings → Notifications → LinkUp' :
                  pushEnabled ? 'You\'ll get alerts for messages & requests' :
-                 'Get notified about messages & requests'}
+                 'Tap to enable alerts for messages & requests'}
               </p>
             </div>
-            {!pushBlocked && (
-              <button
-                onClick={togglePush}
-                disabled={pushLoading}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                  pushEnabled ? 'bg-purple-600' : 'bg-slate-300'
-                } ${pushLoading ? 'opacity-50' : ''}`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  pushEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
-            )}
+            <button
+              onClick={togglePush}
+              disabled={pushLoading || pushBlocked}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                pushEnabled ? 'bg-purple-600' : 'bg-slate-300'
+              } ${(pushLoading || pushBlocked) ? 'opacity-50' : ''}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                pushEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`} />
+            </button>
           </div>
         </div>
 
