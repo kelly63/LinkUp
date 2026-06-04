@@ -1,4 +1,4 @@
-import { Settings, Star, Award, Shield, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera, KeyRound, Eye, EyeOff } from 'lucide-react';
+import { Settings, Star, Award, Shield, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera, KeyRound, Eye, EyeOff, Bell } from 'lucide-react';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
@@ -7,6 +7,7 @@ import { users as usersApi, auth as authApi } from '../lib/api';
 import { toast } from 'sonner';
 import { Capacitor } from '@capacitor/core';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { PushNotifications } from '@capacitor/push-notifications';
 import { ImageCropModal } from './ImageCropModal';
 
 function compressImage(file: File, maxDim = 800, quality = 0.75): Promise<File> {
@@ -62,6 +63,42 @@ interface ProfileViewProps {
 
 export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: ProfileViewProps) {
   const { token, user, updateUser } = useAuth();
+  const isNative = Capacitor.isNativePlatform();
+
+  // Push notification toggle
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isNative) return;
+    PushNotifications.checkPermissions().then((s) => {
+      setPushEnabled(s.receive === 'granted');
+    }).catch(() => {});
+  }, [isNative]);
+
+  const togglePush = async () => {
+    if (!isNative) return;
+    if (pushEnabled) {
+      toast.info('To disable, go to iPhone Settings → Notifications → LinkUp');
+      return;
+    }
+    setPushLoading(true);
+    try {
+      const status = await PushNotifications.requestPermissions();
+      if (status.receive === 'granted') {
+        setPushEnabled(true);
+        await PushNotifications.register();
+        toast.success('Push notifications enabled!');
+      } else {
+        toast.error('Enable in iPhone Settings → Notifications → LinkUp');
+      }
+    } catch {
+      toast.error('Could not request notification permissions');
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
   // Edit modal states
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [cpCurrentPw, setCpCurrentPw] = useState('');
@@ -699,6 +736,47 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
       {/* Settings */}
       <div className="px-6 pb-6">
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          {/* Push notification toggle — visible directly on profile */}
+          {isNative && (
+            <div className="px-5 py-4 flex items-center gap-4 border-b border-slate-100">
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Bell className="w-5 h-5 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-slate-900">Push Notifications</h4>
+                <p className="text-sm text-slate-500">
+                  {pushEnabled ? "Enabled — alerts for messages & requests" : "Tap to enable alerts"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={togglePush}
+                disabled={pushLoading}
+                style={{
+                  width: 44,
+                  height: 24,
+                  borderRadius: 12,
+                  backgroundColor: pushEnabled ? '#9333ea' : '#CBD5E1',
+                  position: 'relative',
+                  flexShrink: 0,
+                  opacity: pushLoading ? 0.5 : 1,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{
+                  position: 'absolute',
+                  top: 4,
+                  left: pushEnabled ? 24 : 4,
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  backgroundColor: 'white',
+                  transition: 'left 0.2s',
+                }} />
+              </button>
+            </div>
+          )}
           <button
             onClick={() => onNavigate('settings')}
             className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors"
@@ -708,7 +786,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             </div>
             <div className="flex-1 text-left">
               <h4 className="text-slate-900">Settings</h4>
-              <p className="text-sm text-slate-500">Notifications, privacy & password</p>
+              <p className="text-sm text-slate-500">Privacy & password</p>
             </div>
             <ChevronRight className="w-5 h-5 text-slate-400" />
           </button>

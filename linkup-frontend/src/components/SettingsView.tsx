@@ -1,7 +1,5 @@
-import { ArrowLeft, Shield, Bell, KeyRound, LogOut, Eye, EyeOff } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { PushNotifications } from '@capacitor/push-notifications';
+import { ArrowLeft, Shield, KeyRound, LogOut, Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { auth as authApi } from '../lib/api';
 import { toast } from 'sonner';
@@ -14,43 +12,6 @@ interface SettingsViewProps {
 
 export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps) {
   const { token } = useAuth();
-  const isNative = Capacitor.isNativePlatform();
-
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [pushLoading, setPushLoading] = useState(false);
-
-  useEffect(() => {
-    if (!isNative) return;
-    PushNotifications.checkPermissions().then((status) => {
-      setPushEnabled(status.receive === 'granted');
-    }).catch(() => {});
-  }, [isNative]);
-
-  const togglePush = async () => {
-    if (!isNative) {
-      toast.info('Push notifications are only available in the iOS app');
-      return;
-    }
-    if (pushEnabled) {
-      toast.info('To disable notifications, go to iPhone Settings → Notifications → LinkUp');
-      return;
-    }
-    setPushLoading(true);
-    try {
-      const status = await PushNotifications.requestPermissions();
-      if (status.receive === 'granted') {
-        setPushEnabled(true);
-        await PushNotifications.register();
-        toast.success('Push notifications enabled!');
-      } else {
-        toast.error('Enable in iPhone Settings → Notifications → LinkUp');
-      }
-    } catch {
-      toast.error('Could not request notification permissions');
-    } finally {
-      setPushLoading(false);
-    }
-  };
 
   // Change password
   const [showChangePw, setShowChangePw] = useState(false);
@@ -95,35 +56,6 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
       </div>
 
       <div className="p-6 space-y-4 max-w-md mx-auto">
-
-        {/* Notifications */}
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-5 py-3 border-b border-slate-100">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Notifications</p>
-          </div>
-          <div className="px-5 py-4 flex items-center gap-4">
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Bell className="w-5 h-5 text-purple-600" />
-            </div>
-            <div className="flex-1">
-              <h4 className="text-slate-900">Push Notifications</h4>
-              <p className="text-sm text-slate-500 mt-0.5">
-                {pushEnabled ? "You'll get alerts for messages & requests" : 'Tap to enable alerts for messages & requests'}
-              </p>
-            </div>
-            <button
-              onClick={togglePush}
-              disabled={pushLoading}
-              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                pushEnabled ? 'bg-purple-600' : 'bg-slate-300'
-              } ${pushLoading ? 'opacity-50' : ''}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                pushEnabled ? 'translate-x-6' : 'translate-x-1'
-              }`} />
-            </button>
-          </div>
-        </div>
 
         {/* Account */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
