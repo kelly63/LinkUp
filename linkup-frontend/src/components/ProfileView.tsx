@@ -10,6 +10,8 @@ import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/
 import { PushNotifications } from '@capacitor/push-notifications';
 import { ImageCropModal } from './ImageCropModal';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 function compressImage(file: File, maxDim = 800, quality = 0.75): Promise<File> {
   return new Promise((resolve) => {
     const img = new Image();
@@ -77,7 +79,6 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   }, [isNative]);
 
   const togglePush = async () => {
-    if (!isNative) return;
     if (pushEnabled) {
       toast.info('To disable, go to iPhone Settings → Notifications → LinkUp');
       return;
@@ -86,7 +87,20 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     try {
       const status = await PushNotifications.requestPermissions();
       if (status.receive === 'granted') {
-        setPushEnabled(true);
+        // Listen for the device token BEFORE calling register()
+        const listener = await PushNotifications.addListener('registration', async (tokenData) => {
+          listener.remove();
+          setPushEnabled(true);
+          if (token) {
+            try {
+              await fetch(`${API}/api/notifications/device-token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ token: tokenData.value }),
+              });
+            } catch {}
+          }
+        });
         await PushNotifications.register();
         toast.success('Push notifications enabled!');
       } else {
