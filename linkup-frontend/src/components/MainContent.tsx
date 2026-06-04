@@ -1,3 +1,4 @@
+import React from 'react';
 import { LockerRoomView } from './LockerRoomView';
 import { PostView } from './PostView';
 import { ChatView } from './ChatView';
@@ -192,47 +193,51 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   }
 
   // ── Sub-views ────────────────────────────────────────────────────────────────
-  if (currentView === 'lockerRoom') return <LockerRoomView onBack={handleBack} initialOpenCommentPostId={lockerRoomInitPostId} onNavigate={handleNavigate} />;
+  // Each sub-view is wrapped in flex-1 min-h-0 so it occupies the remaining
+  // space between the header and the always-visible bottom tab bar correctly.
+  // Without this wrapper, h-full inside sub-views resolves to the full viewport
+  // height and the scroll area bleeds past the tab bar.
+  const wrap = (node: React.ReactNode) => (
+    <div className="flex-1 min-h-0 overflow-hidden">{node}</div>
+  );
 
-  if (currentView === 'coachSetup') return <CoachProfileSetup onBack={handleBack} />;
+  if (currentView === 'lockerRoom') return wrap(<LockerRoomView onBack={handleBack} initialOpenCommentPostId={lockerRoomInitPostId} onNavigate={handleNavigate} />);
+
+  if (currentView === 'coachSetup') return wrap(<CoachProfileSetup onBack={handleBack} />);
 
   if (currentView === 'athleteSearch') {
-    return (
-      <div className="h-full bg-slate-50">
-        <AthleteSearchView
-          onBack={handleBack}
-          onOpenChat={handleOpenChat}
-          onViewProfile={handleViewUserProfile}
-        />
-      </div>
+    return wrap(
+      <AthleteSearchView
+        onBack={handleBack}
+        onOpenChat={handleOpenChat}
+        onViewProfile={handleViewUserProfile}
+      />
     );
   }
 
-  if (currentView === 'clinicFlyer') {
-    return <div className="h-full bg-slate-50"><ClinicFlyerView onBack={handleBack} /></div>;
-  }
+  if (currentView === 'clinicFlyer') return wrap(<ClinicFlyerView onBack={handleBack} />);
 
-  if (currentView === 'preferences') return <PreferencesView onBack={handleBack} />;
-  if (currentView === 'settings') return <SettingsView onBack={handleBack} onNavigate={handleNavigate} onLogout={handleLogout} />;
+  if (currentView === 'preferences') return wrap(<PreferencesView onBack={handleBack} />);
+  if (currentView === 'settings') return wrap(<SettingsView onBack={handleBack} onNavigate={handleNavigate} onLogout={handleLogout} />);
 
   if (currentView === 'roster') {
-    return <RosterListView onBack={handleBack} onNavigate={handleNavigate} onOpenChat={handleOpenChat} />;
+    return wrap(<RosterListView onBack={handleBack} onNavigate={handleNavigate} onOpenChat={handleOpenChat} />);
   }
 
   if (currentView === 'mySessions') {
-    return <MySessionsView onBack={handleBack} onNavigate={handleNavigate} />;
+    return wrap(<MySessionsView onBack={handleBack} onNavigate={handleNavigate} />);
   }
 
   if (currentView === 'reviews') {
-    return <ReviewsView onBack={handleBack} onNavigate={handleNavigate} />;
+    return wrap(<ReviewsView onBack={handleBack} onNavigate={handleNavigate} />);
   }
 
   if (currentView === 'receivedRatings') {
-    return <ReceivedRatingsView onBack={handleBack} onNavigate={handleNavigate} />;
+    return wrap(<ReceivedRatingsView onBack={handleBack} onNavigate={handleNavigate} />);
   }
 
   if (currentView === 'rating' && ratingSessionData) {
-    return (
+    return wrap(
       <RatingView
         sessionPartner={{
           name: ratingSessionData.name,
@@ -240,7 +245,6 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
           sport: ratingSessionData.sport,
           position: ratingSessionData.position,
           type: ratingSessionData.type,
-          // Pass through IDs for API call
           _id: ratingSessionData._id || ratingSessionData.partnerId,
         }}
         sessionDetails={{
@@ -281,7 +285,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   }
 
   if (currentView === 'sessionDetails' && sessionDetailsData) {
-    return (
+    return wrap(
       <SessionDetailsView
         session={sessionDetailsData}
         onBack={handleBack}
@@ -292,7 +296,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   }
 
   if (currentView === 'userProfile' && selectedUserId !== null) {
-    return (
+    return wrap(
       <UserProfileView
         userId={selectedUserId}
         userType={selectedUserType}
@@ -317,7 +321,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   }
 
   if (currentView === 'editSession' && editSessionData) {
-    return (
+    return wrap(
       <EditSessionView
         session={editSessionData}
         onBack={handleBack}
