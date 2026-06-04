@@ -401,7 +401,7 @@ router.get('/test-apns', async (req, res) => {
           note.badge = 1;
           note.sound = 'default';
           note.alert = { title: 'APNs Test', body: 'Push notifications are working!' };
-          note.topic = 'com.linkupathletics.app';
+          note.topic = 'com.linkupathletics.nextgen';
           const result = await testProvider.send(note, [deviceToken]);
           if (result.failed?.length) {
             pushError = `Failed: ${JSON.stringify(result.failed[0].response)}`;
