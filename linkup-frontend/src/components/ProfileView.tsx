@@ -70,84 +70,72 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   // Push notification toggle
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
+  const [deviceToken, setDeviceToken] = useState<string | null>(null);
 
   useEffect(() => {
-    toast.info(`[Push] isNative=${isNative} auth=${token ? 'yes' : 'no'}`);
     if (!isNative) return;
     PushNotifications.checkPermissions().then(async (s) => {
-      toast.info(`[Push] permission=${s.receive}`);
       if (s.receive === 'granted') {
         setPushEnabled(true);
-        await PushNotifications.addListener('registrationError', (err: any) => {
-          toast.error(`[Push] reg error: ${JSON.stringify(err)}`);
-        });
         await PushNotifications.addListener('registration', async (tokenData) => {
-          toast.success(`[Push] token: ${tokenData.value.slice(0, 10)}...`);
+          setDeviceToken(tokenData.value);
           if (token) {
-            try {
-              const res = await fetch(`${API}/api/notifications/device-token`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ token: tokenData.value }),
-              });
-              toast.info(`[Push] save=${res.status}`);
-            } catch (e: any) {
-              toast.error(`[Push] save err: ${e?.message}`);
-            }
+            await fetch(`${API}/api/notifications/device-token`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ token: tokenData.value }),
+            }).catch(() => {});
           }
         });
-        PushNotifications.register()
-          .then(() => toast.info('[Push] register() called'))
-          .catch((e: any) => toast.error(`[Push] register() failed: ${e?.message}`));
+        PushNotifications.register().catch(() => {});
       }
-    }).catch((e: any) => toast.error(`[Push] checkPerms err: ${e?.message}`));
+    }).catch(() => {});
   }, [isNative, token]);
 
   const togglePush = async () => {
     if (pushEnabled) {
-      toast.info('To disable, go to iPhone Settings → Notifications → LinkUp');
+      // Soft-disable: remove token from backend so notifications stop
+      setPushLoading(true);
+      try {
+        const currentToken = deviceToken ?? await new Promise<string>((resolve) => {
+          PushNotifications.addListener('registration', (t) => resolve(t.value));
+          PushNotifications.register().catch(() => {});
+        });
+        if (token && currentToken) {
+          await fetch(`${API}/api/notifications/device-token`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ token: currentToken }),
+          });
+        }
+        setPushEnabled(false);
+        setDeviceToken(null);
+      } catch {}
+      setPushLoading(false);
       return;
     }
     setPushLoading(true);
     try {
       const status = await PushNotifications.requestPermissions();
       if (status.receive === 'granted') {
-        const errListener = await PushNotifications.addListener('registrationError', (err: any) => {
-          errListener.remove();
-          toast.error(`APNs registration failed: ${JSON.stringify(err)}`);
-          setPushLoading(false);
-        });
-        const listener = await PushNotifications.addListener('registration', async (tokenData) => {
-          listener.remove();
-          errListener.remove();
+        await PushNotifications.addListener('registration', async (tokenData) => {
+          setDeviceToken(tokenData.value);
           setPushEnabled(true);
           setPushLoading(false);
           if (token) {
-            try {
-              const res = await fetch(`${API}/api/notifications/device-token`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ token: tokenData.value }),
-              });
-              if (res.ok) {
-                toast.success('Push notifications enabled!');
-              } else {
-                toast.error(`Token save failed: ${res.status}`);
-              }
-            } catch (e: any) {
-              toast.error(`Token save error: ${e?.message}`);
-            }
+            await fetch(`${API}/api/notifications/device-token`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ token: tokenData.value }),
+            }).catch(() => {});
           }
         });
         await PushNotifications.register();
       } else {
-        toast.error('Enable in iPhone Settings → Notifications → LinkUp');
+        toast.info('Enable notifications in iPhone Settings → LinkUp');
         setPushLoading(false);
       }
-    } catch (e: any) {
-      toast.error(`Error: ${e?.message}`);
-      setPushLoading(false);
-    } finally {
+    } catch {
       setPushLoading(false);
     }
   };
