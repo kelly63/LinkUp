@@ -407,6 +407,23 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
           </div>
         )}
 
+        {/* Declined Status — shown to a requester who was declined */}
+        {!isPostedByMe && (localSession as any).declinedPartners?.some(
+          (id: any) => (typeof id === 'object' ? id._id : id)?.toString() === user?._id?.toString()
+        ) && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <XCircle className="w-4 h-4 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900 mb-0.5">Request Declined</p>
+                <p className="text-sm text-red-700">Your request to join this session was declined.</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Pending Partner Status — shown to the requester while awaiting approval */}
         {!isPostedByMe && localSession.status === 'open' &&
           localSession.pendingPartners?.some(p => typeof p === 'object' && p._id === user?._id) && (

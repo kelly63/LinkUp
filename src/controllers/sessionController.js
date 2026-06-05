@@ -476,6 +476,13 @@ const acceptSession = async (req, res) => {
       return res.status(400).json({ message: 'You have already requested to join this session' });
     }
 
+    const wasDeclined = (session.declinedPartners || []).some(
+      (id) => id.toString() === req.user._id.toString()
+    );
+    if (wasDeclined) {
+      return res.status(403).json({ message: 'Your request to join this session was declined' });
+    }
+
     const isAdditionalRequest = session.pendingPartners.length > 0;
     session.pendingPartners.push(req.user._id);
     await session.save();
@@ -623,6 +630,10 @@ const declinePartner = async (req, res) => {
     session.pendingPartners = session.pendingPartners.filter(
       (id) => id.toString() !== partnerId
     );
+    if (!session.declinedPartners) session.declinedPartners = [];
+    if (!session.declinedPartners.some((id) => id.toString() === partnerId)) {
+      session.declinedPartners.push(partnerId);
+    }
     await session.save();
     await session.populate('postedBy', USER_FIELDS);
     await session.populate('partner', USER_FIELDS);
