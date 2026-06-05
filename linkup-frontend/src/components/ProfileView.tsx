@@ -751,8 +751,8 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           <div className="bg-white rounded-xl p-4 flex items-center gap-4">
             {/* Small QR Code */}
             <div className="flex-shrink-0">
-              <QRCodeSVG 
-                value={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/profile/${user?._id || 'unknown'}`}
+              <QRCodeSVG
+                value={`linkupathletics://profile/${user?._id || 'unknown'}`}
                 size={80}
                 level="H"
                 includeMargin={false}
@@ -1147,7 +1147,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <div className="bg-slate-50 rounded-2xl p-6 flex flex-col items-center">
               <div className="bg-white p-4 rounded-xl shadow-lg">
                 <QRCodeSVG 
-                  value={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/profile/${user?._id || 'unknown'}`}
+                  value={`linkupathletics://profile/${user?._id || 'unknown'}`}
                   size={220}
                   level="H"
                   includeMargin={true}
