@@ -258,6 +258,7 @@ export function MobileFrame() {
 
       <HeaderBar
         onBellClick={handleBellClick}
+        onLogoClick={() => handleTabChange('dashboard')}
         showNotifications={isAuthenticated}
         unreadCount={unreadCount}
         panelOpen={panelOpen}
