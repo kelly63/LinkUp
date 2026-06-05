@@ -377,9 +377,12 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-900 mb-0.5">Join Request — Pending Your Approval</p>
-                      <p className="text-sm text-slate-600 mb-3">
-                        <span className="font-medium">{pendingUser.name}</span> has requested to join this session.
-                      </p>
+                      <button
+                        onClick={() => onNavigate && onNavigate('userProfile', { _id: pendingUser._id, ...pendingUser })}
+                        className="text-sm text-emerald-600 font-medium hover:underline mb-3 text-left"
+                      >
+                        {pendingUser.name} — View Profile →
+                      </button>
                       <div className="flex gap-2">
                         <button
                           disabled={!!actionLoading}

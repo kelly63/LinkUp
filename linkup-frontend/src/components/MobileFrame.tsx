@@ -213,7 +213,19 @@ export function MobileFrame() {
         });
         break;
       case 'session_accepted':
-        setPendingNav({ view: 'mySessions', data: null });
+      case 'session_updated':
+      case 'session_cancelled':
+      case 'change_proposed':
+      case 'change_approved':
+      case 'change_declined':
+      case 'session_inquiry':
+      case 'partner_approved':
+      case 'partner_declined':
+        setActiveTab('dashboard');
+        setPendingNav(data?.sessionId
+          ? { view: 'sessionDetails', data: { _id: data.sessionId } }
+          : { view: 'mySessions', data: null }
+        );
         break;
       case 'message_new':
         setActiveTab('chat');
@@ -231,16 +243,6 @@ export function MobileFrame() {
         break;
       case 'rating_new':
         setPendingNav({ view: 'receivedRatings', data: null });
-        break;
-      case 'session_updated':
-      case 'session_cancelled':
-      case 'change_proposed':
-      case 'change_approved':
-      case 'change_declined':
-      case 'session_inquiry':
-      case 'partner_approved':
-      case 'partner_declined':
-        setPendingNav({ view: 'mySessions', data: null });
         break;
     }
   }, []);

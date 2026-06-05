@@ -296,6 +296,12 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, 
               );
             })
           )}
+          <button
+            onClick={onClose}
+            className="w-full py-4 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors border-t border-slate-100"
+          >
+            Close
+          </button>
         </div>
       </div>
     </>
