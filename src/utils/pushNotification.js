@@ -53,7 +53,7 @@ async function sendPush(tokens, { title, body, data = {} }) {
     if (result.failed?.length) {
       const User = require('../models/User');
       const badTokens = result.failed
-        .filter(f => f.response?.reason === 'BadDeviceToken' || f.response?.reason === 'Unregistered')
+        .filter(f => ['BadDeviceToken', 'Unregistered', 'DeviceTokenNotForTopic'].includes(f.response?.reason))
         .map(f => f.device);
       if (badTokens.length) {
         await User.updateMany({}, { $pull: { deviceTokens: { $in: badTokens } } });
