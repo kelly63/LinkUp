@@ -59,8 +59,10 @@ async function sendPush(tokens, { title, body, data = {} }) {
         await User.updateMany({}, { $pull: { deviceTokens: { $in: badTokens } } });
       }
     }
+    return result;
   } catch (err) {
     console.error('[apn] send error:', err.message);
+    return { error: err.message };
   }
 }
 
