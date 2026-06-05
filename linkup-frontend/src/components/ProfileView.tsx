@@ -72,26 +72,35 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [pushLoading, setPushLoading] = useState(false);
 
   useEffect(() => {
+    toast.info(`[Push] isNative=${isNative} auth=${token ? 'yes' : 'no'}`);
     if (!isNative) return;
     PushNotifications.checkPermissions().then(async (s) => {
+      toast.info(`[Push] permission=${s.receive}`);
       if (s.receive === 'granted') {
         setPushEnabled(true);
-        // Re-register every mount to ensure the token is always saved
-        const listener = await PushNotifications.addListener('registration', async (tokenData) => {
-          listener.remove();
+        await PushNotifications.addListener('registrationError', (err: any) => {
+          toast.error(`[Push] reg error: ${JSON.stringify(err)}`);
+        });
+        await PushNotifications.addListener('registration', async (tokenData) => {
+          toast.success(`[Push] token: ${tokenData.value.slice(0, 10)}...`);
           if (token) {
             try {
-              await fetch(`${API}/api/notifications/device-token`, {
+              const res = await fetch(`${API}/api/notifications/device-token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ token: tokenData.value }),
               });
-            } catch {}
+              toast.info(`[Push] save=${res.status}`);
+            } catch (e: any) {
+              toast.error(`[Push] save err: ${e?.message}`);
+            }
           }
         });
-        PushNotifications.register().catch(() => {});
+        PushNotifications.register()
+          .then(() => toast.info('[Push] register() called'))
+          .catch((e: any) => toast.error(`[Push] register() failed: ${e?.message}`));
       }
-    }).catch(() => {});
+    }).catch((e: any) => toast.error(`[Push] checkPerms err: ${e?.message}`));
   }, [isNative, token]);
 
   const togglePush = async () => {
