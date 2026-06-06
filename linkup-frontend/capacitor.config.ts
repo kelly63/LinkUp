@@ -5,7 +5,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 const prodUrl = process.env.CAPACITOR_API_URL;
 
 const config: CapacitorConfig = {
-  appId: 'com.linkupathletics.nextgen',
+  appId: 'com.linkupathletics.app',
   appName: 'LinkUp Athletics',
   webDir: 'build',
   server: {
