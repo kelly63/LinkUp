@@ -9,6 +9,7 @@ interface NotificationPanelProps {
   liveQueue: StoredNotification[];
   onAllRead: () => void;
   onNavigate?: (type: string, data: any) => void;
+  panelTop?: string;
 }
 
 const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color: string; bg: string }> = {
@@ -164,7 +165,7 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, onNavigate }: NotificationPanelProps) {
+export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, onNavigate, panelTop }: NotificationPanelProps) {
   const [items, setItems] = useState<StoredNotification[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -224,8 +225,8 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, 
       )}
 
       <div
-        style={open ? undefined : { display: 'none' }}
-        className="absolute top-[88px] left-0 right-0 z-40 bg-white rounded-b-2xl shadow-2xl flex flex-col max-h-[70%] overflow-y-auto"
+        style={open ? { top: panelTop ?? '100px' } : { display: 'none' }}
+        className="absolute left-0 right-0 z-40 bg-white rounded-b-2xl shadow-2xl flex flex-col max-h-[70%] overflow-y-auto"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
@@ -249,9 +250,9 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, 
             )}
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-slate-100 rounded-full transition-colors"
+              className="p-2.5 hover:bg-slate-100 rounded-full transition-colors"
             >
-              <X className="w-4 h-4 text-slate-500" />
+              <X className="w-5 h-5 text-slate-500" />
             </button>
           </div>
         </div>

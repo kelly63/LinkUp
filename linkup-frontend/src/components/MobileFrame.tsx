@@ -304,6 +304,7 @@ export function MobileFrame() {
           liveQueue={liveQueue}
           onAllRead={handleAllRead}
           onNavigate={handleNotificationNavigate}
+          panelTop={bannerTop}
         />
       )}
 
