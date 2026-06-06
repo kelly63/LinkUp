@@ -1,4 +1,5 @@
 import { Settings, Star, Award, Shield, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera, KeyRound, Eye, EyeOff, Bell } from 'lucide-react';
+import { LocationInput } from './LocationInput';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
@@ -924,13 +925,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
               {/* Location */}
               <div>
                 <label className="text-sm text-slate-700 mb-2 block">Location</label>
-                <input
-                  type="text"
-                  value={tempLocation}
-                  onChange={(e) => setTempLocation(e.target.value)}
-                  placeholder="e.g. Boston, MA"
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
-                />
+                <LocationInput value={tempLocation} onChange={setTempLocation} />
               </div>
 
               {/* Action Buttons */}
