@@ -67,6 +67,18 @@ const postSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    previewImage: {
+      type: String,
+      default: '',
+    },
+    previewDescription: {
+      type: String,
+      default: '',
+    },
+    previewFavicon: {
+      type: String,
+      default: '',
+    },
 
     // Engagement
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

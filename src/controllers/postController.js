@@ -53,6 +53,9 @@ const createPost = async (req, res) => {
       sessionSummary,
       sharedUrl,
       articleTitle,
+      previewImage,
+      previewDescription,
+      previewFavicon,
     } = req.body;
 
     const post = await Post.create({
@@ -65,6 +68,9 @@ const createPost = async (req, res) => {
       sessionSummary: sessionSummary || '',
       sharedUrl: sharedUrl || '',
       articleTitle: articleTitle || '',
+      previewImage: previewImage || '',
+      previewDescription: previewDescription || '',
+      previewFavicon: previewFavicon || '',
     });
 
     await post.populate('author', USER_FIELDS);

@@ -106,6 +106,9 @@ export interface Post {
   sessionSummary: string;
   sharedUrl: string;
   articleTitle: string;
+  previewImage: string;
+  previewDescription: string;
+  previewFavicon: string;
   likes: string[];
   comments: Array<{ _id: string; author: User; text: string; createdAt: string }>;
   createdAt: string;
@@ -420,7 +423,7 @@ export const posts = {
 
   create: (
     token: string,
-    body: { type: string; content?: string; sport?: string; sessionId?: string; sessionPartnerId?: string; sessionSummary?: string; sharedUrl?: string; articleTitle?: string }
+    body: { type: string; content?: string; sport?: string; sessionId?: string; sessionPartnerId?: string; sessionSummary?: string; sharedUrl?: string; articleTitle?: string; previewImage?: string; previewDescription?: string; previewFavicon?: string }
   ) =>
     request<{ post: Post }>('/api/posts', {
       method: 'POST',
