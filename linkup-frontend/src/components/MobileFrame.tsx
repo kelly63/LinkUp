@@ -92,6 +92,12 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
       ? `${d.declinedBy.name} declined your join request`
       : 'Your join request was declined',
   }),
+  session_nearby: (d) => ({
+    title: 'Session Near You',
+    description: d.postedBy?.name
+      ? `${d.postedBy.name} posted a ${d.sport || 'training'} session near you`
+      : `A ${d.sport || 'training'} session was just posted near you`,
+  }),
 };
 
 export function MobileFrame() {
@@ -169,6 +175,8 @@ export function MobileFrame() {
         setPendingNav({ view: 'sessions' });
       } else if (type === 'rating_new') {
         setActiveTab('profile');
+      } else if (type === 'session_nearby') {
+        setActiveTab('post');
       }
     });
     return () => {
@@ -243,6 +251,9 @@ export function MobileFrame() {
         break;
       case 'rating_new':
         setPendingNav({ view: 'receivedRatings', data: null });
+        break;
+      case 'session_nearby':
+        setActiveTab('post');
         break;
     }
   }, []);

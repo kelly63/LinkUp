@@ -118,6 +118,14 @@ const updateProfile = async (req, res) => {
       runValidators: true,
     }).select('-password');
 
+    // Geocode updated location async
+    if (updates.location) {
+      const { geocodeLocation } = require('../utils/geocode');
+      geocodeLocation(updates.location).then((coords) => {
+        if (coords) User.findByIdAndUpdate(req.user._id, { lat: coords.lat, lon: coords.lon }).catch(() => {});
+      }).catch(() => {});
+    }
+
     res.json({ user });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

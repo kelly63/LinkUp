@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star, CalendarClock, CalendarX, ThumbsUp, ThumbsDown, UserSearch } from 'lucide-react';
+import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star, CalendarClock, CalendarX, ThumbsUp, ThumbsDown, UserSearch, MapPin } from 'lucide-react';
 import { notifications as notificationsApi, StoredNotification } from '../lib/api';
 
 interface NotificationPanelProps {
@@ -97,6 +97,12 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color:
     color: 'text-red-600',
     bg: 'bg-red-50',
   },
+  session_nearby: {
+    label: 'Session Near You',
+    Icon: MapPin,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+  },
 };
 
 function notificationBody(n: StoredNotification): string {
@@ -150,6 +156,10 @@ function notificationBody(n: StoredNotification): string {
       return d.declinedBy?.name
         ? `${d.declinedBy.name} declined your request to join "${d.sessionTitle || 'their session'}"`
         : 'Your join request was declined';
+    case 'session_nearby':
+      return d.postedBy?.name
+        ? `${d.postedBy.name} posted a ${d.sport || 'training'} session near you`
+        : `A ${d.sport || 'training'} session was just posted near you`;
     default:
       return 'New notification';
   }

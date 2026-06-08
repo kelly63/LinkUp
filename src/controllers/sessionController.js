@@ -1,6 +1,8 @@
 const Session = require('../models/Session');
+const User = require('../models/User');
 const Message = require('../models/Message');
 const MessageRequest = require('../models/MessageRequest');
+const { haversineDistance } = require('../utils/geocode');
 
 // Send a system message in the thread between two users.
 // Auto-creates/upgrades the MessageRequest so the thread is accessible.
@@ -142,7 +144,41 @@ const createSession = async (req, res) => {
     });
 
     await session.populate('postedBy', USER_FIELDS);
+
+    const io = req.app.get('io');
     res.status(201).json({ session });
+
+    // After responding, notify nearby users with the same sport (non-blocking)
+    setImmediate(async () => {
+      try {
+        if (!io || !session.sport) return;
+        const poster = await User.findById(req.user._id).select('lat lon name').lean();
+        if (!poster?.lat || !poster?.lon) return;
+
+        // Bounding box pre-filter (~10 miles at mid-latitudes)
+        const RANGE = 0.15;
+        const candidates = await User.find({
+          _id: { $ne: poster._id },
+          sport: session.sport,
+          lat: { $gte: poster.lat - RANGE, $lte: poster.lat + RANGE },
+          lon: { $gte: poster.lon - RANGE, $lte: poster.lon + RANGE },
+        }).select('_id lat lon').lean();
+
+        const sessionLabel = session.title || `${session.sport} session`;
+        for (const u of candidates) {
+          if (haversineDistance(poster.lat, poster.lon, u.lat, u.lon) <= 10) {
+            io.notify(u._id, 'session_nearby', {
+              sessionId: session._id,
+              sessionTitle: sessionLabel,
+              sport: session.sport,
+              postedBy: { name: poster.name },
+            });
+          }
+        }
+      } catch (err) {
+        console.error('[session_nearby]', err.message);
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

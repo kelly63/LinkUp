@@ -120,6 +120,14 @@ const register = async (req, res) => {
     const user = await User.create(userData);
     const token = generateToken(user._id);
 
+    // Geocode location async — doesn't block registration
+    if (userData.location) {
+      const { geocodeLocation } = require('../utils/geocode');
+      geocodeLocation(userData.location).then((coords) => {
+        if (coords) User.findByIdAndUpdate(user._id, { lat: coords.lat, lon: coords.lon }).catch(() => {});
+      }).catch(() => {});
+    }
+
     if (incomingRole === 'athlete') {
       const userIdStr = user._id.toString();
       const approveToken = jwt.sign({ userId: userIdStr, action: 'approve' }, ADMIN_SECRET, { expiresIn: '30d' });

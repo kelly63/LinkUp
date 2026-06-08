@@ -53,6 +53,9 @@ const userSchema = new mongoose.Schema(
       maxlength: 100,
       default: '',
     },
+    // Geocoded coordinates (populated when location is saved)
+    lat: { type: Number, default: null },
+    lon: { type: Number, default: null },
 
     // Athlete-specific fields
     school: {
