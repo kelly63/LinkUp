@@ -150,6 +150,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   // Post form fields
   const [locationValue, setLocationValue] = useState('');
   const [isPostTraveling, setIsPostTraveling] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const calendarRef = useRef<HTMLDivElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const durationRef = useRef<HTMLSelectElement>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -271,6 +273,17 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
   };
+
+  // Close calendar when clicking outside
+  useEffect(() => {
+    function handleOutside(e: MouseEvent) {
+      if (calendarRef.current && !calendarRef.current.contains(e.target as Node)) {
+        setShowCalendar(false);
+      }
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
 
   // Fetch available sessions when switching to find tab or filters change (resets to page 1)
   useEffect(() => {
@@ -577,20 +590,54 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
             </div>
 
             {/* Date */}
-            <div>
+            <div ref={calendarRef}>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Date <span className="text-xs text-slate-400 font-normal">— tap dates to select</span>
+                Date
               </label>
 
-              <MonthCalendar
-                selectedDates={selectedDates}
-                onToggle={(val) => selectedDates.includes(val) ? handleDateRemove(val) : handleDateAdd(val)}
-              />
+              {/* Trigger button */}
+              <button
+                type="button"
+                onClick={() => setShowCalendar((v) => !v)}
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 bg-white transition-colors text-left ${
+                  showCalendar ? 'border-emerald-500' : 'border-slate-300 hover:border-slate-400'
+                }`}
+              >
+                <span className={selectedDates.length > 0 ? 'text-slate-900 text-sm' : 'text-slate-400 text-sm'}>
+                  {selectedDates.length > 0
+                    ? [...selectedDates].sort().map(formatDate).join(', ')
+                    : 'Select a date'}
+                </span>
+                <Calendar className="w-4 h-4 text-slate-400 flex-shrink-0" />
+              </button>
 
-              {/* Selected dates summary */}
-              {selectedDates.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
+              {/* Dropdown calendar */}
+              {showCalendar && (
+                <div className="mt-2">
+                  <MonthCalendar
+                    selectedDates={selectedDates}
+                    onToggle={(val) => {
+                      if (selectedDates.includes(val)) {
+                        handleDateRemove(val);
+                      } else {
+                        handleDateAdd(val);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCalendar(false)}
+                    className="w-full mt-2 py-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-xl transition-colors"
+                  >
+                    Done
+                  </button>
+                </div>
+              )}
+
+              {/* Selected date chips */}
+              {selectedDates.length > 0 && !showCalendar && (
+                <div className="flex flex-wrap gap-2 mt-2">
                   {[...selectedDates].sort().map((date) => (
                     <div key={date} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-900 rounded-lg border border-emerald-200">
                       <span className="text-sm font-medium">{formatDate(date)}</span>
