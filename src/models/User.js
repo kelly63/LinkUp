@@ -258,6 +258,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    reEngagementSentAt: { type: Date, default: null },
 
     // Password reset
     resetPasswordToken: {

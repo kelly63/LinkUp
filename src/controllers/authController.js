@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
-const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/email');
+const { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } = require('../utils/email');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'linkup-admin-secret';
@@ -127,6 +127,9 @@ const register = async (req, res) => {
         if (coords) User.findByIdAndUpdate(user._id, { lat: coords.lat, lon: coords.lon }).catch(() => {});
       }).catch(() => {});
     }
+
+    // Welcome email — async, non-blocking
+    sendWelcomeEmail({ user }).catch((err) => console.error('[welcome email]', err.message));
 
     if (incomingRole === 'athlete') {
       const userIdStr = user._id.toString();

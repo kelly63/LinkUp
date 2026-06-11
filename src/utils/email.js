@@ -306,4 +306,113 @@ async function sendVerifiedEmail({ user }) {
   if (error) throw new Error(error.message);
 }
 
-module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail, sendVerifiedEmail };
+async function sendWelcomeEmail({ user }) {
+  const firstName = user.name ? user.name.split(' ')[0] : 'Athlete';
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+    <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:32px">
+      <img src="https://i.imgur.com/LnXJJ04.png" alt="LinkUp Athletics" style="width:36px;height:36px;margin-bottom:12px;display:block" />
+      <h1 style="color:#fff;margin:0;font-size:22px">Welcome to LinkUp, ${firstName}!</h1>
+      <p style="color:rgba(255,255,255,.8);margin:8px 0 0;font-size:15px">Your athletic network starts here.</p>
+    </div>
+
+    <div style="padding:32px">
+      <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 20px">
+        You're now part of a community of college athletes finding training partners, sharing workouts, and leveling up together.
+      </p>
+
+      <div style="background:#f0fdf4;border-radius:10px;padding:20px;margin-bottom:24px">
+        <p style="margin:0 0 12px;font-weight:700;color:#065f46;font-size:14px">GET STARTED IN 3 STEPS</p>
+        <div style="display:flex;align-items:flex-start;margin-bottom:12px">
+          <span style="background:#10b981;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-right:10px;margin-top:1px">1</span>
+          <p style="margin:0;color:#374151;font-size:14px"><strong>Complete your profile</strong> — add your position, skill level, and a photo so athletes know who you are.</p>
+        </div>
+        <div style="display:flex;align-items:flex-start;margin-bottom:12px">
+          <span style="background:#10b981;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-right:10px;margin-top:1px">2</span>
+          <p style="margin:0;color:#374151;font-size:14px"><strong>Post a session</strong> — let athletes near you know what you need and when you're available.</p>
+        </div>
+        <div style="display:flex;align-items:flex-start">
+          <span style="background:#10b981;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-right:10px;margin-top:1px">3</span>
+          <p style="margin:0;color:#374151;font-size:14px"><strong>Find a partner</strong> — browse open sessions from athletes in your area and your sport.</p>
+        </div>
+      </div>
+
+      <p style="color:#6b7280;font-size:13px;margin:0">
+        Questions? Reply to this email or reach us at <a href="mailto:support@linkupathletics.com" style="color:#2563eb">support@linkupathletics.com</a>
+      </p>
+    </div>
+
+    <div style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb">
+      <p style="color:#9ca3af;font-size:12px;margin:0;text-align:center">
+        LinkUp Athletics · <a href="https://linkup-swpu.onrender.com/privacy.html" style="color:#9ca3af">Privacy Policy</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: user.email,
+    subject: `Welcome to LinkUp Athletics, ${firstName}!`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+}
+
+async function sendReEngagementEmail({ user }) {
+  const firstName = user.name ? user.name.split(' ')[0] : 'Athlete';
+  const sport = user.sport || 'your sport';
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+    <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:32px">
+      <img src="https://i.imgur.com/LnXJJ04.png" alt="LinkUp Athletics" style="width:36px;height:36px;margin-bottom:12px;display:block" />
+      <h1 style="color:#fff;margin:0;font-size:22px">${firstName}, athletes near you are looking for a partner</h1>
+      <p style="color:rgba(255,255,255,.8);margin:8px 0 0;font-size:15px">Don't leave them hanging.</p>
+    </div>
+
+    <div style="padding:32px">
+      <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 20px">
+        It's been a week since you've been on LinkUp. ${sport} athletes in your area have been posting sessions — open the app to see who's looking for a training partner.
+      </p>
+
+      <div style="background:#eff6ff;border-radius:10px;padding:20px;margin-bottom:24px;border-left:4px solid #2563eb">
+        <p style="margin:0;color:#1e40af;font-size:14px;line-height:1.6">
+          <strong>Your next training partner is one tap away.</strong><br>
+          Browse open sessions, post your availability, and connect with athletes who match your skill level.
+        </p>
+      </div>
+
+      <p style="color:#6b7280;font-size:13px;margin:0">
+        Don't want these emails? You can update your preferences in the app under Profile → Settings.<br><br>
+        Questions? <a href="mailto:support@linkupathletics.com" style="color:#2563eb">support@linkupathletics.com</a>
+      </p>
+    </div>
+
+    <div style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb">
+      <p style="color:#9ca3af;font-size:12px;margin:0;text-align:center">
+        LinkUp Athletics · <a href="https://linkup-swpu.onrender.com/privacy.html" style="color:#9ca3af">Privacy Policy</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: user.email,
+    subject: `${firstName}, athletes near you are looking for a training partner`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+}
+
+module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail, sendVerifiedEmail, sendWelcomeEmail, sendReEngagementEmail };
