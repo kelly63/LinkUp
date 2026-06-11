@@ -148,31 +148,50 @@ const createSession = async (req, res) => {
     const io = req.app.get('io');
     res.status(201).json({ session });
 
-    // After responding, notify nearby users with the same sport (non-blocking)
+    // After responding, notify nearby users with the same sport/level (non-blocking)
     setImmediate(async () => {
       try {
-        if (!io || !session.sport) return;
+        if (!session.sport) return;
         const poster = await User.findById(req.user._id).select('lat lon name').lean();
         if (!poster?.lat || !poster?.lon) return;
 
         // Bounding box pre-filter (~10 miles at mid-latitudes)
         const RANGE = 0.15;
-        const candidates = await User.find({
+        const candidateQuery = {
           _id: { $ne: poster._id },
           sport: session.sport,
+          email: { $exists: true, $ne: '' },
           lat: { $gte: poster.lat - RANGE, $lte: poster.lat + RANGE },
           lon: { $gte: poster.lon - RANGE, $lte: poster.lon + RANGE },
-        }).select('_id lat lon').lean();
+        };
+        // If the session targets a specific skill level, only notify users at that level
+        if (session.skillLevelRequired) {
+          candidateQuery.skillLevel = session.skillLevelRequired;
+        }
 
+        const candidates = await User.find(candidateQuery).select('_id lat lon email name skillLevel').lean();
+        const { sendSessionNearbyEmail } = require('../utils/email');
         const sessionLabel = session.title || `${session.sport} session`;
+
         for (const u of candidates) {
           if (haversineDistance(poster.lat, poster.lon, u.lat, u.lon) <= 10) {
-            io.notify(u._id, 'session_nearby', {
-              sessionId: session._id,
+            // In-app + push notification
+            if (io) {
+              io.notify(u._id, 'session_nearby', {
+                sessionId: session._id,
+                sessionTitle: sessionLabel,
+                sport: session.sport,
+                postedBy: { name: poster.name },
+              });
+            }
+            // Email notification
+            sendSessionNearbyEmail({
+              user: u,
+              posterName: poster.name,
               sessionTitle: sessionLabel,
               sport: session.sport,
-              postedBy: { name: poster.name },
-            });
+              skillLevel: session.skillLevelRequired,
+            }).catch((err) => console.error('[session_nearby email]', u.email, err.message));
           }
         }
       } catch (err) {

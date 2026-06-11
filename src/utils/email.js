@@ -415,4 +415,60 @@ async function sendReEngagementEmail({ user }) {
   if (error) throw new Error(error.message);
 }
 
-module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail, sendVerifiedEmail, sendWelcomeEmail, sendReEngagementEmail };
+async function sendSessionNearbyEmail({ user, posterName, sessionTitle, sport, skillLevel }) {
+  const firstName = user.name ? user.name.split(' ')[0] : 'Athlete';
+  const levelText = skillLevel ? ` (${skillLevel})` : '';
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+    <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:32px">
+      <img src="https://i.imgur.com/LnXJJ04.png" alt="LinkUp Athletics" style="width:36px;height:36px;margin-bottom:12px;display:block" />
+      <h1 style="color:#fff;margin:0;font-size:22px">A ${sport} session just dropped near you</h1>
+      <p style="color:rgba(255,255,255,.8);margin:8px 0 0;font-size:15px">Someone is looking for a training partner.</p>
+    </div>
+
+    <div style="padding:32px">
+      <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 20px">
+        Hi ${firstName},
+      </p>
+      <p style="color:#374151;font-size:15px;line-height:1.6;margin:0 0 24px">
+        <strong>${posterName}</strong> just posted a <strong>${sport}${levelText}</strong> session near you:
+      </p>
+
+      <div style="background:#eff6ff;border-left:4px solid #2563eb;border-radius:0 10px 10px 0;padding:18px 20px;margin-bottom:28px">
+        <p style="margin:0;color:#1e3a5f;font-size:16px;font-weight:700">${sessionTitle}</p>
+        <p style="margin:6px 0 0;color:#4b5563;font-size:14px">${sport}${levelText} · Posted by ${posterName}</p>
+      </div>
+
+      <p style="color:#374151;font-size:14px;margin:0 0 24px">
+        Open the app to view the session details and send a request to join.
+      </p>
+
+      <p style="color:#9ca3af;font-size:12px;margin:0">
+        You're receiving this because a session matching your sport was posted nearby.
+        You can update your notification preferences in the app under Profile → Settings.
+      </p>
+    </div>
+
+    <div style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb">
+      <p style="color:#9ca3af;font-size:12px;margin:0;text-align:center">
+        LinkUp Athletics · <a href="https://linkup-swpu.onrender.com/privacy.html" style="color:#9ca3af">Privacy Policy</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: user.email,
+    subject: `${posterName} posted a ${sport} session near you`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+}
+
+module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail, sendVerifiedEmail, sendWelcomeEmail, sendReEngagementEmail, sendSessionNearbyEmail };
