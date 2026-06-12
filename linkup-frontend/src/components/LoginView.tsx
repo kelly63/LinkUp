@@ -170,8 +170,11 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
               </label>
               <input
                 type="email"
+                name="username"
+                autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
                 placeholder="your.email@example.com"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors font-[Magra]"
               />
@@ -185,8 +188,11 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
               </label>
               <input
                 type="password"
+                name="password"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleLogin(); }}
                 placeholder="Enter your password"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors font-[Magra]"
               />
