@@ -465,6 +465,214 @@ router.get('/test-apns', async (req, res) => {
 </div></body></html>`);
 });
 
+// GET /api/admin/sessions-dashboard?token=<ADMIN_SECRET>&status=completed|all|open|confirmed
+router.get('/sessions-dashboard', async (req, res) => {
+  const { token, status = 'completed', page = '1' } = req.query;
+  if (!token || token !== ADMIN_SECRET) {
+    return res.status(401).send(adminPage('Invalid or missing admin token', false));
+  }
+
+  try {
+    const Session = require('../models/Session');
+    const Rating  = require('../models/Rating');
+
+    const validStatuses = ['all', 'open', 'confirmed', 'completed', 'cancelled'];
+    const safeStatus = validStatuses.includes(status) ? status : 'completed';
+    const PAGE_SIZE = 50;
+    const skip = (Number(page) - 1) * PAGE_SIZE;
+
+    const query = safeStatus === 'all' ? {} : { status: safeStatus };
+
+    const [sessions, totalCount, completedCount, confirmedCount, openCount] = await Promise.all([
+      Session.find(query)
+        .populate('postedBy', 'name email sport role skillLevel')
+        .populate('partner', 'name email sport role skillLevel')
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(PAGE_SIZE)
+        .lean(),
+      Session.countDocuments(query),
+      Session.countDocuments({ status: 'completed' }),
+      Session.countDocuments({ status: 'confirmed' }),
+      Session.countDocuments({ status: 'open' }),
+    ]);
+
+    // For completed sessions, look up linked ratings
+    const sessionIds = sessions.filter(s => s.status === 'completed').map(s => s._id);
+    const ratings = sessionIds.length
+      ? await Rating.find({ session: { $in: sessionIds } })
+          .populate('rater', 'name')
+          .populate('ratee', 'name')
+          .lean()
+      : [];
+    const ratingsBySession = {};
+    for (const r of ratings) {
+      const sid = r.session.toString();
+      if (!ratingsBySession[sid]) ratingsBySession[sid] = [];
+      ratingsBySession[sid].push(r);
+    }
+
+    const baseUrl = APP_URL;
+    const dashBase = `${baseUrl}/api/admin/sessions-dashboard?token=${encodeURIComponent(token)}`;
+    const ratingsUrl = `${baseUrl}/api/admin/dashboard?token=${encodeURIComponent(token)}`;
+    const verifyUrl  = `${baseUrl}/api/admin/verify-dashboard?token=${encodeURIComponent(token)}`;
+
+    const tabStyle = (s) => safeStatus === s
+      ? 'background:#1e3a5f;color:#fff;padding:8px 20px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px'
+      : 'background:#e2e8f0;color:#475569;padding:8px 20px;border-radius:8px;text-decoration:none;font-size:14px';
+
+    const statusBadge = (s) => {
+      const map = {
+        completed: ['#d1fae5','#065f46','✅ Completed'],
+        confirmed: ['#dbeafe','#1e40af','🤝 Confirmed'],
+        open:      ['#fef3c7','#92400e','🔓 Open'],
+        cancelled: ['#fee2e2','#991b1b','❌ Cancelled'],
+      };
+      const [bg, color, label] = map[s] || ['#f1f5f9','#475569', s];
+      return `<span style="background:${bg};color:${color};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${label}</span>`;
+    };
+
+    const ratingStars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+
+    const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+    const pager = totalPages > 1 ? (() => {
+      const p = Number(page);
+      const parts = [];
+      if (p > 1) parts.push(`<a href="${dashBase}&status=${safeStatus}&page=${p-1}" style="padding:6px 12px;background:#e2e8f0;border-radius:6px;text-decoration:none;color:#475569;font-size:13px">← Prev</a>`);
+      parts.push(`<span style="font-size:13px;color:#64748b">Page ${p} of ${totalPages}</span>`);
+      if (p < totalPages) parts.push(`<a href="${dashBase}&status=${safeStatus}&page=${p+1}" style="padding:6px 12px;background:#e2e8f0;border-radius:6px;text-decoration:none;color:#475569;font-size:13px">Next →</a>`);
+      return `<div style="display:flex;align-items:center;gap:10px;justify-content:center;margin-top:20px">${parts.join('')}</div>`;
+    })() : '';
+
+    const cards = sessions.length === 0
+      ? `<div style="text-align:center;padding:60px 20px;color:#94a3b8;background:#fff;border-radius:12px;border:1px solid #e2e8f0">
+          <div style="font-size:40px;margin-bottom:12px">🏋️</div>
+          <p style="font-size:16px;margin:0">No ${safeStatus === 'all' ? '' : safeStatus + ' '}sessions found</p>
+         </div>`
+      : sessions.map((s) => {
+          const poster  = s.postedBy  || {};
+          const partner = s.partner   || null;
+          const sessionDate = s.date || '—';
+          const created = new Date(s.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const sid = s._id.toString();
+          const linkedRatings = ratingsBySession[sid] || [];
+
+          const ratingBlock = s.status === 'completed' ? (() => {
+            if (linkedRatings.length === 0) {
+              return `<div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 12px;font-size:13px;color:#92400e">
+                ⚠️ No ratings submitted for this session yet
+              </div>`;
+            }
+            return linkedRatings.map(r => {
+              const statusColor = r.status === 'approved' ? '#16a34a' : r.status === 'rejected' ? '#dc2626' : '#d97706';
+              return `<div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px">
+                <div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:4px">⭐ Rating submitted</div>
+                <div style="font-size:13px;color:#374151">
+                  <strong>${r.rater?.name || '?'}</strong> rated <strong>${r.ratee?.name || '?'}</strong> —
+                  <span style="color:#f59e0b">${ratingStars(r.overallRating)}</span> ${r.overallRating}/5 ·
+                  <span style="color:${statusColor};font-weight:600">${r.status}</span>
+                </div>
+              </div>`;
+            }).join('');
+          })() : '';
+
+          return `
+          <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:18px 20px;margin-bottom:12px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+              <div>
+                <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:2px">${s.title || s.sport}</div>
+                <div style="font-size:12px;color:#94a3b8">${s.sport} · ${sessionDate} · Created ${created}</div>
+              </div>
+              ${statusBadge(s.status)}
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <div style="background:#f8fafc;border-radius:8px;padding:10px 12px">
+                <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Posted by</div>
+                <div style="font-size:14px;font-weight:600;color:#1e293b">${poster.name || '—'}</div>
+                <div style="font-size:12px;color:#64748b">${poster.email || ''}</div>
+                <div style="font-size:12px;color:#64748b">${poster.sport || ''} ${poster.skillLevel ? '· ' + poster.skillLevel : ''}</div>
+              </div>
+              <div style="background:#f8fafc;border-radius:8px;padding:10px 12px">
+                <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Partner</div>
+                ${partner
+                  ? `<div style="font-size:14px;font-weight:600;color:#1e293b">${partner.name}</div>
+                     <div style="font-size:12px;color:#64748b">${partner.email || ''}</div>
+                     <div style="font-size:12px;color:#64748b">${partner.sport || ''} ${partner.skillLevel ? '· ' + partner.skillLevel : ''}</div>`
+                  : `<div style="font-size:13px;color:#94a3b8;font-style:italic">No partner yet</div>`}
+              </div>
+            </div>
+
+            ${s.location ? `<div style="font-size:13px;color:#64748b;margin-bottom:4px">📍 ${s.location}</div>` : ''}
+            ${ratingBlock}
+          </div>`;
+        }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LinkUp — Sessions Dashboard</title>
+</head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:0">
+  <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:20px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-size:24px">🏋️</div>
+      <div>
+        <h1 style="margin:0;color:#fff;font-size:20px">Sessions Dashboard</h1>
+        <p style="margin:2px 0 0;color:rgba(255,255,255,.7);font-size:13px">LinkUp Athletics</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a href="${ratingsUrl}" style="color:rgba(255,255,255,.85);font-size:13px;text-decoration:none;background:rgba(255,255,255,.15);padding:6px 14px;border-radius:6px">⚡ Ratings</a>
+      <a href="${verifyUrl}"  style="color:rgba(255,255,255,.85);font-size:13px;text-decoration:none;background:rgba(255,255,255,.15);padding:6px 14px;border-radius:6px">🔍 Verification</a>
+    </div>
+  </div>
+
+  <div style="max-width:800px;margin:0 auto;padding:28px 20px">
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px">
+      <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #e2e8f0;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:#16a34a">${completedCount}</div>
+        <div style="font-size:13px;color:#64748b;margin-top:2px">Completed</div>
+      </div>
+      <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #e2e8f0;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:#2563eb">${confirmedCount}</div>
+        <div style="font-size:13px;color:#64748b;margin-top:2px">Confirmed</div>
+      </div>
+      <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #e2e8f0;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:#d97706">${openCount}</div>
+        <div style="font-size:13px;color:#64748b;margin-top:2px">Open</div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap">
+      <a href="${dashBase}&status=completed" style="${tabStyle('completed')}">✅ Completed <span style="opacity:.7">(${completedCount})</span></a>
+      <a href="${dashBase}&status=confirmed" style="${tabStyle('confirmed')}">🤝 Confirmed <span style="opacity:.7">(${confirmedCount})</span></a>
+      <a href="${dashBase}&status=open"      style="${tabStyle('open')}">🔓 Open <span style="opacity:.7">(${openCount})</span></a>
+      <a href="${dashBase}&status=all"       style="${tabStyle('all')}">All</a>
+    </div>
+
+    <div style="font-size:13px;color:#94a3b8;margin-bottom:16px">${totalCount} session${totalCount !== 1 ? 's' : ''} · showing ${sessions.length}</div>
+
+    ${cards}
+    ${pager}
+
+    <p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:24px">
+      LinkUp Athletics Admin · <a href="${dashBase}&status=completed" style="color:#94a3b8">Bookmark Completed Sessions</a>
+    </p>
+  </div>
+</body>
+</html>`;
+
+    res.send(html);
+  } catch (err) {
+    console.error('[admin] sessions-dashboard error:', err);
+    res.status(500).send(adminPage('Server error loading sessions dashboard', false));
+  }
+});
+
 // GET /api/admin/sessions-debug?token=<ADMIN_SECRET>&sport=Basketball
 // Shows open sessions and simulates the exact getAvailableSessions query
 router.get('/sessions-debug', async (req, res) => {

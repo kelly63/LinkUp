@@ -301,6 +301,28 @@ const getAdminDashboard = async (req, res) => {
               </div>`;
           }
 
+          const sessionBlock = r.session
+            ? (() => {
+                const s = r.session;
+                const sDate = s.date || '—';
+                const sLoc  = s.location || '—';
+                const sStatus = s.status || '—';
+                const sStatusColor = sStatus === 'completed' ? '#16a34a' : sStatus === 'confirmed' ? '#2563eb' : '#d97706';
+                return `<div style="margin-top:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px">
+                  <div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">📅 Linked Session (verification)</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:13px;color:#374151">
+                    <span><strong>Sport:</strong> ${s.sport || '—'}</span>
+                    <span><strong>Date:</strong> ${sDate}</span>
+                    <span><strong>Location:</strong> ${sLoc}</span>
+                    <span><strong>Status:</strong> <span style="color:${sStatusColor};font-weight:600">${sStatus}</span></span>
+                  </div>
+                  ${sStatus !== 'completed' ? `<div style="margin-top:6px;font-size:12px;color:#b45309;background:#fffbeb;border-radius:4px;padding:4px 8px;display:inline-block">⚠️ Session not marked completed — verify before approving</div>` : ''}
+                </div>`;
+              })()
+            : `<div style="margin-top:12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:13px;color:#92400e">
+                ⚠️ <strong>No linked session</strong> — this rating was submitted without a session reference. Verify manually.
+               </div>`;
+
           return `
           <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:20px;margin-bottom:14px">
             <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
@@ -323,6 +345,7 @@ const getAdminDashboard = async (req, res) => {
             ${catItems ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">${catItems}</div>` : ''}
             ${r.wouldTrainAgain != null ? `<div style="margin-top:8px;font-size:13px;color:#64748b">${r.wouldTrainAgain ? '✅ Would train again' : '❌ Would not train again'}</div>` : ''}
             ${r.feedback ? `<div style="margin-top:10px;background:#f8fafc;border-left:3px solid #2563eb;border-radius:0 6px 6px 0;padding:10px 12px;font-size:14px;color:#374151;line-height:1.5">${r.feedback.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>` : ''}
+            ${sessionBlock}
             ${actions}
           </div>`;
         }).join('');
@@ -335,11 +358,17 @@ const getAdminDashboard = async (req, res) => {
   <title>LinkUp Admin Dashboard</title>
 </head>
 <body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:0">
-  <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:20px 32px;display:flex;align-items:center;gap:12px">
-    <div style="font-size:24px">⚡</div>
-    <div>
-      <h1 style="margin:0;color:#fff;font-size:20px">LinkUp Athletics</h1>
-      <p style="margin:2px 0 0;color:rgba(255,255,255,.7);font-size:13px">Admin Dashboard</p>
+  <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:20px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-size:24px">⚡</div>
+      <div>
+        <h1 style="margin:0;color:#fff;font-size:20px">LinkUp Athletics</h1>
+        <p style="margin:2px 0 0;color:rgba(255,255,255,.7);font-size:13px">Ratings Dashboard</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <a href="${baseUrl}/api/admin/sessions-dashboard?token=${encodeURIComponent(token)}" style="color:rgba(255,255,255,.85);font-size:13px;text-decoration:none;background:rgba(255,255,255,.15);padding:6px 14px;border-radius:6px">🏋️ Sessions</a>
+      <a href="${baseUrl}/api/admin/verify-dashboard?token=${encodeURIComponent(token)}" style="color:rgba(255,255,255,.85);font-size:13px;text-decoration:none;background:rgba(255,255,255,.15);padding:6px 14px;border-radius:6px">🔍 Verification</a>
     </div>
   </div>
 
