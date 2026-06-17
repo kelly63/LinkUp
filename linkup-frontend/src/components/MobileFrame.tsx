@@ -109,6 +109,8 @@ export function MobileFrame() {
   const [pendingNav, setPendingNav] = useState<PendingNav>(null);
   const [banner, setBanner] = useState<{ title: string; description: string } | null>(null);
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   // Auth state comes directly from context — survives page refresh automatically
   const { token, isAuthenticated } = useAuth();
@@ -142,6 +144,16 @@ export function MobileFrame() {
   }, [showBanner]);
 
   useSocket({ token, onNotification: handleNotification });
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const handler = () => {
+      setKeyboardVisible(vv.height < window.innerHeight * 0.75);
+    };
+    vv.addEventListener('resize', handler);
+    return () => vv.removeEventListener('resize', handler);
+  }, []);
 
   // Handle deep links — e.g. linkupathletics://profile/<userId> from QR code scans
   useEffect(() => {
@@ -323,12 +335,12 @@ export function MobileFrame() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onAuthChange={() => {}}
-        onChatOpenChange={undefined}
+        onChatOpenChange={setIsChatOpen}
         externalNav={pendingNav}
         onExternalNavProcessed={() => setPendingNav(null)}
       />
 
-      {isAuthenticated && (
+      {isAuthenticated && !isChatOpen && !keyboardVisible && (
         <BottomTabBar
           activeTab={activeTab}
           onTabChange={handleTabChange}
