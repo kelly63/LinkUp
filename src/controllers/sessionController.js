@@ -209,10 +209,12 @@ const getAvailableSessions = async (req, res) => {
     const { sport, skillLevel, location, source, page = 1, limit = 20 } = req.query;
 
     const targetSource = source || 'athletics';
+    const now = new Date();
     const query = {
       status: 'open',
       postedBy: { $ne: req.user._id },
       source: { $in: [targetSource, null, undefined] },
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
     };
 
     if (sport) query.sport = { $regex: sport, $options: 'i' };
@@ -354,6 +356,9 @@ const updateSession = async (req, res) => {
       for (const field of schedulingFields) {
         if (req.body[field] !== undefined) session[field] = req.body[field];
       }
+      if (req.body.date !== undefined) {
+        session.expiresAt = computeExpiresAt(req.body.date, req.body.dateWindowStart, req.body.dateWindowEnd);
+      }
     }
 
     await session.save();
@@ -384,6 +389,7 @@ const approveChange = async (req, res) => {
     session.time = time;
     session.location = location;
     session.duration = duration;
+    session.expiresAt = computeExpiresAt(date, null, null);
     session.pendingChange = null;
 
     await session.save();
