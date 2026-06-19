@@ -359,7 +359,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               </div>
             </div>
             <h1 className="text-white text-2xl mb-2 font-[Magra]">LinkUp Athletics</h1>
-            <p className="text-emerald-200 text-sm">LinkUp. Level Up.</p>
+            <p className="text-emerald-400 text-sm font-[Magra] uppercase tracking-widest">There Is No Offseason.</p>
           </div>
         </div>
 

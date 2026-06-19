@@ -89,7 +89,7 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
         textTransform: 'uppercase',
         fontFamily: 'Arial, sans-serif',
       }}>
-        LinkUp. Level Up.
+        There Is No Offseason.
       </p>
     </div>
   );
