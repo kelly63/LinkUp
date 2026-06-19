@@ -575,12 +575,16 @@ router.get('/sessions-dashboard', async (req, res) => {
           const linkedRatings = ratingsBySession[sid] || [];
 
           const ratingBlock = s.status === 'completed' ? (() => {
-            if (linkedRatings.length === 0) {
-              return `<div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 12px;font-size:13px;color:#92400e">
-                ⚠️ No ratings submitted for this session yet
-              </div>`;
-            }
-            return linkedRatings.map(r => {
+            const raterIds = new Set(linkedRatings.map(r => r.rater?._id?.toString()));
+            const remindUrl = (uid) => `${baseUrl}/api/admin/sessions/${sid}/remind-rating?token=${encodeURIComponent(token)}&userId=${uid}`;
+            const remindBtn = (uid, name) => uid
+              ? `<a href="${remindUrl(uid)}" style="display:inline-block;margin-top:8px;background:#2563eb;color:#fff;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;text-decoration:none">🔔 Remind ${name} to rate</a>`
+              : '';
+
+            const posterHasRated  = poster._id  && raterIds.has(poster._id.toString());
+            const partnerHasRated = partner?._id && raterIds.has(partner._id.toString());
+
+            const ratingRows = linkedRatings.map(r => {
               const statusColor = r.status === 'approved' ? '#16a34a' : r.status === 'rejected' ? '#dc2626' : '#d97706';
               return `<div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px">
                 <div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:4px">⭐ Rating submitted</div>
@@ -591,6 +595,17 @@ router.get('/sessions-dashboard', async (req, res) => {
                 </div>
               </div>`;
             }).join('');
+
+            const noRatingsWarning = linkedRatings.length === 0
+              ? `<div style="margin-top:10px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:8px 12px;font-size:13px;color:#92400e">⚠️ No ratings submitted for this session yet</div>`
+              : '';
+
+            const reminders = `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+              ${!posterHasRated  ? remindBtn(poster._id,  poster.name  || 'Poster')  : ''}
+              ${!partnerHasRated && partner ? remindBtn(partner._id, partner.name || 'Partner') : ''}
+            </div>`;
+
+            return noRatingsWarning + ratingRows + reminders;
           })() : '';
 
           return `
@@ -806,6 +821,38 @@ router.get('/push-debug', async (req, res) => {
     pushSent: tokens.length > 0,
     pushResults,
   });
+});
+
+// GET /api/admin/sessions/:sessionId/remind-rating?token=<ADMIN_SECRET>&userId=<userId>
+router.get('/sessions/:sessionId/remind-rating', async (req, res) => {
+  const { token, userId } = req.query;
+  if (!token || token !== ADMIN_SECRET) {
+    return res.status(401).send(adminPage('Invalid or missing admin token', false));
+  }
+  if (!userId) return res.status(400).send(adminPage('userId is required', false));
+
+  try {
+    const Session = require('../models/Session');
+    const session = await Session.findById(req.params.sessionId).lean();
+    if (!session) return res.status(404).send(adminPage('Session not found', false));
+
+    const user = await User.findById(userId).select('name').lean();
+    if (!user) return res.status(404).send(adminPage('User not found', false));
+
+    const io = req.app.get('io');
+    if (!io) return res.status(500).send(adminPage('Socket not available', false));
+
+    const sessionLabel = session.title || session.sport;
+    await io.notify(userId, 'rating_reminder', {
+      sessionId: session._id,
+      sessionTitle: sessionLabel,
+    });
+
+    res.send(adminPage(`Rating reminder sent to ${user.name}`, true));
+  } catch (err) {
+    console.error('[admin] remind-rating error:', err);
+    res.status(500).send(adminPage('Server error sending reminder', false));
+  }
 });
 
 module.exports = router;

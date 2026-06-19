@@ -44,6 +44,12 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
       ? `${d.from.name} gave you a ${d.overallRating}★ rating`
       : 'You received a new rating',
   }),
+  rating_reminder: (d) => ({
+    title: 'Rate Your Session',
+    description: d.sessionTitle
+      ? `How was "${d.sessionTitle}"? Don't forget to rate your partner.`
+      : "Don't forget to rate your training partner.",
+  }),
   session_updated: (d) => ({
     title: 'Session Updated',
     description: d.updatedBy?.name
@@ -185,7 +191,7 @@ export function MobileFrame() {
       } else if (type === 'session_accepted' || type === 'session_updated' || type === 'change_proposed' || type === 'change_approved' || type === 'change_declined' || type === 'session_cancelled' || type === 'session_inquiry' || type === 'partner_approved' || type === 'partner_declined') {
         setActiveTab('dashboard');
         setPendingNav({ view: 'sessions' });
-      } else if (type === 'rating_new') {
+      } else if (type === 'rating_new' || type === 'rating_reminder') {
         setActiveTab('profile');
       } else if (type === 'session_nearby') {
         setActiveTab('post');
