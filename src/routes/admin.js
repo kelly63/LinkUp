@@ -476,14 +476,28 @@ router.get('/sessions-dashboard', async (req, res) => {
     const Session = require('../models/Session');
     const Rating  = require('../models/Rating');
 
-    const validStatuses = ['all', 'open', 'confirmed', 'completed', 'cancelled'];
-    const safeStatus = validStatuses.includes(status) ? status : 'completed';
+    const validStatuses = ['all', 'open', 'confirmed', 'completed', 'cancelled', 'current', 'past'];
+    const safeStatus = validStatuses.includes(status) ? status : 'current';
     const PAGE_SIZE = 50;
     const skip = (Number(page) - 1) * PAGE_SIZE;
+    const now = new Date();
 
-    const query = safeStatus === 'all' ? {} : { status: safeStatus };
+    const currentQuery = {
+      status: { $in: ['open', 'confirmed'] },
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
+    };
+    const pastQuery = {
+      $or: [
+        { status: { $in: ['completed', 'cancelled'] } },
+        { status: { $in: ['open', 'confirmed'] }, expiresAt: { $lt: now } },
+      ],
+    };
+    const query = safeStatus === 'all'       ? {} :
+                  safeStatus === 'current'   ? currentQuery :
+                  safeStatus === 'past'      ? pastQuery :
+                  { status: safeStatus };
 
-    const [sessions, totalCount, completedCount, confirmedCount, openCount] = await Promise.all([
+    const [sessions, totalCount, completedCount, confirmedCount, openCount, currentCount, pastCount] = await Promise.all([
       Session.find(query)
         .populate('postedBy', 'name email sport role skillLevel')
         .populate('partner', 'name email sport role skillLevel')
@@ -495,6 +509,8 @@ router.get('/sessions-dashboard', async (req, res) => {
       Session.countDocuments({ status: 'completed' }),
       Session.countDocuments({ status: 'confirmed' }),
       Session.countDocuments({ status: 'open' }),
+      Session.countDocuments(currentQuery),
+      Session.countDocuments(pastQuery),
     ]);
 
     // For completed sessions, look up linked ratings
@@ -554,6 +570,7 @@ router.get('/sessions-dashboard', async (req, res) => {
           const partner = s.partner   || null;
           const sessionDate = s.date || '—';
           const created = new Date(s.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          const isExpired = s.expiresAt && new Date(s.expiresAt) < now && s.status === 'open';
           const sid = s._id.toString();
           const linkedRatings = ratingsBySession[sid] || [];
 
@@ -583,7 +600,10 @@ router.get('/sessions-dashboard', async (req, res) => {
                 <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:2px">${s.title || s.sport}</div>
                 <div style="font-size:12px;color:#94a3b8">${s.sport} · ${sessionDate} · Created ${created}</div>
               </div>
-              ${statusBadge(s.status)}
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                ${statusBadge(s.status)}
+                ${isExpired ? `<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">⏰ Expired</span>` : ''}
+              </div>
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
@@ -632,14 +652,18 @@ router.get('/sessions-dashboard', async (req, res) => {
 
   <div style="max-width:800px;margin:0 auto;padding:28px 20px">
 
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px">
+      <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #e2e8f0;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:#2563eb">${currentCount}</div>
+        <div style="font-size:13px;color:#64748b;margin-top:2px">Current</div>
+      </div>
+      <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #e2e8f0;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:#94a3b8">${pastCount}</div>
+        <div style="font-size:13px;color:#64748b;margin-top:2px">Past</div>
+      </div>
       <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #e2e8f0;text-align:center">
         <div style="font-size:28px;font-weight:700;color:#16a34a">${completedCount}</div>
         <div style="font-size:13px;color:#64748b;margin-top:2px">Completed</div>
-      </div>
-      <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #e2e8f0;text-align:center">
-        <div style="font-size:28px;font-weight:700;color:#2563eb">${confirmedCount}</div>
-        <div style="font-size:13px;color:#64748b;margin-top:2px">Confirmed</div>
       </div>
       <div style="background:#fff;border-radius:12px;padding:18px;border:1px solid #e2e8f0;text-align:center">
         <div style="font-size:28px;font-weight:700;color:#d97706">${openCount}</div>
@@ -648,6 +672,8 @@ router.get('/sessions-dashboard', async (req, res) => {
     </div>
 
     <div style="display:flex;gap:8px;margin-bottom:28px;flex-wrap:wrap">
+      <a href="${dashBase}&status=current"   style="${tabStyle('current')}">📅 Current <span style="opacity:.7">(${currentCount})</span></a>
+      <a href="${dashBase}&status=past"      style="${tabStyle('past')}">🕐 Past <span style="opacity:.7">(${pastCount})</span></a>
       <a href="${dashBase}&status=completed" style="${tabStyle('completed')}">✅ Completed <span style="opacity:.7">(${completedCount})</span></a>
       <a href="${dashBase}&status=confirmed" style="${tabStyle('confirmed')}">🤝 Confirmed <span style="opacity:.7">(${confirmedCount})</span></a>
       <a href="${dashBase}&status=open"      style="${tabStyle('open')}">🔓 Open <span style="opacity:.7">(${openCount})</span></a>
