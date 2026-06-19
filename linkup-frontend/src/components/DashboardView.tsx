@@ -12,6 +12,7 @@ import {
   PlusCircle,
   Award,
   Shield,
+  ExternalLink,
 } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
@@ -529,11 +530,48 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                   {post.type === 'article' && (
                     <div>
                       {post.content && <p className="text-sm text-slate-800 mb-2">{post.content}</p>}
-                      {post.sharedUrl && (
-                        <div className="border border-slate-200 rounded-xl px-3 py-2 text-xs text-emerald-600 truncate">
-                          {post.articleTitle || post.sharedUrl}
-                        </div>
-                      )}
+                      {post.sharedUrl && (() => {
+                        let domain = '';
+                        try { domain = new URL(post.sharedUrl).hostname.replace(/^www\./, ''); } catch {}
+                        return (
+                          <a
+                            href={post.sharedUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="block border border-slate-200 rounded-2xl overflow-hidden hover:border-emerald-400 transition-colors"
+                          >
+                            {post.previewImage && (
+                              <img
+                                src={post.previewImage}
+                                alt=""
+                                className="w-full h-40 object-cover"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            )}
+                            <div className="p-3">
+                              <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
+                                {post.previewFavicon && (
+                                  <img
+                                    src={post.previewFavicon}
+                                    alt=""
+                                    className="w-3.5 h-3.5"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                  />
+                                )}
+                                <span>{domain}</span>
+                                <ExternalLink className="w-3 h-3 ml-auto flex-shrink-0" />
+                              </div>
+                              <p className="text-slate-900 text-sm font-medium line-clamp-2">
+                                {post.articleTitle || domain}
+                              </p>
+                              {post.previewDescription && (
+                                <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{post.previewDescription}</p>
+                              )}
+                            </div>
+                          </a>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
