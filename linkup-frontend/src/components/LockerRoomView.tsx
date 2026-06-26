@@ -77,9 +77,6 @@ function SessionContent({ post }: { post: Post }) {
 }
 
 function ArticleContent({ post }: { post: Post }) {
-  let domain = '';
-  try { domain = new URL(post.sharedUrl).hostname.replace(/^www\./, ''); } catch {}
-
   return (
     <div>
       {post.content && <p className="text-slate-900 text-sm mb-3">{post.content}</p>}
@@ -88,35 +85,16 @@ function ArticleContent({ post }: { post: Post }) {
           href={post.sharedUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="block border border-slate-200 rounded-2xl overflow-hidden hover:border-emerald-400 transition-colors"
+          className="block border-2 border-slate-200 rounded-xl overflow-hidden hover:border-emerald-400 transition-colors"
         >
-          {post.previewImage && (
-            <img
-              src={post.previewImage}
-              alt=""
-              className="w-full h-40 object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          )}
-          <div className="p-3">
-            <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
-              {post.previewFavicon && (
-                <img
-                  src={post.previewFavicon}
-                  alt=""
-                  className="w-3.5 h-3.5"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              )}
-              <span>{domain}</span>
-              <ExternalLink className="w-3 h-3 ml-auto flex-shrink-0" />
+          <div className="p-4">
+            <h4 className="text-slate-900 text-sm font-medium mb-1 line-clamp-2">
+              {post.articleTitle || post.sharedUrl}
+            </h4>
+            <div className="flex items-center gap-2 text-xs text-emerald-600">
+              <ExternalLink className="w-3.5 h-3.5" />
+              <span className="truncate">{new URL(post.sharedUrl).hostname}</span>
             </div>
-            <p className="text-slate-900 text-sm font-medium line-clamp-2">
-              {post.articleTitle || domain}
-            </p>
-            {post.previewDescription && (
-              <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{post.previewDescription}</p>
-            )}
           </div>
         </a>
       )}

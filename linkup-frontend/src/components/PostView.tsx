@@ -1,4 +1,4 @@
-import { Calendar, Award, MapPin, Clock, ArrowLeft, Users, X, Search, Filter, Plane } from 'lucide-react';
+import { Calendar, Award, MapPin, Clock, ArrowLeft, Users, X, Search, Filter, Plane, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { NeedCard } from './NeedCard';
 import { AvailableSessionView } from './AvailableSessionView';
@@ -34,8 +34,94 @@ interface PostViewProps {
   }) => void;
 }
 
-function todayStr() {
-  return new Date().toISOString().split('T')[0];
+function MonthCalendar({
+  selectedDates,
+  onToggle,
+}: {
+  selectedDates: string[];
+  onToggle: (date: string) => void;
+}) {
+  const [viewDate, setViewDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    return d;
+  });
+
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const firstDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const cells: (Date | null)[] = [
+    ...Array(firstDow).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1)),
+  ];
+
+  const monthLabel = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const canGoPrev = new Date(year, month, 1) > new Date(today.getFullYear(), today.getMonth(), 1);
+
+  return (
+    <div className="bg-white rounded-xl border-2 border-slate-200 p-3">
+      <div className="flex items-center justify-between mb-2">
+        <button
+          type="button"
+          onClick={() => setViewDate(new Date(year, month - 1, 1))}
+          disabled={!canGoPrev}
+          className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-30"
+        >
+          <ChevronLeft className="w-4 h-4 text-slate-600" />
+        </button>
+        <span className="text-sm font-semibold text-slate-800">{monthLabel}</span>
+        <button
+          type="button"
+          onClick={() => setViewDate(new Date(year, month + 1, 1))}
+          className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+        >
+          <ChevronRight className="w-4 h-4 text-slate-600" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 mb-1">
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+          <div key={d} className="text-center text-[10px] font-medium text-slate-400 py-1">{d}</div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-y-1">
+        {cells.map((date, i) => {
+          if (!date) return <div key={`e-${i}`} />;
+          const val = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+          const isPast = date < today;
+          const isToday = date.getTime() === today.getTime();
+          const isSelected = selectedDates.includes(val);
+          return (
+            <button
+              key={val}
+              type="button"
+              disabled={isPast}
+              onClick={() => onToggle(val)}
+              className={`mx-auto w-9 h-9 rounded-full text-sm font-medium transition-all flex items-center justify-center ${
+                isSelected
+                  ? 'bg-emerald-500 text-white shadow-sm'
+                  : isToday
+                    ? 'border-2 border-emerald-400 text-emerald-700 font-bold'
+                    : isPast
+                      ? 'text-slate-300 cursor-not-allowed'
+                      : 'text-slate-700 hover:bg-slate-100 active:bg-emerald-100'
+              }`}
+            >
+              {date.getDate()}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }: PostViewProps) {
@@ -47,9 +133,9 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [selectedPartnerRoles, setSelectedPartnerRoles] = useState<string[]>([]);
   const [posterRole, setPosterRole] = useState('');
   const [selectedTeamType, setSelectedTeamType] = useState<string>(user?.teamType || '');
-  const [dateType, setDateType] = useState<'specific' | 'flexible'>('specific');
-  const [specificDate, setSpecificDate] = useState('');
+  const [selectedDates, setSelectedDates] = useState<string[]>([]);
   const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
+  const [isDateFlexible, setIsDateFlexible] = useState(false);
   const [isTimeFlexible, setIsTimeFlexible] = useState(false);
   
   // Find Sessions filters
@@ -152,6 +238,21 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   };
 
   const activeFilterCount = filterSport.length + filterPositions.length + filterSkillLevels.length + (filterDistance !== '10' ? 1 : 0) + (isFindTraveling && findTravelLocation.trim() ? 1 : 0);
+
+  const handleDateAdd = (date: string) => {
+    if (date && !selectedDates.includes(date)) {
+      setSelectedDates([...selectedDates, date]);
+    }
+  };
+
+  const handleDateRemove = (dateToRemove: string) => {
+    setSelectedDates(selectedDates.filter(date => date !== dateToRemove));
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
 
   const handleTimeAdd = (time: string) => {
     if (time && !selectedTimes.includes(time)) {
@@ -479,50 +580,49 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                Date
+                Date <span className="text-xs text-slate-400 font-normal">— tap dates to select</span>
               </label>
 
-              {/* Specific / Flexible toggle */}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setDateType('specific')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium transition-colors border-2 ${
-                    dateType === 'specific'
-                      ? 'bg-emerald-500 text-white border-emerald-500'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <Calendar className="w-4 h-4" />
-                  Specific Date
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDateType('flexible')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-medium transition-colors border-2 ${
-                    dateType === 'flexible'
-                      ? 'bg-emerald-500 text-white border-emerald-500'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <Clock className="w-4 h-4" />
-                  Flexible
-                </button>
-              </div>
+              <MonthCalendar
+                selectedDates={selectedDates}
+                onToggle={(val) => selectedDates.includes(val) ? handleDateRemove(val) : handleDateAdd(val)}
+              />
 
-              {dateType === 'specific' && (
-                <input
-                  type="date"
-                  min={todayStr()}
-                  value={specificDate}
-                  onChange={(e) => setSpecificDate(e.target.value)}
-                  className="w-full mt-2 px-4 py-3 border-2 border-slate-200 rounded-xl text-sm text-slate-900 focus:border-emerald-500 focus:outline-none bg-white"
-                />
+              {/* Selected dates summary */}
+              {selectedDates.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {[...selectedDates].sort().map((date) => (
+                    <div key={date} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-900 rounded-lg border border-emerald-200">
+                      <span className="text-sm font-medium">{formatDate(date)}</span>
+                      <button type="button" onClick={() => handleDateRemove(date)} className="hover:bg-emerald-200 rounded-full p-0.5 transition-colors">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
 
-              {dateType === 'flexible' && (
-                <p className="text-sm text-slate-500 mt-2">Your session will be marked as flexible — the date will be discussed with your partner.</p>
-              )}
+              {/* Flexible Date Option */}
+              <label className="flex items-center gap-2 mt-3 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={isDateFlexible}
+                    onChange={() => setIsDateFlexible(!isDateFlexible)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-emerald-500 peer-checked:border-emerald-600 transition-all flex items-center justify-center">
+                    {isDateFlexible && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">
+                  Flexible on date <span className="text-xs text-slate-400">(Will discuss with partner)</span>
+                </span>
+              </label>
             </div>
 
             {/* Time */}
@@ -694,8 +794,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   toast.error('Please select at least one partner role.');
                   return;
                 }
-                if (dateType === 'specific' && !specificDate) {
-                  toast.error('Please select a date or choose Flexible.');
+                if (selectedDates.length === 0 && !isDateFlexible) {
+                  toast.error('Please add a date or mark as flexible.');
                   return;
                 }
                 setSubmitting(true);
@@ -708,7 +808,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     posterRole: resolvedPosterRole,
                     partnerRole: selectedPartnerRoles.join(', '),
                     title: `${selectedSport} – ${selectedPartnerRoles.join(' / ')} needed`,
-                    date: dateType === 'flexible' ? 'Flexible' : specificDate,
+                    date: selectedDates[0] || 'Flexible',
                     time: selectedTimes[0] || (isTimeFlexible ? 'Flexible' : ''),
                     duration: durationRef.current?.value || '1 hr',
                     location: locationValue,
@@ -724,8 +824,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   setSelectedPartnerRoles([]);
                   setPosterRole('');
                   setSelectedTeamType(user?.teamType || '');
-                  setDateType('specific');
-                  setSpecificDate('');
+                  setSelectedDates([]);
                   setSelectedTimes([]);
                   setSelectedSkillLevels([]);
                   setLocationValue('');

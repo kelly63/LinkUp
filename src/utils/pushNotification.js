@@ -28,7 +28,7 @@ function getProvider() {
   }
 }
 
-const BUNDLE_ID = 'com.linkupathletics.app';
+const BUNDLE_ID = 'com.linkupathletics.nextgen';
 
 /**
  * Send a push notification to one or more APNs device tokens.
@@ -53,16 +53,14 @@ async function sendPush(tokens, { title, body, data = {} }) {
     if (result.failed?.length) {
       const User = require('../models/User');
       const badTokens = result.failed
-        .filter(f => ['BadDeviceToken', 'Unregistered', 'DeviceTokenNotForTopic'].includes(f.response?.reason))
+        .filter(f => f.response?.reason === 'BadDeviceToken' || f.response?.reason === 'Unregistered')
         .map(f => f.device);
       if (badTokens.length) {
         await User.updateMany({}, { $pull: { deviceTokens: { $in: badTokens } } });
       }
     }
-    return result;
   } catch (err) {
     console.error('[apn] send error:', err.message);
-    return { error: err.message };
   }
 }
 

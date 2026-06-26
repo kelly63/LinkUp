@@ -158,8 +158,6 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
       handleOpenChatRef.current(data);
     } else if (view === 'userProfile' && data?._id) {
       handleNavigate('userProfile', { ...data, id: data._id });
-    } else if (view === 'sessionDetails' && data?._id) {
-      handleNavigate('sessionDetails', data);
     } else if (view === 'mySessions') {
       handleNavigate('mySessions');
     } else if (view === 'receivedRatings') {

@@ -1,4 +1,4 @@
-import { ChevronLeft, Calendar, MapPin, Clock, Users, Trophy, MessageCircle, Star, Navigation, CheckCircle, XCircle, Award, Shield } from 'lucide-react';
+import { ChevronLeft, Calendar, MapPin, Clock, Users, Trophy, MessageCircle, Star, Navigation, CheckCircle, Award, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, Session } from '../lib/api';
@@ -50,14 +50,10 @@ interface AvailableSessionViewProps {
 }
 
 export function AvailableSessionView({ session, isOnRoster = false, onBack, onNavigate, onViewProfile, onOpenChat }: AvailableSessionViewProps) {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const [showAcceptConfirmation, setShowAcceptConfirmation] = useState(false);
   const [isRequested, setIsRequested] = useState(false);
   const [accepting, setAccepting] = useState(false);
-
-  const isDeclined = (session as any).declinedPartners?.some(
-    (id: any) => (typeof id === 'object' ? id._id : id)?.toString() === user?._id?.toString()
-  ) ?? false;
   const [acceptError, setAcceptError] = useState('');
 
   // Normalise fields — works whether we got a full Session or the minimal shape
@@ -325,25 +321,8 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
           </div>
         )}
 
-        {/* Declined State */}
-        {isDeclined && (
-          <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-5 mb-4">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <XCircle className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-red-900 font-medium mb-1">Request Declined</h3>
-                <p className="text-sm text-red-700">
-                  {posterName} declined your request to join this session.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Action Buttons */}
-        {!isRequested && !isDeclined && (
+        {!isRequested && (
           <div className="space-y-3 mb-6">
             <button
               onClick={() => setShowAcceptConfirmation(true)}

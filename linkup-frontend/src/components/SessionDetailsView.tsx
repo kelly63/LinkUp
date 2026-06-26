@@ -377,12 +377,9 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-slate-900 mb-0.5">Join Request — Pending Your Approval</p>
-                      <button
-                        onClick={() => onNavigate && onNavigate('userProfile', { _id: pendingUser._id, ...pendingUser })}
-                        className="text-sm text-emerald-600 font-medium hover:underline mb-3 text-left"
-                      >
-                        {pendingUser.name} — View Profile →
-                      </button>
+                      <p className="text-sm text-slate-600 mb-3">
+                        <span className="font-medium">{pendingUser.name}</span> has requested to join this session.
+                      </p>
                       <div className="flex gap-2">
                         <button
                           disabled={!!actionLoading}
@@ -404,23 +401,6 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                 </div>
               ) : null
             )}
-          </div>
-        )}
-
-        {/* Declined Status — shown to a requester who was declined */}
-        {!isPostedByMe && (localSession as any).declinedPartners?.some(
-          (id: any) => (typeof id === 'object' ? id._id : id)?.toString() === user?._id?.toString()
-        ) && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-4">
-            <div className="flex items-start gap-3">
-              <div className="w-9 h-9 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <XCircle className="w-4 h-4 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900 mb-0.5">Request Declined</p>
-                <p className="text-sm text-red-700">Your request to join this session was declined.</p>
-              </div>
-            </div>
           </div>
         )}
 

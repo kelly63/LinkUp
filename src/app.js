@@ -115,11 +115,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 if (require.main === module) {
-  const { startCronJobs } = require('./utils/cron');
-  httpServer.listen(PORT, () => {
-    console.log(`LinkUp server running on port ${PORT}`);
-    startCronJobs();
-  });
+  httpServer.listen(PORT, () => console.log(`LinkUp server running on port ${PORT}`));
 }
 
 module.exports = { app, io };

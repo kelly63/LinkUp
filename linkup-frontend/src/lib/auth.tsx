@@ -40,15 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: state.token, user }));
           setState((prev) => ({ ...prev, user }));
         })
-        .catch((err: any) => {
-          // Token expired or invalid — force logout so the user gets sent back to login
-          const msg = err?.message || '';
-          if (msg.toLowerCase().includes('not authorized') || msg.toLowerCase().includes('invalid token') || msg.toLowerCase().includes('user not found')) {
-            disconnectSocket();
-            localStorage.removeItem(STORAGE_KEY);
-            setState({ token: null, user: null, isAuthenticated: false });
-          }
-        });
+        .catch(() => {}); // silently ignore — stale cached data is still usable
     }
   }, []);
 

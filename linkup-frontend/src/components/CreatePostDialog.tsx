@@ -86,9 +86,6 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
       if (postType === 'article') {
         body.sharedUrl = articleUrl.trim();
         if (articleTitle.trim()) body.articleTitle = articleTitle.trim();
-        if (preview?.image) body.previewImage = preview.image;
-        if (preview?.description) body.previewDescription = preview.description;
-        if (preview?.favicon) body.previewFavicon = preview.favicon;
       }
       if (user?.sport) body.sport = user.sport;
 

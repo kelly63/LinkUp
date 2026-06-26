@@ -1,5 +1,4 @@
 import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Award, Users, Check, Upload, Shield, FileCheck, Camera, Plus, X, Info, Eye, Map, Bell } from 'lucide-react';
-import { LocationInput } from './LocationInput';
 import { useState, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -30,7 +29,6 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
   const [agreementTab, setAgreementTab] = useState<'terms' | 'privacy'>('terms');
 
   // Verification state (Step 5)
-  const [locationError, setLocationError] = useState(false);
   const [verificationOption, setVerificationOption] = useState<'roster' | 'other' | null>(null);
   const [verificationRosterUrl, setVerificationRosterUrl] = useState('');
   const [verificationNote, setVerificationNote] = useState('');
@@ -197,15 +195,6 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
   };
 
   const handleNext = () => {
-    if (step === 2) {
-      const loc = formData.location.trim();
-      // Require a town-level entry: must contain a comma (e.g. "Boston, MA")
-      if (!loc || !loc.includes(',')) {
-        setLocationError(true);
-        return;
-      }
-      setLocationError(false);
-    }
     setStep(step + 1);
   };
 
@@ -359,7 +348,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               </div>
             </div>
             <h1 className="text-white text-2xl mb-2 font-[Magra]">LinkUp Athletics</h1>
-            <p className="text-emerald-400 text-sm font-[Magra] uppercase tracking-widest">There Is No Offseason.</p>
+            <p className="text-emerald-200 text-sm">LinkUp. Level Up.</p>
           </div>
         </div>
 
@@ -489,16 +478,15 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Location <span className="text-red-500">*</span>
+                Location
               </label>
-              <LocationInput
+              <input
+                type="text"
                 value={formData.location}
-                onChange={(val) => { setFormData({ ...formData, location: val }); setLocationError(false); }}
-                error={locationError}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                placeholder="City, State"
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
-              {locationError && (
-                <p className="text-xs text-red-500 mt-1">Please enter your city and state (e.g. Boston, MA)</p>
-              )}
             </div>
 
             {/* Password */}

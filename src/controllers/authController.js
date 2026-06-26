@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
-const { sendVerificationEmail, sendPasswordResetEmail, sendWelcomeEmail } = require('../utils/email');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/email');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'linkup-admin-secret';
@@ -10,7 +10,7 @@ const APP_URL = process.env.APP_URL || 'http://localhost:5000';
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '30d',
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 
 function validatePassword(password) {
@@ -119,17 +119,6 @@ const register = async (req, res) => {
 
     const user = await User.create(userData);
     const token = generateToken(user._id);
-
-    // Geocode location async — doesn't block registration
-    if (userData.location) {
-      const { geocodeLocation } = require('../utils/geocode');
-      geocodeLocation(userData.location).then((coords) => {
-        if (coords) User.findByIdAndUpdate(user._id, { lat: coords.lat, lon: coords.lon }).catch(() => {});
-      }).catch(() => {});
-    }
-
-    // Welcome email — async, non-blocking
-    sendWelcomeEmail({ user }).catch((err) => console.error('[welcome email]', err.message));
 
     if (incomingRole === 'athlete') {
       const userIdStr = user._id.toString();

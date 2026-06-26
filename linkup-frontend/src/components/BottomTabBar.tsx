@@ -44,7 +44,11 @@ export function BottomTabBar({ activeTab, onTabChange, badges = {} }: BottomTabB
                   strokeWidth={2}
                 />
                 {badgeCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-white" />
+                  <span className="absolute -top-1 -right-1.5 min-w-[16px] h-4 bg-red-500 rounded-full flex items-center justify-center px-1">
+                    <span className="text-[9px] font-bold text-white leading-none">
+                      {badgeCount > 99 ? '99+' : badgeCount}
+                    </span>
+                  </span>
                 )}
               </div>
               <span className="text-xs font-[Magra]">{tab.label}</span>

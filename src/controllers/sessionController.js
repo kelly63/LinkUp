@@ -1,8 +1,6 @@
 const Session = require('../models/Session');
-const User = require('../models/User');
 const Message = require('../models/Message');
 const MessageRequest = require('../models/MessageRequest');
-const { haversineDistance } = require('../utils/geocode');
 
 // Send a system message in the thread between two users.
 // Auto-creates/upgrades the MessageRequest so the thread is accessible.
@@ -144,60 +142,7 @@ const createSession = async (req, res) => {
     });
 
     await session.populate('postedBy', USER_FIELDS);
-
-    const io = req.app.get('io');
     res.status(201).json({ session });
-
-    // After responding, notify nearby users with the same sport/level (non-blocking)
-    setImmediate(async () => {
-      try {
-        if (!session.sport) return;
-        const poster = await User.findById(req.user._id).select('lat lon name').lean();
-        if (!poster?.lat || !poster?.lon) return;
-
-        // Bounding box pre-filter (~10 miles at mid-latitudes)
-        const RANGE = 0.15;
-        const candidateQuery = {
-          _id: { $ne: poster._id },
-          sport: session.sport,
-          email: { $exists: true, $ne: '' },
-          lat: { $gte: poster.lat - RANGE, $lte: poster.lat + RANGE },
-          lon: { $gte: poster.lon - RANGE, $lte: poster.lon + RANGE },
-        };
-        // If the session targets a specific skill level, only notify users at that level
-        if (session.skillLevelRequired) {
-          candidateQuery.skillLevel = session.skillLevelRequired;
-        }
-
-        const candidates = await User.find(candidateQuery).select('_id lat lon email name skillLevel').lean();
-        const { sendSessionNearbyEmail } = require('../utils/email');
-        const sessionLabel = session.title || `${session.sport} session`;
-
-        for (const u of candidates) {
-          if (haversineDistance(poster.lat, poster.lon, u.lat, u.lon) <= 10) {
-            // In-app + push notification
-            if (io) {
-              io.notify(u._id, 'session_nearby', {
-                sessionId: session._id,
-                sessionTitle: sessionLabel,
-                sport: session.sport,
-                postedBy: { name: poster.name },
-              });
-            }
-            // Email notification
-            sendSessionNearbyEmail({
-              user: u,
-              posterName: poster.name,
-              sessionTitle: sessionLabel,
-              sport: session.sport,
-              skillLevel: session.skillLevelRequired,
-            }).catch((err) => console.error('[session_nearby email]', u.email, err.message));
-          }
-        }
-      } catch (err) {
-        console.error('[session_nearby]', err.message);
-      }
-    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -209,12 +154,10 @@ const getAvailableSessions = async (req, res) => {
     const { sport, skillLevel, location, source, page = 1, limit = 20 } = req.query;
 
     const targetSource = source || 'athletics';
-    const now = new Date();
     const query = {
       status: 'open',
       postedBy: { $ne: req.user._id },
       source: { $in: [targetSource, null, undefined] },
-      $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
     };
 
     if (sport) query.sport = { $regex: sport, $options: 'i' };
@@ -356,9 +299,6 @@ const updateSession = async (req, res) => {
       for (const field of schedulingFields) {
         if (req.body[field] !== undefined) session[field] = req.body[field];
       }
-      if (req.body.date !== undefined) {
-        session.expiresAt = computeExpiresAt(req.body.date, req.body.dateWindowStart, req.body.dateWindowEnd);
-      }
     }
 
     await session.save();
@@ -389,7 +329,6 @@ const approveChange = async (req, res) => {
     session.time = time;
     session.location = location;
     session.duration = duration;
-    session.expiresAt = computeExpiresAt(date, null, null);
     session.pendingChange = null;
 
     await session.save();
@@ -535,13 +474,6 @@ const acceptSession = async (req, res) => {
     );
     if (alreadyPending) {
       return res.status(400).json({ message: 'You have already requested to join this session' });
-    }
-
-    const wasDeclined = (session.declinedPartners || []).some(
-      (id) => id.toString() === req.user._id.toString()
-    );
-    if (wasDeclined) {
-      return res.status(403).json({ message: 'Your request to join this session was declined' });
     }
 
     const isAdditionalRequest = session.pendingPartners.length > 0;
@@ -691,10 +623,6 @@ const declinePartner = async (req, res) => {
     session.pendingPartners = session.pendingPartners.filter(
       (id) => id.toString() !== partnerId
     );
-    if (!session.declinedPartners) session.declinedPartners = [];
-    if (!session.declinedPartners.some((id) => id.toString() === partnerId)) {
-      session.declinedPartners.push(partnerId);
-    }
     await session.save();
     await session.populate('postedBy', USER_FIELDS);
     await session.populate('partner', USER_FIELDS);

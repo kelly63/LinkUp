@@ -98,12 +98,6 @@ const sessionSchema = new mongoose.Schema(
       ref: 'User',
     }],
 
-    // Users whose join requests were declined — cannot request again
-    declinedPartners: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-    }],
-
     // Pending change proposed by the poster, awaiting partner approval
     pendingChange: {
       type: {

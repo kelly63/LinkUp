@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star, CalendarClock, CalendarX, ThumbsUp, ThumbsDown, UserSearch, MapPin } from 'lucide-react';
+import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star, CalendarClock, CalendarX, ThumbsUp, ThumbsDown, UserSearch } from 'lucide-react';
 import { notifications as notificationsApi, StoredNotification } from '../lib/api';
 
 interface NotificationPanelProps {
@@ -9,7 +9,6 @@ interface NotificationPanelProps {
   liveQueue: StoredNotification[];
   onAllRead: () => void;
   onNavigate?: (type: string, data: any) => void;
-  panelTop?: string;
 }
 
 const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color: string; bg: string }> = {
@@ -97,12 +96,6 @@ const TYPE_META: Record<string, { label: string; Icon: React.ElementType; color:
     color: 'text-red-600',
     bg: 'bg-red-50',
   },
-  session_nearby: {
-    label: 'Session Near You',
-    Icon: MapPin,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
-  },
 };
 
 function notificationBody(n: StoredNotification): string {
@@ -156,10 +149,6 @@ function notificationBody(n: StoredNotification): string {
       return d.declinedBy?.name
         ? `${d.declinedBy.name} declined your request to join "${d.sessionTitle || 'their session'}"`
         : 'Your join request was declined';
-    case 'session_nearby':
-      return d.postedBy?.name
-        ? `${d.postedBy.name} posted a ${d.sport || 'training'} session near you`
-        : `A ${d.sport || 'training'} session was just posted near you`;
     default:
       return 'New notification';
   }
@@ -175,7 +164,7 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, onNavigate, panelTop }: NotificationPanelProps) {
+export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, onNavigate }: NotificationPanelProps) {
   const [items, setItems] = useState<StoredNotification[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -235,8 +224,8 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, 
       )}
 
       <div
-        style={open ? { top: panelTop ?? '100px' } : { display: 'none' }}
-        className="absolute left-0 right-0 z-40 bg-white rounded-b-2xl shadow-2xl flex flex-col max-h-[70%] overflow-y-auto"
+        style={open ? undefined : { display: 'none' }}
+        className="absolute top-[88px] left-0 right-0 z-40 bg-white rounded-b-2xl shadow-2xl flex flex-col max-h-[70%] overflow-y-auto"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
@@ -260,9 +249,9 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, 
             )}
             <button
               onClick={onClose}
-              className="p-2.5 hover:bg-slate-100 rounded-full transition-colors"
+              className="p-1.5 hover:bg-slate-100 rounded-full transition-colors"
             >
-              <X className="w-5 h-5 text-slate-500" />
+              <X className="w-4 h-4 text-slate-500" />
             </button>
           </div>
         </div>
@@ -307,12 +296,6 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, 
               );
             })
           )}
-          <button
-            onClick={onClose}
-            className="w-full py-4 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors border-t border-slate-100"
-          >
-            Close
-          </button>
         </div>
       </div>
     </>

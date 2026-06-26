@@ -1,5 +1,4 @@
 import { Settings, Star, Award, Shield, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera, KeyRound, Eye, EyeOff, Bell } from 'lucide-react';
-import { LocationInput } from './LocationInput';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
@@ -71,21 +70,23 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   // Push notification toggle
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
-  const [deviceToken, setDeviceToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isNative) return;
     PushNotifications.checkPermissions().then(async (s) => {
       if (s.receive === 'granted') {
         setPushEnabled(true);
-        await PushNotifications.addListener('registration', async (tokenData) => {
-          setDeviceToken(tokenData.value);
+        // Re-register every mount to ensure the token is always saved
+        const listener = await PushNotifications.addListener('registration', async (tokenData) => {
+          listener.remove();
           if (token) {
-            await fetch(`${API}/api/notifications/device-token`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ token: tokenData.value }),
-            }).catch(() => {});
+            try {
+              await fetch(`${API}/api/notifications/device-token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ token: tokenData.value }),
+              });
+            } catch {}
           }
         });
         PushNotifications.register().catch(() => {});
@@ -95,48 +96,49 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
 
   const togglePush = async () => {
     if (pushEnabled) {
-      // Soft-disable: remove token from backend so notifications stop
-      setPushLoading(true);
-      try {
-        const currentToken = deviceToken ?? await new Promise<string>((resolve) => {
-          PushNotifications.addListener('registration', (t) => resolve(t.value));
-          PushNotifications.register().catch(() => {});
-        });
-        if (token && currentToken) {
-          await fetch(`${API}/api/notifications/device-token`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ token: currentToken }),
-          });
-        }
-        setPushEnabled(false);
-        setDeviceToken(null);
-      } catch {}
-      setPushLoading(false);
+      toast.info('To disable, go to iPhone Settings → Notifications → LinkUp');
       return;
     }
     setPushLoading(true);
     try {
       const status = await PushNotifications.requestPermissions();
       if (status.receive === 'granted') {
-        await PushNotifications.addListener('registration', async (tokenData) => {
-          setDeviceToken(tokenData.value);
+        const errListener = await PushNotifications.addListener('registrationError', (err: any) => {
+          errListener.remove();
+          toast.error(`APNs registration failed: ${JSON.stringify(err)}`);
+          setPushLoading(false);
+        });
+        const listener = await PushNotifications.addListener('registration', async (tokenData) => {
+          listener.remove();
+          errListener.remove();
           setPushEnabled(true);
           setPushLoading(false);
           if (token) {
-            await fetch(`${API}/api/notifications/device-token`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ token: tokenData.value }),
-            }).catch(() => {});
+            try {
+              const res = await fetch(`${API}/api/notifications/device-token`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ token: tokenData.value }),
+              });
+              if (res.ok) {
+                toast.success('Push notifications enabled!');
+              } else {
+                toast.error(`Token save failed: ${res.status}`);
+              }
+            } catch (e: any) {
+              toast.error(`Token save error: ${e?.message}`);
+            }
           }
         });
         await PushNotifications.register();
       } else {
-        toast.info('Enable notifications in iPhone Settings → LinkUp');
+        toast.error('Enable in iPhone Settings → Notifications → LinkUp');
         setPushLoading(false);
       }
-    } catch {
+    } catch (e: any) {
+      toast.error(`Error: ${e?.message}`);
+      setPushLoading(false);
+    } finally {
       setPushLoading(false);
     }
   };
@@ -749,8 +751,8 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           <div className="bg-white rounded-xl p-4 flex items-center gap-4">
             {/* Small QR Code */}
             <div className="flex-shrink-0">
-              <QRCodeSVG
-                value={`linkupathletics://profile/${user?._id || 'unknown'}`}
+              <QRCodeSVG 
+                value={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/profile/${user?._id || 'unknown'}`}
                 size={80}
                 level="H"
                 includeMargin={false}
@@ -925,7 +927,13 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
               {/* Location */}
               <div>
                 <label className="text-sm text-slate-700 mb-2 block">Location</label>
-                <LocationInput value={tempLocation} onChange={setTempLocation} />
+                <input
+                  type="text"
+                  value={tempLocation}
+                  onChange={(e) => setTempLocation(e.target.value)}
+                  placeholder="e.g. Boston, MA"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
+                />
               </div>
 
               {/* Action Buttons */}
@@ -1139,7 +1147,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             <div className="bg-slate-50 rounded-2xl p-6 flex flex-col items-center">
               <div className="bg-white p-4 rounded-xl shadow-lg">
                 <QRCodeSVG 
-                  value={`linkupathletics://profile/${user?._id || 'unknown'}`}
+                  value={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/profile/${user?._id || 'unknown'}`}
                   size={220}
                   level="H"
                   includeMargin={true}
