@@ -39,10 +39,53 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
   const { token, user } = useAuth();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [localSession, setLocalSession] = useState(session);
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [suggestDate, setSuggestDate] = useState('');
+  const [suggestTime, setSuggestTime] = useState('');
 
   // Determine the "other person" in this session
   const isPostedByMe = user?._id === (localSession.postedBy?._id ?? localSession.postedBy);
   const partner = isPostedByMe ? localSession.partner : localSession.postedBy;
+
+  const isExpired = !!(
+    localSession.expiresAt &&
+    new Date(localSession.expiresAt) < new Date() &&
+    (localSession.status === 'open' || localSession.status === 'confirmed')
+  );
+
+  // pendingChange.proposedBy may be a string ID or populated object
+  const pendingProposedById =
+    localSession.pendingChange?.proposedBy
+      ? (typeof localSession.pendingChange.proposedBy === 'object'
+          ? (localSession.pendingChange.proposedBy as any)._id
+          : localSession.pendingChange.proposedBy)
+      : null;
+  const partnerSuggested =
+    pendingProposedById !== null &&
+    localSession.partner &&
+    pendingProposedById === (typeof localSession.partner === 'object'
+      ? (localSession.partner as any)._id
+      : localSession.partner);
+
+  const handleSuggestTime = async () => {
+    if (!token || !suggestDate) return;
+    setActionLoading('suggest');
+    try {
+      const { session: updated } = await sessionsApi.suggestTime(token, localSession._id, {
+        date: suggestDate,
+        ...(suggestTime ? { time: suggestTime } : {}),
+      });
+      setLocalSession(updated);
+      setShowSuggestModal(false);
+      setSuggestDate('');
+      setSuggestTime('');
+      toast.success('Time suggestion sent to the session owner');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not send suggestion');
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   const handleApproveChange = async () => {
     if (!token) return;
@@ -423,7 +466,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
         {/* Pending Change Banner */}
         {localSession.pendingChange && (
           <div className={`rounded-2xl border p-4 mb-4 ${
-            !isPostedByMe
+            (partnerSuggested ? isPostedByMe : !isPostedByMe)
               ? 'bg-amber-50 border-amber-200'
               : 'bg-slate-50 border-slate-200'
           }`}>
@@ -433,7 +476,9 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-900 mb-1">
-                  {isPostedByMe ? 'Awaiting partner approval' : 'Proposed changes to this session'}
+                  {partnerSuggested
+                    ? (isPostedByMe ? 'Your partner suggested a new time' : 'Suggestion sent — awaiting owner response')
+                    : (isPostedByMe ? 'Awaiting partner approval' : 'Proposed changes to this session')}
                 </p>
                 <div className="space-y-1 mb-3">
                   {localSession.pendingChange.changedFields.includes('date') && (
@@ -465,14 +510,15 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                     </p>
                   )}
                 </div>
-                {!isPostedByMe && (
+                {/* Owner approves partner suggestion, OR partner approves owner proposal */}
+                {(partnerSuggested ? isPostedByMe : !isPostedByMe) && (
                   <div className="flex gap-2">
                     <button
                       disabled={!!actionLoading}
                       onClick={handleApproveChange}
                       className="flex-1 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-60"
                     >
-                      {actionLoading === 'approve' ? 'Approving…' : 'Approve Changes'}
+                      {actionLoading === 'approve' ? 'Accepting…' : 'Accept'}
                     </button>
                     <button
                       disabled={!!actionLoading}
@@ -676,8 +722,71 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
           </div>
         )}
 
+        {/* Suggest New Time — shown to partner when session is expired and no pending suggestion yet */}
+        {isExpired && !isPostedByMe && !localSession.pendingChange && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Calendar className="w-4 h-4 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-slate-900 mb-0.5">Session has expired</p>
+                <p className="text-xs text-slate-500 mb-3">Suggest a new date to the session owner to keep it going.</p>
+                <button
+                  onClick={() => setShowSuggestModal(true)}
+                  className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-sm font-medium transition-colors"
+                >
+                  Suggest New Time
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="h-10" />
       </div>
+
+      {/* Suggest New Time modal */}
+      {showSuggestModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
+          <div className="bg-white rounded-t-3xl w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-semibold text-slate-900">Suggest New Time</h3>
+              <button onClick={() => setShowSuggestModal(false)} className="text-slate-400 hover:text-slate-600">
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Date <span className="text-red-500">*</span></label>
+                <input
+                  type="date"
+                  value={suggestDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setSuggestDate(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Time <span className="text-slate-400 font-normal">(optional)</span></label>
+                <input
+                  type="time"
+                  value={suggestTime}
+                  onChange={(e) => setSuggestTime(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-sm text-slate-900 focus:border-amber-400 focus:outline-none"
+                />
+              </div>
+              <button
+                onClick={handleSuggestTime}
+                disabled={!suggestDate || actionLoading === 'suggest'}
+                className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
+              >
+                {actionLoading === 'suggest' ? 'Sending…' : 'Send Suggestion'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

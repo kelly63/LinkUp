@@ -12,6 +12,7 @@ const {
   completeSession,
   approveChange,
   declineChange,
+  suggestNewTime,
   approvePartner,
   declinePartner,
 } = require('../controllers/sessionController');
@@ -30,6 +31,7 @@ router.post('/:id/accept', acceptSession);
 router.post('/:id/complete', completeSession);
 router.post('/:id/approve-change', approveChange);
 router.post('/:id/decline-change', declineChange);
+router.post('/:id/suggest-time', suggestNewTime);
 router.post('/:id/approve-partner', approvePartner);
 router.post('/:id/decline-partner', declinePartner);
 

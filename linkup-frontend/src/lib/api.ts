@@ -74,6 +74,7 @@ export interface Session {
     proposedBy: string;
     proposedAt: string;
   } | null;
+  expiresAt?: string | null;
 }
 
 export interface Connection {
@@ -300,6 +301,11 @@ export const sessions = {
 
   declineChange: (token: string, id: string) =>
     request<{ session: Session }>(`/api/sessions/${id}/decline-change`, { method: 'POST' }, token),
+
+  suggestTime: (token: string, id: string, body: { date: string; time?: string }) =>
+    request<{ session: Session }>(`/api/sessions/${id}/suggest-time`, {
+      method: 'POST', body: JSON.stringify(body),
+    }, token),
 
   approvePartner: (token: string, id: string, partnerId: string) =>
     request<{ session: Session }>(`/api/sessions/${id}/approve-partner`, {

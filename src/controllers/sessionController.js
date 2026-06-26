@@ -311,17 +311,29 @@ const updateSession = async (req, res) => {
   }
 };
 
-// POST /api/sessions/:id/approve-change — partner approves pending scheduling change
+// POST /api/sessions/:id/approve-change — approve a pending scheduling change
+// Works both ways: partner approves owner's proposal, or owner accepts partner's suggestion
 const approveChange = async (req, res) => {
   try {
     const session = await Session.findById(req.params.id);
     if (!session) return res.status(404).json({ message: 'Session not found' });
+    if (!session.pendingChange) return res.status(400).json({ message: 'No pending change to approve' });
 
-    if (!session.partner || session.partner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Only the session partner can approve changes' });
+    const userId = req.user._id.toString();
+    const posterId = session.postedBy.toString();
+    const partnerId = session.partner?.toString();
+    const proposedBy = session.pendingChange.proposedBy?.toString();
+
+    // Partner suggested → owner approves; Owner proposed → partner approves
+    const partnerSuggested = proposedBy === partnerId;
+    const isOwner = userId === posterId;
+    const isPartner = userId === partnerId;
+
+    if (partnerSuggested && !isOwner) {
+      return res.status(403).json({ message: 'Only the session owner can accept this suggestion' });
     }
-    if (!session.pendingChange) {
-      return res.status(400).json({ message: 'No pending change to approve' });
+    if (!partnerSuggested && !isPartner) {
+      return res.status(403).json({ message: 'Only the session partner can approve changes' });
     }
 
     const { date, time, location, duration } = session.pendingChange;
@@ -329,6 +341,7 @@ const approveChange = async (req, res) => {
     session.time = time;
     session.location = location;
     session.duration = duration;
+    if (date && date !== 'Flexible') session.expiresAt = computeExpiresAt(date, null, null);
     session.pendingChange = null;
 
     await session.save();
@@ -336,11 +349,12 @@ const approveChange = async (req, res) => {
     await session.populate('partner', USER_FIELDS);
 
     const io = req.app.get('io');
-    const posterId = session.postedBy._id.toString();
     const sessionLabel = session.title || session.sport;
+    // Notify the person who proposed the change
+    const notifyId = partnerSuggested ? partnerId : posterId;
 
     if (io) {
-      io.notify(posterId, 'change_approved', {
+      io.notify(notifyId, 'change_approved', {
         sessionId: session._id,
         sessionTitle: sessionLabel,
         approvedBy: { _id: req.user._id, name: req.user.name },
@@ -350,8 +364,8 @@ const approveChange = async (req, res) => {
     await postSystemMessage(
       io,
       req.user._id,
-      posterId,
-      `✓ ${req.user.name} approved your proposed changes to "${sessionLabel}".`,
+      notifyId,
+      `✓ ${req.user.name} accepted the proposed changes to "${sessionLabel}".`,
       session._id
     );
 
@@ -361,17 +375,27 @@ const approveChange = async (req, res) => {
   }
 };
 
-// POST /api/sessions/:id/decline-change — partner declines pending scheduling change
+// POST /api/sessions/:id/decline-change — decline a pending scheduling change (bidirectional)
 const declineChange = async (req, res) => {
   try {
     const session = await Session.findById(req.params.id);
     if (!session) return res.status(404).json({ message: 'Session not found' });
+    if (!session.pendingChange) return res.status(400).json({ message: 'No pending change to decline' });
 
-    if (!session.partner || session.partner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Only the session partner can decline changes' });
+    const userId = req.user._id.toString();
+    const posterId = session.postedBy.toString();
+    const partnerId = session.partner?.toString();
+    const proposedBy = session.pendingChange.proposedBy?.toString();
+
+    const partnerSuggested = proposedBy === partnerId;
+    const isOwner = userId === posterId;
+    const isPartner = userId === partnerId;
+
+    if (partnerSuggested && !isOwner) {
+      return res.status(403).json({ message: 'Only the session owner can decline this suggestion' });
     }
-    if (!session.pendingChange) {
-      return res.status(400).json({ message: 'No pending change to decline' });
+    if (!partnerSuggested && !isPartner) {
+      return res.status(403).json({ message: 'Only the session partner can decline changes' });
     }
 
     session.pendingChange = null;
@@ -380,11 +404,11 @@ const declineChange = async (req, res) => {
     await session.populate('partner', USER_FIELDS);
 
     const io = req.app.get('io');
-    const posterId = session.postedBy._id.toString();
     const sessionLabel = session.title || session.sport;
+    const notifyId = partnerSuggested ? partnerId : posterId;
 
     if (io) {
-      io.notify(posterId, 'change_declined', {
+      io.notify(notifyId, 'change_declined', {
         sessionId: session._id,
         sessionTitle: sessionLabel,
         declinedBy: { _id: req.user._id, name: req.user.name },
@@ -394,8 +418,72 @@ const declineChange = async (req, res) => {
     await postSystemMessage(
       io,
       req.user._id,
+      notifyId,
+      `${req.user.name} declined the proposed changes to "${sessionLabel}".`,
+      session._id
+    );
+
+    res.json({ session });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// POST /api/sessions/:id/suggest-time — partner suggests a new date/time on an expired session
+const suggestNewTime = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    if (!session.partner || session.partner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Only the confirmed session partner can suggest a new time' });
+    }
+    if (session.status === 'completed' || session.status === 'cancelled') {
+      return res.status(400).json({ message: 'Cannot suggest times on completed or cancelled sessions' });
+    }
+    if (session.pendingChange) {
+      return res.status(400).json({ message: 'There is already a pending change on this session' });
+    }
+
+    const { date, time } = req.body;
+    if (!date) return res.status(400).json({ message: 'A date is required' });
+
+    session.pendingChange = {
+      date,
+      time: time || session.time,
+      location: session.location,
+      duration: session.duration,
+      changedFields: ['date', ...(time && time !== session.time ? ['time'] : [])],
+      proposedBy: req.user._id,
+      proposedAt: new Date(),
+    };
+
+    await session.save();
+    await session.populate('postedBy', USER_FIELDS);
+    await session.populate('partner', USER_FIELDS);
+
+    const io = req.app.get('io');
+    const posterId = session.postedBy._id.toString();
+    const sessionLabel = session.title || session.sport;
+
+    if (io) {
+      io.notify(posterId, 'change_proposed', {
+        sessionId: session._id,
+        sessionTitle: sessionLabel,
+        sport: session.sport,
+        changedFields: session.pendingChange.changedFields,
+        proposedDate: date,
+        proposedTime: time,
+        proposedBy: { _id: req.user._id, name: req.user.name },
+      });
+    }
+
+    const dateStr = time ? `${date} at ${time}` : date;
+    await postSystemMessage(
+      io,
+      req.user._id,
       posterId,
-      `${req.user.name} declined your proposed changes to "${sessionLabel}". Original schedule remains.`,
+      `${req.user.name} suggested a new time for "${sessionLabel}": ${dateStr}. Tap to review and accept.`,
       session._id
     );
 
@@ -708,6 +796,7 @@ module.exports = {
   completeSession,
   approveChange,
   declineChange,
+  suggestNewTime,
   approvePartner,
   declinePartner,
 };
