@@ -1,4 +1,4 @@
-import { ChevronLeft, Calendar, MapPin, Clock, Users, Trophy, MessageCircle, Star, Navigation, CheckCircle, Award, Shield } from 'lucide-react';
+import { ChevronLeft, Calendar, MapPin, Clock, Users, Trophy, MessageCircle, Star, Navigation, CheckCircle, Award, Shirt } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, Session } from '../lib/api';
@@ -153,9 +153,8 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
               <div className="flex items-center gap-2 mb-1">
                 <h3 className="text-slate-900 font-medium group-hover:text-emerald-600 transition-colors">{posterName}</h3>
                 {isOnRoster && (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200">
-                    <Shield className="w-2.5 h-2.5" />
-                    Roster
+                  <span title="On your roster" className="inline-flex items-center justify-center w-5 h-5 bg-green-100 text-green-600 rounded-full border border-green-200">
+                    <Shirt className="w-3 h-3" />
                   </span>
                 )}
               </div>

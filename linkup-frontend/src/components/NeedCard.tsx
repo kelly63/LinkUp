@@ -1,4 +1,4 @@
-import { MapPin, Clock, Award, Users, Shield, Plane } from 'lucide-react';
+import { MapPin, Clock, Award, Users, Shirt, Plane } from 'lucide-react';
 
 interface Need {
   id: string | number;
@@ -50,9 +50,8 @@ export function NeedCard({ need, onClick, onPosterClick }: NeedCardProps) {
               {need.posterName || 'Unknown'}
             </span>
             {need.isOnRoster && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full border border-green-200">
-                <Shield className="w-2.5 h-2.5" />
-                Roster
+              <span title="On your roster" className="inline-flex items-center justify-center w-5 h-5 bg-green-100 text-green-600 rounded-full border border-green-200">
+                <Shirt className="w-3 h-3" />
               </span>
             )}
             {need.isTraveler && (
