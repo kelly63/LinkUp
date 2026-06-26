@@ -21,7 +21,7 @@ const tabs: TabItem[] = [
 
 export function BottomTabBar({ activeTab, onTabChange, badges = {} }: BottomTabBarProps) {
   return (
-    <div className="safe-area-bottom bg-white border-t border-slate-200 px-2 pt-2">
+    <div className="relative z-[51] safe-area-bottom bg-white border-t border-slate-200 px-2 pt-2">
       <div className="h-16 flex items-center justify-around">
         {tabs.map((tab) => {
           const Icon = tab.icon;
