@@ -44,12 +44,6 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
       ? `${d.from.name} gave you a ${d.overallRating}★ rating`
       : 'You received a new rating',
   }),
-  rating_reminder: (d) => ({
-    title: 'Rate Your Session',
-    description: d.sessionTitle
-      ? `How was "${d.sessionTitle}"? Don't forget to rate your partner.`
-      : "Don't forget to rate your training partner.",
-  }),
   session_updated: (d) => ({
     title: 'Session Updated',
     description: d.updatedBy?.name
@@ -98,12 +92,6 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
       ? `${d.declinedBy.name} declined your join request`
       : 'Your join request was declined',
   }),
-  session_nearby: (d) => ({
-    title: 'Session Near You',
-    description: d.postedBy?.name
-      ? `${d.postedBy.name} posted a ${d.sport || 'training'} session near you`
-      : `A ${d.sport || 'training'} session was just posted near you`,
-  }),
 };
 
 export function MobileFrame() {
@@ -114,9 +102,8 @@ export function MobileFrame() {
   const [liveQueue, setLiveQueue] = useState<StoredNotification[]>([]);
   const [pendingNav, setPendingNav] = useState<PendingNav>(null);
   const [banner, setBanner] = useState<{ title: string; description: string } | null>(null);
+  const [expiredDismissed, setExpiredDismissed] = useState(false);
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   // Auth state comes directly from context — survives page refresh automatically
   const { token, isAuthenticated } = useAuth();
@@ -151,16 +138,6 @@ export function MobileFrame() {
 
   useSocket({ token, onNotification: handleNotification });
 
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const handler = () => {
-      setKeyboardVisible(vv.height < window.innerHeight * 0.75);
-    };
-    vv.addEventListener('resize', handler);
-    return () => vv.removeEventListener('resize', handler);
-  }, []);
-
   // Handle deep links — e.g. linkupathletics://profile/<userId> from QR code scans
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -191,10 +168,8 @@ export function MobileFrame() {
       } else if (type === 'session_accepted' || type === 'session_updated' || type === 'change_proposed' || type === 'change_approved' || type === 'change_declined' || type === 'session_cancelled' || type === 'session_inquiry' || type === 'partner_approved' || type === 'partner_declined') {
         setActiveTab('dashboard');
         setPendingNav({ view: 'sessions' });
-      } else if (type === 'rating_new' || type === 'rating_reminder') {
+      } else if (type === 'rating_new') {
         setActiveTab('profile');
-      } else if (type === 'session_nearby') {
-        setActiveTab('post');
       }
     });
     return () => {
@@ -239,19 +214,7 @@ export function MobileFrame() {
         });
         break;
       case 'session_accepted':
-      case 'session_updated':
-      case 'session_cancelled':
-      case 'change_proposed':
-      case 'change_approved':
-      case 'change_declined':
-      case 'session_inquiry':
-      case 'partner_approved':
-      case 'partner_declined':
-        setActiveTab('dashboard');
-        setPendingNav(data?.sessionId
-          ? { view: 'sessionDetails', data: { _id: data.sessionId } }
-          : { view: 'mySessions', data: null }
-        );
+        setPendingNav({ view: 'mySessions', data: null });
         break;
       case 'message_new':
         setActiveTab('chat');
@@ -270,8 +233,15 @@ export function MobileFrame() {
       case 'rating_new':
         setPendingNav({ view: 'receivedRatings', data: null });
         break;
-      case 'session_nearby':
-        setActiveTab('post');
+      case 'session_updated':
+      case 'session_cancelled':
+      case 'change_proposed':
+      case 'change_approved':
+      case 'change_declined':
+      case 'session_inquiry':
+      case 'partner_approved':
+      case 'partner_declined':
+        setPendingNav({ view: 'mySessions', data: null });
         break;
     }
   }, []);
@@ -289,7 +259,6 @@ export function MobileFrame() {
 
       <HeaderBar
         onBellClick={handleBellClick}
-        onLogoClick={() => handleTabChange('dashboard')}
         showNotifications={isAuthenticated}
         unreadCount={unreadCount}
         panelOpen={panelOpen}
@@ -323,7 +292,9 @@ export function MobileFrame() {
         </div>
       )}
 
-      {isAuthenticated && <ExpiredSessionsModal />}
+      {isAuthenticated && !expiredDismissed && (
+        <ExpiredSessionsModal onDismiss={() => setExpiredDismissed(true)} />
+      )}
 
       {isAuthenticated && token && (
         <NotificationPanel
@@ -333,7 +304,6 @@ export function MobileFrame() {
           liveQueue={liveQueue}
           onAllRead={handleAllRead}
           onNavigate={handleNotificationNavigate}
-          panelTop={bannerTop}
         />
       )}
 
@@ -341,12 +311,12 @@ export function MobileFrame() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onAuthChange={() => {}}
-        onChatOpenChange={setIsChatOpen}
+        onChatOpenChange={undefined}
         externalNav={pendingNav}
         onExternalNavProcessed={() => setPendingNav(null)}
       />
 
-      {isAuthenticated && !isChatOpen && !keyboardVisible && (
+      {isAuthenticated && (
         <BottomTabBar
           activeTab={activeTab}
           onTabChange={handleTabChange}
