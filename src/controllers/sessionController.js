@@ -1,6 +1,7 @@
 const Session = require('../models/Session');
 const Message = require('../models/Message');
 const MessageRequest = require('../models/MessageRequest');
+const Connection = require('../models/Connection');
 
 // Send a system message in the thread between two users.
 // Auto-creates/upgrades the MessageRequest so the thread is accessible.
@@ -154,15 +155,43 @@ const getAvailableSessions = async (req, res) => {
     const { sport, skillLevel, location, source, page = 1, limit = 20 } = req.query;
 
     const targetSource = source || 'athletics';
+    const now = new Date();
     const query = {
       status: 'open',
       postedBy: { $ne: req.user._id },
       source: { $in: [targetSource, null, undefined] },
+      // Hide sessions whose date window has passed
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
     };
 
     if (sport) query.sport = { $regex: sport, $options: 'i' };
     if (skillLevel) query.skillLevelRequired = skillLevel;
     if (location) query.location = { $regex: location.trim(), $options: 'i' };
+
+    // Team-type filtering: men see men's sessions, women see women's sessions.
+    // Roster connections are always visible regardless of team type (social aspect).
+    const userTeamType = req.user.teamType;
+    if (userTeamType === 'mens' || userTeamType === 'womens') {
+      const conns = await Connection.find({
+        $or: [{ requester: req.user._id }, { recipient: req.user._id }],
+        status: 'accepted',
+      }).select('requester recipient').lean();
+
+      const rosterIds = conns.map((c) =>
+        c.requester.toString() === req.user._id.toString() ? c.recipient : c.requester
+      );
+
+      // Match own teamType, or sessions with no teamType set, or from a roster connection
+      query.$and = [
+        {
+          $or: [
+            { teamType: userTeamType },
+            { teamType: { $in: ['', null, undefined] } },
+            { postedBy: { $in: rosterIds } },
+          ],
+        },
+      ];
+    }
 
     const skip = (Number(page) - 1) * Number(limit);
     const sessions = await Session.find(query)

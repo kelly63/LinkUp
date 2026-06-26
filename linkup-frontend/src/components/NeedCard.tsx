@@ -60,16 +60,6 @@ export function NeedCard({ need, onClick, onPosterClick }: NeedCardProps) {
                 Traveling
               </span>
             )}
-            {need.teamType === 'mens' && (
-              <span className="inline-flex items-center px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full border border-emerald-200">
-                Men's
-              </span>
-            )}
-            {need.teamType === 'womens' && (
-              <span className="inline-flex items-center px-1.5 py-0.5 bg-pink-100 text-pink-700 text-[10px] font-bold rounded-full border border-pink-200">
-                Women's
-              </span>
-            )}
           </div>
           <p className="text-xs text-emerald-500 group-hover:underline">View profile</p>
         </div>
