@@ -52,6 +52,33 @@
     build: {
       target: 'esnext',
       outDir: 'build',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom'],
+            'vendor-radix': [
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-select',
+              '@radix-ui/react-popover',
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-avatar',
+              '@radix-ui/react-checkbox',
+              '@radix-ui/react-switch',
+              '@radix-ui/react-label',
+              '@radix-ui/react-slot',
+              '@radix-ui/react-scroll-area',
+            ],
+            'vendor-capacitor': [
+              '@capacitor/core',
+              '@capacitor/camera',
+              '@capacitor/push-notifications',
+              '@capacitor/app',
+            ],
+            'vendor-misc': ['socket.io-client', 'sonner', 'lucide-react'],
+          },
+        },
+      },
     },
     server: {
       port: 3000,
