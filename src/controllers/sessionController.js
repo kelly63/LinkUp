@@ -1,4 +1,5 @@
 const Session = require('../models/Session');
+const User = require('../models/User');
 const Message = require('../models/Message');
 const MessageRequest = require('../models/MessageRequest');
 const Connection = require('../models/Connection');
@@ -144,6 +145,42 @@ const createSession = async (req, res) => {
 
     await session.populate('postedBy', USER_FIELDS);
     res.status(201).json({ session });
+
+    // Notify matching users in the background (don't block the response)
+    setImmediate(async () => {
+      try {
+        const io = req.app.get('io');
+        if (!io) return;
+
+        const sessionTeamType = session.teamType || '';
+
+        // Build teamType filter: match own teamType or no teamType restriction
+        const teamTypeFilter = sessionTeamType
+          ? { $or: [{ teamType: sessionTeamType }, { teamType: { $in: ['', null] } }] }
+          : {};
+
+        const matchingUsers = await User.find({
+          _id: { $ne: req.user._id },
+          sport: { $regex: `^${session.sport}$`, $options: 'i' },
+          ...teamTypeFilter,
+        }).select('_id').lean();
+
+        const sessionLabel = session.title || `${session.sport} session`;
+        const posterName = req.user.name;
+
+        for (const u of matchingUsers) {
+          io.notify(u._id, 'session_nearby', {
+            sessionId: session._id,
+            sessionTitle: sessionLabel,
+            sport: session.sport,
+            location: session.location,
+            postedBy: { _id: req.user._id, name: posterName },
+          });
+        }
+      } catch (err) {
+        console.error('[session_nearby] notification error', err);
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

@@ -92,6 +92,18 @@ const NOTIFICATION_MESSAGES: Record<string, (data: any) => { title: string; desc
       ? `${d.declinedBy.name} declined your join request`
       : 'Your join request was declined',
   }),
+  session_nearby: (d) => ({
+    title: `New ${d.sport || ''} Session`.trim(),
+    description: d.location
+      ? `${d.postedBy?.name || 'Someone'} posted a session near ${d.location}`
+      : `${d.postedBy?.name || 'Someone'} posted a ${d.sport || 'training'} session`,
+  }),
+  rating_reminder: (d) => ({
+    title: 'Rate Your Session',
+    description: d.sessionTitle
+      ? `How was "${d.sessionTitle}"? Don't forget to rate your partner.`
+      : "Don't forget to rate your training partner.",
+  }),
 };
 
 export function MobileFrame() {
@@ -168,8 +180,10 @@ export function MobileFrame() {
       } else if (type === 'session_accepted' || type === 'session_updated' || type === 'change_proposed' || type === 'change_approved' || type === 'change_declined' || type === 'session_cancelled' || type === 'session_inquiry' || type === 'partner_approved' || type === 'partner_declined') {
         setActiveTab('dashboard');
         setPendingNav({ view: 'sessions' });
-      } else if (type === 'rating_new') {
+      } else if (type === 'rating_new' || type === 'rating_reminder') {
         setActiveTab('profile');
+      } else if (type === 'session_nearby') {
+        setActiveTab('post');
       }
     });
     return () => {

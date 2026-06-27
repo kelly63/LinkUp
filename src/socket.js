@@ -24,6 +24,8 @@ const PUSH_MESSAGES = {
   session_inquiry: (d) => ({ title: 'Session Inquiry',       body: d.from?.name ? `${d.from.name} is interested in your session` : 'Someone is interested in your session' }),
   partner_approved:(d) => ({ title: 'Request Approved',      body: d.approvedBy?.name ? `${d.approvedBy.name} approved your session request` : 'Your session request was approved' }),
   partner_declined:(d) => ({ title: 'Request Declined',      body: d.declinedBy?.name ? `${d.declinedBy.name} declined your session request` : 'Your session request was declined' }),
+  rating_reminder: (d) => ({ title: 'Rate Your Session',    body: d.sessionTitle ? `How was "${d.sessionTitle}"? Don't forget to rate your training partner.` : "Don't forget to rate your training partner." }),
+  session_nearby:  (d) => ({ title: `New ${d.sport || ''} Session`.trim(), body: d.location ? `${d.postedBy?.name || 'Someone'} posted a session near ${d.location}` : `${d.postedBy?.name || 'Someone'} posted a ${d.sport || 'training'} session` }),
 };
 
 if (process.env.VAPID_EMAIL && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
