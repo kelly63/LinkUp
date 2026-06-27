@@ -53,6 +53,12 @@
 	<string>LinkUp Athletics needs photo library access to update your profile photo.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>LinkUp Athletics needs permission to save photos.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>LinkUp Athletics uses your location to show nearby training sessions and connect you with athletes in your area.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>LinkUp Athletics uses your location to show nearby training sessions and connect you with athletes in your area.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>LinkUp Athletics sends notifications for session updates, messages, and nearby training opportunities.</string>
 	<key>GIDClientID</key>
 	<string>432112410961-39m83q270cgj7q5140nl5kghnn8es4qd.apps.googleusercontent.com</string>
 	<key>GIDServerClientID</key>
@@ -65,6 +71,16 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.432112410961-39m83q270cgj7q5140nl5kghnn8es4qd</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.linkupathletics.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>linkupathletics</string>
 			</array>
 		</dict>
 	</array>
