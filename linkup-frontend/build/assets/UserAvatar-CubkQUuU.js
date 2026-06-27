@@ -1,0 +1,1 @@
+import{j as s}from"./vendor-radix-OlcM7gYp.js";import{a as o}from"./index-C8oCtnfp.js";function n(t){return t.split(" ").map(r=>r[0]).join("").toUpperCase().slice(0,2)}function m({avatar:t,name:r,size:e=80,className:i=""}){const a=o(t,e);return a?s.jsx("img",{src:a,alt:r,className:`w-full h-full object-cover rounded-full ${i}`}):s.jsx(s.Fragment,{children:n(r)})}export{m as U};
