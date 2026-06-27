@@ -173,6 +173,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your.email@example.com"
+                autoComplete="username"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors font-[Magra]"
               />
             </div>
@@ -188,6 +189,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
+                autoComplete="current-password"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors font-[Magra]"
               />
             </div>

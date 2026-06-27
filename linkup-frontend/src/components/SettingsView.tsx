@@ -122,6 +122,7 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
                 <label className="block text-sm font-medium text-slate-700 mb-1">Current Password</label>
                 <div className="relative">
                   <input type={cpShowCurrent ? 'text' : 'password'} value={cpCurrent} onChange={e => setCpCurrent(e.target.value)} placeholder="Enter current password"
+                    autoComplete="current-password"
                     className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                   <button type="button" onClick={() => setCpShowCurrent(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                     {cpShowCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -132,6 +133,7 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
                 <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
                 <div className="relative">
                   <input type={cpShowNew ? 'text' : 'password'} value={cpNew} onChange={e => setCpNew(e.target.value)} placeholder="At least 8 characters"
+                    autoComplete="new-password"
                     className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
                   <button type="button" onClick={() => setCpShowNew(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                     {cpShowNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -156,6 +158,7 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
                 <input type="password" value={cpConfirm} onChange={e => setCpConfirm(e.target.value)} placeholder="Re-enter new password"
+                  autoComplete="new-password"
                   className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500" />
               </div>
               <button onClick={handleChangePassword} disabled={cpSaving}

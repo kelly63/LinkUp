@@ -455,6 +455,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="your.email@example.com"
+                autoComplete="username"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
@@ -500,6 +501,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="Create a strong password"
+                autoComplete="new-password"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
               {formData.password.length > 0 && (
@@ -532,6 +534,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 placeholder="Re-enter your password"
+                autoComplete="new-password"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
             </div>
