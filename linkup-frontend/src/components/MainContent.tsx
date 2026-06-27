@@ -1,27 +1,25 @@
-import React, { lazy, Suspense } from 'react';
-
-const LockerRoomView = lazy(() => import('./LockerRoomView').then(m => ({ default: m.LockerRoomView })));
-const PostView = lazy(() => import('./PostView').then(m => ({ default: m.PostView })));
-const ChatView = lazy(() => import('./ChatView').then(m => ({ default: m.ChatView })));
-const ProfileView = lazy(() => import('./ProfileView').then(m => ({ default: m.ProfileView })));
-const DashboardView = lazy(() => import('./DashboardView').then(m => ({ default: m.DashboardView })));
-const MapView = lazy(() => import('./MapView').then(m => ({ default: m.MapView })));
-const CoachProfileSetup = lazy(() => import('./CoachProfileSetup').then(m => ({ default: m.CoachProfileSetup })));
-const AthleteSearchView = lazy(() => import('./AthleteSearchView').then(m => ({ default: m.AthleteSearchView })));
-const ClinicFlyerView = lazy(() => import('./ClinicFlyerView').then(m => ({ default: m.ClinicFlyerView })));
-const LoginView = lazy(() => import('./LoginView').then(m => ({ default: m.LoginView })));
-const SignUpView = lazy(() => import('./SignUpView').then(m => ({ default: m.SignUpView })));
-const PreferencesView = lazy(() => import('./PreferencesView').then(m => ({ default: m.PreferencesView })));
-const SettingsView = lazy(() => import('./SettingsView').then(m => ({ default: m.SettingsView })));
-const UserProfileView = lazy(() => import('./UserProfileView').then(m => ({ default: m.UserProfileView })));
-const RatingView = lazy(() => import('./RatingView').then(m => ({ default: m.RatingView })));
-const ReviewsView = lazy(() => import('./ReviewsView').then(m => ({ default: m.ReviewsView })));
-const ReceivedRatingsView = lazy(() => import('./ReceivedRatingsView').then(m => ({ default: m.ReceivedRatingsView })));
-const SessionDetailsView = lazy(() => import('./SessionDetailsView').then(m => ({ default: m.SessionDetailsView })));
-const RosterListView = lazy(() => import('./RosterListView').then(m => ({ default: m.RosterListView })));
-const EditSessionView = lazy(() => import('./EditSessionView').then(m => ({ default: m.EditSessionView })));
-const MySessionsView = lazy(() => import('./MySessionsView').then(m => ({ default: m.MySessionsView })));
-
+import React from 'react';
+import { LockerRoomView } from './LockerRoomView';
+import { PostView } from './PostView';
+import { ChatView } from './ChatView';
+import { ProfileView } from './ProfileView';
+import { DashboardView } from './DashboardView';
+import { MapView } from './MapView';
+import { CoachProfileSetup } from './CoachProfileSetup';
+import { AthleteSearchView } from './AthleteSearchView';
+import { ClinicFlyerView } from './ClinicFlyerView';
+import { LoginView } from './LoginView';
+import { SignUpView } from './SignUpView';
+import { PreferencesView } from './PreferencesView';
+import { SettingsView } from './SettingsView';
+import { UserProfileView } from './UserProfileView';
+import { RatingView } from './RatingView';
+import { ReviewsView } from './ReviewsView';
+import { ReceivedRatingsView } from './ReceivedRatingsView';
+import { SessionDetailsView } from './SessionDetailsView';
+import { RosterListView } from './RosterListView';
+import { EditSessionView } from './EditSessionView';
+import { MySessionsView } from './MySessionsView';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, ratings as ratingsApi } from '../lib/api';
@@ -345,7 +343,6 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
 
   // ── Main tabs ────────────────────────────────────────────────────────────────
   return (
-    <Suspense fallback={<div className="flex-1 bg-zinc-950" />}>
     <div className="flex-1 overflow-hidden bg-slate-50 relative">
       {activeTab === 'dashboard' && (
         <DashboardView
@@ -395,6 +392,5 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
       )}
       {activeTab === 'rosterList' && <RosterListView onBack={handleBack} onNavigate={handleNavigate} onOpenChat={handleOpenChat} />}
     </div>
-    </Suspense>
   );
 }
