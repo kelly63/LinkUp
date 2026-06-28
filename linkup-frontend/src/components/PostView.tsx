@@ -86,13 +86,13 @@ function MonthCalendar({
         </button>
       </div>
 
-      <div className="grid grid-cols-7 mb-1">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }} className="mb-1">
         {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
           <div key={d} className="text-center text-[10px] font-medium text-slate-400 py-1">{d}</div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-y-1">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }} className="gap-y-1">
         {cells.map((date, i) => {
           if (!date) return <div key={`e-${i}`} />;
           const val = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
