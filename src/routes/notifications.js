@@ -80,6 +80,7 @@ router.post('/device-token', auth, async (req, res) => {
     const { token } = req.body;
     if (!token) return res.status(400).json({ message: 'token is required' });
     const User = require('../models/User');
+    console.log(`[apn] registering token for user ${req.user.id}: ${token.slice(0, 12)}...${token.slice(-6)}`);
     await User.findByIdAndUpdate(req.user.id, {
       $addToSet: { deviceTokens: token },
     });

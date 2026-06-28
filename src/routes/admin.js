@@ -574,4 +574,21 @@ router.get('/push-debug', async (req, res) => {
   });
 });
 
+// GET /api/admin/clear-tokens?token=<ADMIN_SECRET>&email=<email>
+// Removes all stored APNs device tokens for a user so they re-register fresh
+router.get('/clear-tokens', async (req, res) => {
+  const { token, email } = req.query;
+  if (!token || token !== ADMIN_SECRET) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+  if (!email) return res.status(400).json({ message: 'email required' });
+  const user = await User.findOne({ email: email.toLowerCase().trim() });
+  if (!user) return res.status(404).json({ message: 'User not found' });
+  const prev = user.deviceTokens?.length || 0;
+  user.deviceTokens = [];
+  await user.save();
+  console.log(`[apn] cleared ${prev} token(s) for ${email}`);
+  res.json({ message: `Cleared ${prev} token(s) for ${email}` });
+});
+
 module.exports = router;
