@@ -51,6 +51,8 @@ async function sendPush(tokens, { title, body, data = {} }) {
   note.alert = { title, body };
   note.payload = data;
   note.topic = BUNDLE_ID;
+  note.priority = 10;
+  note.pushType = 'alert';
 
   try {
     const result = await p.send(note, tokens);
