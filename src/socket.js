@@ -248,6 +248,7 @@ function getSocketIo(httpServer) {
     const notification = { _id: saved?._id, type, data, read: false, createdAt: saved?.createdAt ?? new Date() };
 
     // Real-time via Socket.io (works when app is open)
+    console.log(`[notify] type=${type} → user:${userIdStr} online=${isOnline}`);
     io.to(`user:${userIdStr}`).emit('notification', notification);
 
     // Web Push (browser) — only when socket is offline
@@ -268,6 +269,7 @@ function getSocketIo(httpServer) {
     const msgFn = PUSH_MESSAGES[type];
     if (msgFn) {
       const user = await User.findById(userId).select('deviceTokens').lean().catch(() => null);
+      console.log(`[apn] notify type=${type} userId=${userId} tokens=${user?.deviceTokens?.length ?? 'user-not-found'}`);
       if (user?.deviceTokens?.length) {
         const { title, body } = msgFn(data);
         sendPush(user.deviceTokens, { title, body, data: { type, ...data } }).catch(() => {});
