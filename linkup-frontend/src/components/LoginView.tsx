@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { auth as authApi, users as usersApi } from '../lib/api';
 import { Capacitor } from '@capacitor/core';
 import { SocialLogin } from '@capgo/capacitor-social-login';
+import { Preferences } from '@capacitor/preferences';
 
 interface LoginViewProps {
   onLogin: (token?: string, user?: any) => void;
@@ -13,12 +14,23 @@ const IOS_CLIENT_ID = '432112410961-39m83q270cgj7q5140nl5kghnn8es4qd.apps.google
 const WEB_CLIENT_ID = '432112410961-q9da62ss2fb94ipb7h6e5ige1v0eaoni.apps.googleusercontent.com';
 
 export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
-  const [email, setEmail] = useState(() => localStorage.getItem('linkup_saved_email') || '');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
-  const [rememberEmail, setRememberEmail] = useState(() => localStorage.getItem('linkup_remember_email') === 'true');
+  const [rememberEmail, setRememberEmail] = useState(false);
+
+  useEffect(() => {
+    Preferences.get({ key: 'linkup_remember_email' }).then(({ value }) => {
+      if (value === 'true') {
+        setRememberEmail(true);
+        Preferences.get({ key: 'linkup_saved_email' }).then(({ value: saved }) => {
+          if (saved) setEmail(saved);
+        });
+      }
+    });
+  }, []);
 
   useEffect(() => {
     SocialLogin.initialize({
@@ -81,11 +93,11 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
     try {
       const { token, user } = await authApi.login(email, password);
       if (rememberEmail) {
-        localStorage.setItem('linkup_remember_email', 'true');
-        localStorage.setItem('linkup_saved_email', email);
+        await Preferences.set({ key: 'linkup_remember_email', value: 'true' });
+        await Preferences.set({ key: 'linkup_saved_email', value: email });
       } else {
-        localStorage.removeItem('linkup_remember_email');
-        localStorage.removeItem('linkup_saved_email');
+        await Preferences.remove({ key: 'linkup_remember_email' });
+        await Preferences.remove({ key: 'linkup_saved_email' });
       }
       onLogin(token, user);
     } catch (err: any) {
