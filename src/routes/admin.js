@@ -5,7 +5,7 @@ const { approveRating, rejectRating, getAdminDashboard } = require('../controlle
 const { sendVerifiedEmail } = require('../utils/email');
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'linkup-admin-secret';
-const APP_URL = process.env.APP_URL || 'https://linkup-backend-46g1.onrender.com';
+const APP_URL = process.env.APP_URL || 'https://linkup-swpu.onrender.com';
 const router = express.Router();
 
 function adminPage(message, success) {
@@ -401,7 +401,7 @@ router.get('/test-apns', async (req, res) => {
           note.badge = 1;
           note.sound = 'default';
           note.alert = { title: 'APNs Test', body: 'Push notifications are working!' };
-          note.topic = 'com.linkupathletics.nextgen';
+          note.topic = process.env.APN_BUNDLE_ID || 'com.linkupathletics.app';
           const result = await testProvider.send(note, [deviceToken]);
           if (result.failed?.length) {
             pushError = `Failed: ${JSON.stringify(result.failed[0].response)}`;

@@ -15,12 +15,17 @@ function getProvider() {
   const key = normalizePemKey(process.env.APN_KEY);
   const keyId = process.env.APN_KEY_ID;
   const teamId = process.env.APN_TEAM_ID;
-  if (!key || !keyId || !teamId) return null;
+  if (!key || !keyId || !teamId) {
+    console.warn('[apn] missing credentials — push disabled. Set APN_KEY, APN_KEY_ID, APN_TEAM_ID on Render.');
+    return null;
+  }
   try {
+    const isProduction = process.env.NODE_ENV === 'production';
     provider = new apn.Provider({
       token: { key, keyId, teamId },
-      production: process.env.NODE_ENV === 'production',
+      production: isProduction,
     });
+    console.log(`[apn] provider ready — gateway: ${isProduction ? 'production' : 'sandbox'}, bundle: ${process.env.APN_BUNDLE_ID || 'com.linkupathletics.app'}`);
     return provider;
   } catch (err) {
     console.error('[apn] provider init error:', err.message);
@@ -49,8 +54,9 @@ async function sendPush(tokens, { title, body, data = {} }) {
 
   try {
     const result = await p.send(note, tokens);
-    // Remove invalid tokens from the database
+    if (result.sent?.length) console.log(`[apn] sent to ${result.sent.length} device(s)`);
     if (result.failed?.length) {
+      console.warn('[apn] failed:', JSON.stringify(result.failed.map(f => ({ device: f.device?.slice(0,12), reason: f.response?.reason }))));
       const User = require('../models/User');
       const badTokens = result.failed
         .filter(f => f.response?.reason === 'BadDeviceToken' || f.response?.reason === 'Unregistered')
