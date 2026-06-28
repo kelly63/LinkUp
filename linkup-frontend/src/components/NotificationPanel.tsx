@@ -218,7 +218,7 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, 
     <>
       {open && (
         <div
-          className="absolute inset-0 z-30 bg-black/20 backdrop-blur-[1px]"
+          className="absolute inset-x-0 top-0 bottom-[72px] z-30 bg-black/20 backdrop-blur-[1px]"
           onClick={onClose}
         />
       )}
