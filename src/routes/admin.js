@@ -538,7 +538,7 @@ router.post('/reset-password', async (req, res) => {
 // GET /api/admin/push-debug?token=<ADMIN_SECRET>&email=<email>
 // Shows device tokens for a user and optionally sends a test push
 router.get('/push-debug', async (req, res) => {
-  const { token, email } = req.query;
+  const { token, email, sandbox } = req.query;
   if (!token || token !== ADMIN_SECRET) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
@@ -549,6 +549,7 @@ router.get('/push-debug', async (req, res) => {
   if (!user) return res.status(404).json({ message: 'User not found' });
 
   const tokens = user.deviceTokens || [];
+  const useSandbox = sandbox === 'true';
   let pushResults = null;
 
   if (tokens.length > 0) {
@@ -556,8 +557,9 @@ router.get('/push-debug', async (req, res) => {
       const { sendPush } = require('../utils/pushNotification');
       pushResults = await sendPush(tokens, {
         title: 'LinkUp Test',
-        body: 'Push notifications are working!',
+        body: useSandbox ? 'Push via sandbox gateway' : 'Push notifications are working!',
         data: { type: 'test' },
+        sandbox: useSandbox,
       });
     } catch (err) {
       pushResults = { error: err.message };

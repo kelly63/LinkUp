@@ -1,6 +1,7 @@
 const apn = require('node-apn');
 
 let provider = null;
+let sandboxProvider = null;
 
 function normalizePemKey(raw) {
   const s = (raw || '').replace(/\\n/g, '\n').trim();
@@ -10,8 +11,7 @@ function normalizePemKey(raw) {
   return `-----BEGIN PRIVATE KEY-----\n${s}\n-----END PRIVATE KEY-----`;
 }
 
-function getProvider() {
-  if (provider) return provider;
+function buildProvider(production) {
   const key = normalizePemKey(process.env.APN_KEY);
   const keyId = process.env.APN_KEY_ID;
   const teamId = process.env.APN_TEAM_ID;
@@ -20,17 +20,22 @@ function getProvider() {
     return null;
   }
   try {
-    const isProduction = process.env.NODE_ENV === 'production';
-    provider = new apn.Provider({
-      token: { key, keyId, teamId },
-      production: isProduction,
-    });
-    console.log(`[apn] provider ready — gateway: ${isProduction ? 'production' : 'sandbox'}, bundle: ${process.env.APN_BUNDLE_ID || 'com.linkupathletics.app'}`);
-    return provider;
+    const p = new apn.Provider({ token: { key, keyId, teamId }, production });
+    console.log(`[apn] provider ready — gateway: ${production ? 'production' : 'sandbox'}, bundle: ${process.env.APN_BUNDLE_ID || 'com.linkupathletics.app'}`);
+    return p;
   } catch (err) {
     console.error('[apn] provider init error:', err.message);
     return null;
   }
+}
+
+function getProvider(sandbox = false) {
+  if (sandbox) {
+    if (!sandboxProvider) sandboxProvider = buildProvider(false);
+    return sandboxProvider;
+  }
+  if (!provider) provider = buildProvider(true);
+  return provider;
 }
 
 const BUNDLE_ID = process.env.APN_BUNDLE_ID || 'com.linkupathletics.app';
@@ -40,8 +45,8 @@ const BUNDLE_ID = process.env.APN_BUNDLE_ID || 'com.linkupathletics.app';
  * @param {string[]} tokens
  * @param {{ title: string, body: string, data?: object }} payload
  */
-async function sendPush(tokens, { title, body, data = {} }) {
-  const p = getProvider();
+async function sendPush(tokens, { title, body, data = {}, sandbox = false }) {
+  const p = getProvider(sandbox);
   if (!p || !tokens?.length) return;
 
   const note = new apn.Notification();
