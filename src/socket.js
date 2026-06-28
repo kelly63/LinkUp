@@ -247,12 +247,12 @@ function getSocketIo(httpServer) {
     const saved = await Notification.create({ user: userId, type, data }).catch(() => null);
     const notification = { _id: saved?._id, type, data, read: false, createdAt: saved?.createdAt ?? new Date() };
 
+    // Web Push (browser) — only when socket is offline
+    const isOnline = onlineUsers.has(userIdStr) && onlineUsers.get(userIdStr).size > 0;
+
     // Real-time via Socket.io (works when app is open)
     console.log(`[notify] type=${type} → user:${userIdStr} online=${isOnline}`);
     io.to(`user:${userIdStr}`).emit('notification', notification);
-
-    // Web Push (browser) — only when socket is offline
-    const isOnline = onlineUsers.has(userIdStr) && onlineUsers.get(userIdStr).size > 0;
     if (!isOnline) {
       const subs = await PushSubscription.find({ user: userId }).lean().catch(() => []);
       const payload = JSON.stringify({ type, data });
