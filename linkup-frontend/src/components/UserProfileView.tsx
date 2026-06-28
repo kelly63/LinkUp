@@ -96,6 +96,18 @@ export function UserProfileView({
     }
   };
 
+  const handleCancelRosterRequest = async () => {
+    if (!token || !connectionId) return;
+    try {
+      await connectionsApi.remove(token, connectionId);
+      setConnStatus('none');
+      setConnectionId(null);
+      toast.success('Request cancelled');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not cancel request');
+    }
+  };
+
   const handleRatingSubmit = async (rating: number, review: string) => {
     if (!token || !profileUser) return;
     try {
@@ -286,9 +298,17 @@ export function UserProfileView({
                 <span className="text-sm font-semibold text-emerald-900">Connected</span>
               </div>
             ) : connStatus === 'pending' ? (
-              <div className="bg-slate-100 border-2 border-slate-200 rounded-xl py-3 flex items-center justify-center gap-2">
-                <Clock className="w-5 h-5 text-slate-500" />
-                <span className="text-sm font-semibold text-slate-600">Request Sent</span>
+              <div className="flex flex-col gap-2">
+                <div className="bg-slate-100 border-2 border-slate-200 rounded-xl py-3 flex items-center justify-center gap-2">
+                  <Clock className="w-5 h-5 text-slate-500" />
+                  <span className="text-sm font-semibold text-slate-600">Request Sent</span>
+                </div>
+                <button
+                  onClick={handleCancelRosterRequest}
+                  className="w-full bg-white hover:bg-red-50 text-red-600 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 border-2 border-red-200 text-sm font-semibold"
+                >
+                  Cancel Request
+                </button>
               </div>
             ) : (
               <button

@@ -986,10 +986,10 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               
       
 
-            {/* Skill Level */}
+            {/* Playing Level */}
             <div>
               <label className="text-sm text-slate-700 mb-2 block">
-                Skill Level
+                Playing Level
               </label>
               <select 
                 value={formData.skillLevel}
@@ -1200,101 +1200,18 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               <div className="w-16 h-16 bg-emerald-100 rounded-full mx-auto flex items-center justify-center mb-3">
                 <Eye className="w-8 h-8 text-emerald-600" />
               </div>
-              <h3 className="text-slate-900 font-semibold mb-2">Control Your Visibility</h3>
+              <h3 className="text-slate-900 font-semibold mb-2">Almost Done!</h3>
               <p className="text-sm text-slate-600">
-                Choose who can search for and view your profile
+                Set your search area to control how far away athletes can find you
               </p>
             </div>
 
-            {/* Visibility Mode */}
-            <div className="bg-white rounded-2xl p-4 border-2 border-slate-200">
-              <label className="text-sm text-slate-700 mb-3 block font-semibold">Who can find you?</label>
-              
-              <div className="space-y-3">
-                <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all hover:bg-slate-50 {formData.visibilityMode === 'everyone' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'}">
-                  <div className="relative mt-0.5">
-                    <input
-                      type="radio"
-                      name="visibility"
-                      checked={formData.visibilityMode === 'everyone'}
-                      onChange={() => setFormData({ ...formData, visibilityMode: 'everyone' })}
-                      className="sr-only peer"
-                    />
-                    <div className="w-5 h-5 border-2 border-slate-300 rounded-full bg-white peer-checked:border-emerald-600 transition-all flex items-center justify-center">
-                      {formData.visibilityMode === 'everyone' && (
-                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-sm font-semibold text-slate-900">Everyone</span>
-                    <p className="text-xs text-slate-500 mt-0.5">All athletes and coaches can see your profile</p>
-                  </div>
-                </label>
+            {/* Visibility — always everyone, no UI needed */}
 
-                <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all hover:bg-slate-50 {formData.visibilityMode === 'filtered' ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200'}">
-                  <div className="relative mt-0.5">
-                    <input
-                      type="radio"
-                      name="visibility"
-                      checked={formData.visibilityMode === 'filtered'}
-                      onChange={() => setFormData({ ...formData, visibilityMode: 'filtered' })}
-                      className="sr-only peer"
-                    />
-                    <div className="w-5 h-5 border-2 border-slate-300 rounded-full bg-white peer-checked:border-emerald-600 transition-all flex items-center justify-center">
-                      {formData.visibilityMode === 'filtered' && (
-                        <div className="w-2.5 h-2.5 bg-emerald-500 rounded-full" />
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <span className="text-sm font-semibold text-slate-900">Filtered (Recommended)</span>
-                    <p className="text-xs text-slate-500 mt-0.5">Only specific skill levels and sports</p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            {/* Filtered Options */}
             {formData.visibilityMode === 'filtered' && (
               <>
-                {/* Skill Levels */}
-                <div className="bg-white rounded-2xl p-4 border-2 border-slate-200">
-                  <label className="text-sm text-slate-700 mb-3 block font-semibold">Allowed Skill Levels</label>
-                  <p className="text-xs text-slate-500 mb-3">Who can search for you</p>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    {skillLevels.map((level) => (
-                      <button
-                        key={level}
-                        onClick={() => toggleLevel(level)}
-                        className={`px-3 py-2 rounded-lg text-xs transition-all ${
-                          formData.allowedLevels.includes(level)
-                            ? 'bg-emerald-500 text-white border-2 border-emerald-500'
-                            : 'bg-white text-slate-700 border-2 border-slate-300'
-                        }`}
-                      >
-                        {level}
-                      </button>
-                    ))}
-                    <button
-                      onClick={toggleAllLevels}
-                      className={`px-3 py-2 rounded-lg text-xs transition-all ${
-                        formData.allowedLevels.length === skillLevels.length
-                          ? 'bg-red-600 text-white border-2 border-red-500'
-                          : 'bg-emerald-500 text-white border-2 border-emerald-500'
-                      }`}
-                    >
-                      {formData.allowedLevels.length === skillLevels.length ? 'Deselect All' : 'Select All'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Sports */}
-                <div className="bg-white rounded-2xl p-4 border-2 border-slate-200">
-                  <label className="text-sm text-slate-700 mb-3 block font-semibold">Allowed Sports</label>
-                  <p className="text-xs text-slate-500 mb-3">Which sports can find you</p>
-                  
+                {/* Sports (kept for filtered legacy path, hidden since filtered removed) */}
+                <div className="hidden">
                   <div className="flex flex-wrap gap-2">
                     {availableSports.map((sport) => (
                       <button

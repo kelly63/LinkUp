@@ -114,6 +114,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
     if (token && userData) login(token, userData);
     setAuthView('login');
     onAuthChange(true);
+    onTabChange('dashboard');
   };
 
   const handleLogout = () => {
