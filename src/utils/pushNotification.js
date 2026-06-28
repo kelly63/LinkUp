@@ -28,7 +28,7 @@ function getProvider() {
   }
 }
 
-const BUNDLE_ID = 'com.linkupathletics.app';
+const BUNDLE_ID = process.env.APN_BUNDLE_ID || 'com.linkupathletics.app';
 
 /**
  * Send a push notification to one or more APNs device tokens.

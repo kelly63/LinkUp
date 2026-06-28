@@ -115,7 +115,11 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 if (require.main === module) {
-  httpServer.listen(PORT, () => console.log(`LinkUp server running on port ${PORT}`));
+  httpServer.listen(PORT, () => {
+    console.log(`LinkUp server running on port ${PORT}`);
+    console.log(`[apn] bundle ID: ${process.env.APN_BUNDLE_ID || 'com.linkupathletics.app (default)'}`);
+    console.log(`[apn] environment: ${process.env.NODE_ENV === 'production' ? 'production' : 'sandbox'}`);
+  });
 }
 
 module.exports = { app, io };
