@@ -1,11 +1,11 @@
 import {
   ArrowLeft, Send, Calendar, MapPin, CheckCircle, Edit3,
-  MessageCircle, UserCheck, X, ChevronRight, Heart,
+  MessageCircle, UserCheck, X, ChevronRight, Heart, Dumbbell,
 } from 'lucide-react';
 import { avatarThumb } from '../lib/api';
 import { useState, useRef, useEffect } from 'react';
 import { useMessages } from '../hooks/useMessages';
-import { messages as messagesApi } from '../lib/api';
+import { messages as messagesApi, sessions as sessionsApi } from '../lib/api';
 import { toast } from 'sonner';
 
 interface RequestInfo {
@@ -48,6 +48,17 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
   const [proposedTime, setProposedTime] = useState('');
   const [proposedLocation, setProposedLocation] = useState('');
 
+  // Workout request modal
+  const [showWorkoutRequest, setShowWorkoutRequest] = useState(false);
+  const [workoutStep, setWorkoutStep] = useState<1 | 2>(1);
+  const [workoutMessage, setWorkoutMessage] = useState('');
+  const [workoutDate, setWorkoutDate] = useState('');
+  const [workoutDateFlexible, setWorkoutDateFlexible] = useState(false);
+  const [workoutLocation, setWorkoutLocation] = useState('');
+  const [workoutDuration, setWorkoutDuration] = useState('1 hour');
+  const [workoutNotes, setWorkoutNotes] = useState('');
+  const [workoutSubmitting, setWorkoutSubmitting] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -85,6 +96,39 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
       onRequestDeclined?.();
     } catch (err: any) {
       toast.error(err?.message || 'Could not decline request');
+    }
+  };
+
+  const handleWorkoutRequestSubmit = async () => {
+    setWorkoutSubmitting(true);
+    try {
+      // Send the casual message first
+      if (workoutMessage.trim()) {
+        await sendMessage(workoutMessage.trim());
+      }
+      // Create the session
+      const { session } = await sessionsApi.create(token, {
+        date: workoutDateFlexible ? 'Flexible' : workoutDate || 'Flexible',
+        location: workoutLocation || 'TBD',
+        duration: workoutDuration,
+        notes: workoutNotes,
+        status: 'open',
+      } as any);
+      // Post session link into chat
+      await messagesApi.postSessionLink(token, { recipientId: chat.id, sessionId: session._id });
+      toast.success('Workout request sent!');
+      setShowWorkoutRequest(false);
+      setWorkoutStep(1);
+      setWorkoutMessage('');
+      setWorkoutDate('');
+      setWorkoutDateFlexible(false);
+      setWorkoutLocation('');
+      setWorkoutDuration('1 hour');
+      setWorkoutNotes('');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not send request');
+    } finally {
+      setWorkoutSubmitting(false);
     }
   };
 
@@ -335,8 +379,8 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
       </div>
 
       {/* Text Input */}
-      <div className="bg-white border-t border-slate-200 p-4">
-        <div className="flex items-center gap-2">
+      <div className="bg-white border-t border-slate-200 p-3">
+        <div className="flex items-center gap-2 mb-2">
           <input
             type="text"
             value={inputText}
@@ -353,6 +397,13 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
             <Send className="w-5 h-5" />
           </button>
         </div>
+        <button
+          onClick={() => { setShowWorkoutRequest(true); setWorkoutStep(1); }}
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-semibold transition-colors"
+        >
+          <Dumbbell className="w-4 h-4" />
+          Request Workout
+        </button>
       </div>
 
       {/* Confirmation Modal */}
@@ -488,6 +539,137 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Workout Request Modal */}
+      {showWorkoutRequest && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-50">
+          <div className="bg-white rounded-t-3xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center">
+                  <Dumbbell className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-slate-900">Request Workout</h3>
+                  <p className="text-xs text-slate-500">with {chat.name}</p>
+                </div>
+              </div>
+              <button onClick={() => setShowWorkoutRequest(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                <X className="w-5 h-5 text-slate-500" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {workoutStep === 1 ? (
+                <>
+                  <div>
+                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Send a message</label>
+                    <p className="text-xs text-slate-500 mb-3">Give {chat.name} a heads up about what you're thinking</p>
+                    <textarea
+                      value={workoutMessage}
+                      onChange={(e) => setWorkoutMessage(e.target.value)}
+                      placeholder={`e.g. "Can you workout next week? Morristown area?"`}
+                      rows={4}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:border-emerald-400 focus:outline-none transition-colors resize-none text-sm"
+                    />
+                  </div>
+                  <button
+                    onClick={() => setWorkoutStep(2)}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-xl font-semibold transition-all"
+                  >
+                    Next: Add Details
+                  </button>
+                  <button onClick={() => setShowWorkoutRequest(false)} className="w-full py-3 text-sm text-slate-500">
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm text-slate-600">Finalize the workout details so {chat.name} knows exactly what you have in mind.</p>
+
+                  {/* Date */}
+                  <div>
+                    <label className="text-sm font-semibold text-slate-700 mb-2 block flex items-center gap-2">
+                      <Calendar className="w-4 h-4" /> Date
+                    </label>
+                    {!workoutDateFlexible && (
+                      <input
+                        type="date"
+                        value={workoutDate}
+                        onChange={(e) => setWorkoutDate(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-900 focus:border-emerald-400 focus:outline-none transition-colors mb-2"
+                      />
+                    )}
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={workoutDateFlexible}
+                        onChange={(e) => setWorkoutDateFlexible(e.target.checked)}
+                        className="w-4 h-4 accent-emerald-600"
+                      />
+                      <span className="text-sm text-slate-600">Flexible on date</span>
+                    </label>
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                    <label className="text-sm font-semibold text-slate-700 mb-2 block flex items-center gap-2">
+                      <MapPin className="w-4 h-4" /> Location
+                    </label>
+                    <input
+                      type="text"
+                      value={workoutLocation}
+                      onChange={(e) => setWorkoutLocation(e.target.value)}
+                      placeholder="e.g. Morristown, NJ or TBD"
+                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-400 focus:outline-none transition-colors"
+                    />
+                  </div>
+
+                  {/* Duration */}
+                  <div>
+                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Duration</label>
+                    <select
+                      value={workoutDuration}
+                      onChange={(e) => setWorkoutDuration(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-900 focus:border-emerald-400 focus:outline-none transition-colors"
+                    >
+                      {['30 minutes', '1 hour', '1.5 hours', '2 hours', '2.5 hours', '3 hours'].map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Notes (optional)</label>
+                    <textarea
+                      value={workoutNotes}
+                      onChange={(e) => setWorkoutNotes(e.target.value)}
+                      placeholder="Goals, equipment needed, anything else..."
+                      rows={3}
+                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:border-emerald-400 focus:outline-none transition-colors resize-none text-sm"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleWorkoutRequestSubmit}
+                    disabled={workoutSubmitting}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                  >
+                    {workoutSubmitting
+                      ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      : <><Dumbbell className="w-5 h-5" /> Send Request</>}
+                  </button>
+                  <button onClick={() => setWorkoutStep(1)} className="w-full py-3 text-sm text-slate-500">
+                    ← Back
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
