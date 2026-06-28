@@ -13,11 +13,12 @@ const IOS_CLIENT_ID = '432112410961-39m83q270cgj7q5140nl5kghnn8es4qd.apps.google
 const WEB_CLIENT_ID = '432112410961-q9da62ss2fb94ipb7h6e5ige1v0eaoni.apps.googleusercontent.com';
 
 export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('linkup_saved_email') || '');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
+  const [rememberEmail, setRememberEmail] = useState(() => localStorage.getItem('linkup_remember_email') === 'true');
 
   useEffect(() => {
     SocialLogin.initialize({
@@ -79,6 +80,13 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
     setError('');
     try {
       const { token, user } = await authApi.login(email, password);
+      if (rememberEmail) {
+        localStorage.setItem('linkup_remember_email', 'true');
+        localStorage.setItem('linkup_saved_email', email);
+      } else {
+        localStorage.removeItem('linkup_remember_email');
+        localStorage.removeItem('linkup_saved_email');
+      }
       onLogin(token, user);
     } catch (err: any) {
       setError(err.message || 'Login failed. Check your credentials.');
@@ -194,8 +202,17 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
               />
             </div>
 
-            {/* Forgot Password */}
-            <div className="text-right">
+            {/* Remember me + Forgot Password */}
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberEmail}
+                  onChange={(e) => setRememberEmail(e.target.checked)}
+                  className="w-4 h-4 accent-emerald-600 rounded"
+                />
+                <span className="text-sm text-slate-600 font-[Magra]">Remember me</span>
+              </label>
               <button
                 type="button"
                 onClick={() => { setShowForgot(true); setForgotEmail(email); }}
