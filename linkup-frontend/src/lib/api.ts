@@ -19,6 +19,7 @@ export interface User {
   location: string;
   teamType: string;
   school?: string;
+  year?: string;
   sport: string;
   position: string;
   skillLevel: string;

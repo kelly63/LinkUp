@@ -217,6 +217,17 @@ export function UserProfileView({
               <span>{profileUser.location}</span>
             </div>
           )}
+
+          {isAthlete && ((profileUser as any).school || (profileUser as any).year) && (
+            <div className="flex items-center justify-center gap-1.5 text-emerald-200 text-sm mt-1">
+              <span>🎓</span>
+              <span>
+                {(profileUser as any).school}
+                {(profileUser as any).school && (profileUser as any).year ? ' · ' : ''}
+                {(profileUser as any).year}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

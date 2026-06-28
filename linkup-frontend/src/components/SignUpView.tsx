@@ -53,6 +53,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     // Athlete specific
     teamType: '',
     school: '',
+    year: '',
     sport: '',
     position: '',
     skillLevel: '',
@@ -220,6 +221,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
         // Athlete fields
         teamType: formData.teamType,
         school: formData.school,
+        year: formData.year,
         sport: formData.sport,
         position: formData.position,
         skillLevel: formData.skillLevel,
@@ -851,6 +853,29 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 placeholder="e.g., University of Maryland"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
+            </div>
+
+            {/* Year / Class */}
+            <div>
+              <label className="text-sm text-slate-700 mb-2 block">
+                Year
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate', '5th Year'] as const).map((yr) => (
+                  <button
+                    key={yr}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, year: formData.year === yr ? '' : yr })}
+                    className={`py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+                      formData.year === yr
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                        : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-300'
+                    }`}
+                  >
+                    {yr}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Primary Sport */}

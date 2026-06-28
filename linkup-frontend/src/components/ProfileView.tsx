@@ -197,6 +197,8 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [athleteSport, setAthleteSport] = useState(user?.sport || '');
   const [athletePosition, setAthletePosition] = useState(user?.position || '');
   const [athleteLevel, setAthleteLevel] = useState(user?.skillLevel || '');
+  const [athleteSchool, setAthleteSchool] = useState(user?.school || '');
+  const [athleteYear, setAthleteYear] = useState(user?.year || '');
   const [aboutMe, setAboutMe] = useState(user?.bio || '');
 
   // Coach philosophy data
@@ -208,6 +210,8 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [tempPosition, setTempPosition] = useState('');
   const [tempLevel, setTempLevel] = useState('');
   const [tempLocation, setTempLocation] = useState('');
+  const [tempSchool, setTempSchool] = useState('');
+  const [tempYear, setTempYear] = useState('');
   const [tempAboutMe, setTempAboutMe] = useState('');
   const [tempPhilosophy, setTempPhilosophy] = useState('');
   
@@ -234,6 +238,8 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     setTempPosition(athletePosition);
     setTempLevel(athleteLevel);
     setTempLocation(user?.location || '');
+    setTempSchool(athleteSchool);
+    setTempYear(athleteYear);
     setShowAthleteProfileEdit(true);
   };
   
@@ -241,6 +247,8 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     setAthleteSport(tempSport);
     setAthletePosition(tempPosition);
     setAthleteLevel(tempLevel);
+    setAthleteSchool(tempSchool);
+    setAthleteYear(tempYear);
     setShowAthleteProfileEdit(false);
     if (token) {
       setSavingProfile(true);
@@ -251,6 +259,8 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           position: tempPosition,
           skillLevel: tempLevel,
           location: tempLocation,
+          school: tempSchool,
+          year: tempYear,
         });
         updateUser(updated);
         toast.success('Profile updated');
@@ -483,6 +493,16 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   <span className="text-sm text-slate-500">Athletic Level</span>
                   <span className="text-slate-900">{athleteLevel || '—'}</span>
                 </div>
+
+                {(athleteSchool || athleteYear) && (
+                  <div className="flex items-center justify-between py-2 border-b border-slate-200">
+                    <span className="text-sm text-slate-500">School</span>
+                    <span className="text-slate-900 text-right">
+                      {athleteSchool || '—'}
+                      {athleteYear ? <span className="text-slate-500 ml-1">· {athleteYear}</span> : null}
+                    </span>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between py-2">
                   <span className="text-sm text-slate-500">Location</span>
@@ -922,6 +942,39 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                     <option key={level} value={level}>{level}</option>
                   ))}
                 </select>
+              </div>
+
+              {/* School */}
+              <div>
+                <label className="text-sm text-slate-700 mb-2 block">School / College</label>
+                <input
+                  type="text"
+                  value={tempSchool}
+                  onChange={(e) => setTempSchool(e.target.value)}
+                  placeholder="e.g. University of Maryland"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
+                />
+              </div>
+
+              {/* Year */}
+              <div>
+                <label className="text-sm text-slate-700 mb-2 block">Year</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate', '5th Year'] as const).map((yr) => (
+                    <button
+                      key={yr}
+                      type="button"
+                      onClick={() => setTempYear(tempYear === yr ? '' : yr)}
+                      className={`py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${
+                        tempYear === yr
+                          ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-300'
+                      }`}
+                    >
+                      {yr}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Location */}

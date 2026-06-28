@@ -60,6 +60,11 @@ const userSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    year: {
+      type: String,
+      enum: ['Freshman', 'Sophomore', 'Junior', 'Senior', 'Graduate', '5th Year', ''],
+      default: '',
+    },
     teamType: {
       type: String,
       enum: ['mens', 'womens', ''],
