@@ -250,10 +250,9 @@ function getSocketIo(httpServer) {
     // Real-time via Socket.io (works when app is open)
     io.to(`user:${userIdStr}`).emit('notification', notification);
 
-    // Push to offline users (app closed / backgrounded)
+    // Web Push (browser) — only when socket is offline
     const isOnline = onlineUsers.has(userIdStr) && onlineUsers.get(userIdStr).size > 0;
     if (!isOnline) {
-      // Web Push (browser)
       const subs = await PushSubscription.find({ user: userId }).lean().catch(() => []);
       const payload = JSON.stringify({ type, data });
       for (const sub of subs) {
@@ -263,15 +262,15 @@ function getSocketIo(httpServer) {
           }
         });
       }
+    }
 
-      // APNs (iOS native app)
-      const msgFn = PUSH_MESSAGES[type];
-      if (msgFn) {
-        const user = await User.findById(userId).select('deviceTokens').lean().catch(() => null);
-        if (user?.deviceTokens?.length) {
-          const { title, body } = msgFn(data);
-          sendPush(user.deviceTokens, { title, body, data: { type, ...data } }).catch(() => {});
-        }
+    // APNs (iOS native app) — always send; iOS suppresses it if the app is in the foreground
+    const msgFn = PUSH_MESSAGES[type];
+    if (msgFn) {
+      const user = await User.findById(userId).select('deviceTokens').lean().catch(() => null);
+      if (user?.deviceTokens?.length) {
+        const { title, body } = msgFn(data);
+        sendPush(user.deviceTokens, { title, body, data: { type, ...data } }).catch(() => {});
       }
     }
   };
