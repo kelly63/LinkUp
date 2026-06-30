@@ -8,7 +8,7 @@ import { useAuth } from '../lib/auth';
 import { useSocket, Notification } from '../hooks/useSocket';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { useNativePush } from '../hooks/useNativePush';
-import { StoredNotification } from '../lib/api';
+import { StoredNotification, notifications as notificationsApi, messages as messagesApi } from '../lib/api';
 import { ExpiredSessionsModal } from './ExpiredSessionsModal';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
@@ -148,7 +148,22 @@ export function MobileFrame() {
     }
   }, [showBanner]);
 
-  useSocket({ token, onNotification: handleNotification });
+  // Badge counts are otherwise only updated by live socket events, so a
+  // notification that arrives while the app is closed/backgrounded (or a
+  // socket event missed during a connection drop) would leave the bell/chat
+  // badges silently stuck at 0. Reconcile from the server on every connect
+  // (including reconnects) so the badges always reflect real unread state.
+  const refreshUnreadCounts = useCallback(() => {
+    if (!token) return;
+    notificationsApi.getAll(token)
+      .then(({ notifications }) => setUnreadCount(notifications.filter((n) => !n.read).length))
+      .catch(() => {});
+    messagesApi.getInbox(token)
+      .then(({ conversations }) => setChatUnread(conversations.reduce((sum, c) => sum + (c.unread || 0), 0)))
+      .catch(() => {});
+  }, [token]);
+
+  useSocket({ token, onNotification: handleNotification, onConnect: refreshUnreadCounts });
 
   // Handle deep links — e.g. linkupathletics://profile/<userId> from QR code scans
   useEffect(() => {

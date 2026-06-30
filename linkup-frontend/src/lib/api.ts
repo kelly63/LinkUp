@@ -373,6 +373,9 @@ export const messages = {
 
   like: (token: string, messageId: string) =>
     request<{ messageId: string; likes: string[] }>(`/api/messages/${messageId}/like`, { method: 'PUT' }, token),
+
+  getInbox: (token: string) =>
+    request<{ conversations: { unread: number }[] }>('/api/messages', {}, token),
 };
 
 // ─── Ratings ─────────────────────────────────────────────────────────────────

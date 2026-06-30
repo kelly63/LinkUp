@@ -18,9 +18,13 @@ interface UseSocketOptions {
   token: string | null;
   onNotification?: (notification: Notification) => void;
   onPresenceChange?: (userId: string, isOnline: boolean) => void;
+  // Fired on every successful connect, including reconnects after a dropped
+  // connection — use this to reconcile any state (e.g. unread counts) that
+  // may have missed real-time events while disconnected.
+  onConnect?: () => void;
 }
 
-export function useSocket({ token, onNotification, onPresenceChange }: UseSocketOptions) {
+export function useSocket({ token, onNotification, onPresenceChange, onConnect }: UseSocketOptions) {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
@@ -29,7 +33,10 @@ export function useSocket({ token, onNotification, onPresenceChange }: UseSocket
     const s = getSocket(token);
     socketRef.current = s;
 
-    s.on('connect', () => {});
+    if (onConnect) {
+      s.on('connect', onConnect);
+      if (s.connected) onConnect();
+    }
 
     s.on('connect_error', (err) => {
       console.error('[socket] connection error', err.message);
@@ -46,6 +53,7 @@ export function useSocket({ token, onNotification, onPresenceChange }: UseSocket
     }
 
     return () => {
+      if (onConnect) s.off('connect', onConnect);
       if (onNotification) s.off('notification', onNotification);
       if (onPresenceChange) s.off('user:presence');
     };
