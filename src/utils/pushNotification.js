@@ -49,6 +49,8 @@ async function sendPush(tokens, { title, body, data = {}, sandbox = process.env.
   const p = getProvider(sandbox);
   if (!p || !tokens?.length) return;
 
+  console.log(`[apn] sending via ${sandbox ? 'sandbox' : 'production'} gateway to ${tokens.length} device(s)`);
+
   const note = new apn.Notification();
   note.expiry = Math.floor(Date.now() / 1000) + 3600;
   note.badge = 1;
