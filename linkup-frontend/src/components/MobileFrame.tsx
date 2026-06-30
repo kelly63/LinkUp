@@ -13,7 +13,6 @@ import { ExpiredSessionsModal } from './ExpiredSessionsModal';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { PushNotifications } from '@capacitor/push-notifications';
-import { toast } from 'sonner';
 
 type PendingNav = { view: string; data?: any } | null;
 
@@ -144,7 +143,6 @@ export function MobileFrame() {
     const builder = NOTIFICATION_MESSAGES[notification.type];
     if (builder) {
       const { title, description } = builder(notification.data);
-      toast(title, { description });
       showBanner(title, description);
     }
   }, [showBanner]);

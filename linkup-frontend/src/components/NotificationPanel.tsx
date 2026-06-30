@@ -1,6 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { X, Bell, UserPlus, UserCheck, CalendarCheck, MessageSquare, CheckCheck, Star, CalendarClock, CalendarX, ThumbsUp, ThumbsDown, UserSearch } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { notifications as notificationsApi, StoredNotification } from '../lib/api';
+
+// Matches the in-app banner's offset — on native, the safe-area-inset-top
+// varies by device (Dynamic Island vs. notch), so a fixed pixel value
+// pushes the header (heading + close button) up under the status bar.
+const PANEL_TOP = Capacitor.isNativePlatform() ? 'calc(env(safe-area-inset-top, 0px) + 56px)' : '88px';
 
 interface NotificationPanelProps {
   token: string;
@@ -224,8 +230,8 @@ export function NotificationPanel({ token, open, onClose, liveQueue, onAllRead, 
       )}
 
       <div
-        style={open ? undefined : { display: 'none' }}
-        className="absolute top-[88px] left-0 right-0 z-40 bg-white rounded-b-2xl shadow-2xl flex flex-col max-h-[70%] overflow-y-auto"
+        style={{ top: PANEL_TOP, ...(open ? {} : { display: 'none' }) }}
+        className="absolute left-0 right-0 z-40 bg-white rounded-b-2xl shadow-2xl flex flex-col max-h-[70%] overflow-y-auto"
       >
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
