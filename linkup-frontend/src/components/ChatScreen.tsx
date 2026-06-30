@@ -6,6 +6,7 @@ import { avatarThumb } from '../lib/api';
 import { useState, useRef, useEffect } from 'react';
 import { useMessages } from '../hooks/useMessages';
 import { messages as messagesApi, sessions as sessionsApi } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { toast } from 'sonner';
 
 interface RequestInfo {
@@ -40,6 +41,7 @@ interface ChatScreenProps {
 }
 
 export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, onRequestAccepted, onRequestDeclined, onViewProfile, onViewSession }: ChatScreenProps) {
+  const { user } = useAuth();
   const [inputText, setInputText] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSessionConfirmed, setIsSessionConfirmed] = useState(false);
@@ -106,8 +108,9 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
       if (workoutMessage.trim()) {
         await sendMessage(workoutMessage.trim());
       }
-      // Create the session
+      // Create the session — sport auto-detected from the requester's primary sport
       const { session } = await sessionsApi.create(token, {
+        sport: user?.sport || 'Other',
         date: workoutDateFlexible ? 'Flexible' : workoutDate || 'Flexible',
         location: workoutLocation || 'TBD',
         duration: workoutDuration,

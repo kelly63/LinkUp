@@ -265,9 +265,10 @@ function getSocketIo(httpServer) {
       }
     }
 
-    // APNs (iOS native app) — always send; iOS suppresses it if the app is in the foreground
+    // APNs (iOS native app) — only when the socket is offline; the in-app
+    // toast/banner already covers the foreground case via the socket event above.
     const msgFn = PUSH_MESSAGES[type];
-    if (msgFn) {
+    if (msgFn && !isOnline) {
       const user = await User.findById(userId).select('deviceTokens').lean().catch(() => null);
       console.log(`[apn] notify type=${type} userId=${userId} tokens=${user?.deviceTokens?.length ?? 'user-not-found'}`);
       if (user?.deviceTokens?.length) {
