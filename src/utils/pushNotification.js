@@ -65,7 +65,7 @@ async function sendPush(tokens, { title, body, data = {}, sandbox = process.env.
     const result = await p.send(note, tokens);
     if (result.sent?.length) console.log(`[apn] sent to ${result.sent.length} device(s)`);
     if (result.failed?.length) {
-      console.warn('[apn] failed:', JSON.stringify(result.failed.map(f => ({ device: f.device?.slice(0,12), reason: f.response?.reason }))));
+      console.warn('[apn] failed:', JSON.stringify(result.failed.map(f => ({ device: f.device?.slice(0,12), status: f.status, reason: f.response?.reason }))));
       const User = require('../models/User');
       const badTokens = result.failed
         .filter(f => f.response?.reason === 'BadDeviceToken' || f.response?.reason === 'Unregistered')
@@ -74,8 +74,10 @@ async function sendPush(tokens, { title, body, data = {}, sandbox = process.env.
         await User.updateMany({}, { $pull: { deviceTokens: { $in: badTokens } } });
       }
     }
+    return result;
   } catch (err) {
     console.error('[apn] send error:', err.message);
+    return { error: err.message };
   }
 }
 
