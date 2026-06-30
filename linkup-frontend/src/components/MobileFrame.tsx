@@ -115,6 +115,7 @@ export function MobileFrame() {
   const [pendingNav, setPendingNav] = useState<PendingNav>(null);
   const [banner, setBanner] = useState<{ title: string; description: string } | null>(null);
   const [expiredDismissed, setExpiredDismissed] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auth state comes directly from context — survives page refresh automatically
@@ -164,6 +165,27 @@ export function MobileFrame() {
   }, [token]);
 
   useSocket({ token, onNotification: handleNotification, onConnect: refreshUnreadCounts });
+
+  // Hide the bottom tab bar while a text input is focused — on native iOS the
+  // keyboard shrinks the WebView viewport, which otherwise pushes the tab bar
+  // (a normal flow element, not position: fixed) up to sit above the keyboard.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const isTextInput = (el: EventTarget | null) =>
+      el instanceof HTMLElement && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
+    const handleFocusIn = (e: FocusEvent) => {
+      if (isTextInput(e.target)) setKeyboardVisible(true);
+    };
+    const handleFocusOut = (e: FocusEvent) => {
+      if (isTextInput(e.target)) setKeyboardVisible(false);
+    };
+    document.addEventListener('focusin', handleFocusIn);
+    document.addEventListener('focusout', handleFocusOut);
+    return () => {
+      document.removeEventListener('focusin', handleFocusIn);
+      document.removeEventListener('focusout', handleFocusOut);
+    };
+  }, []);
 
   // Handle deep links — e.g. linkupathletics://profile/<userId> from QR code scans
   useEffect(() => {
@@ -345,7 +367,7 @@ export function MobileFrame() {
         onExternalNavProcessed={() => setPendingNav(null)}
       />
 
-      {isAuthenticated && (
+      {isAuthenticated && !keyboardVisible && (
         <BottomTabBar
           activeTab={activeTab}
           onTabChange={handleTabChange}

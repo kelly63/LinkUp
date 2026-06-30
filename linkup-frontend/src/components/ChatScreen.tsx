@@ -41,7 +41,6 @@ interface ChatScreenProps {
 
 export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, onRequestAccepted, onRequestDeclined, onViewProfile, onViewSession }: ChatScreenProps) {
   const [inputText, setInputText] = useState('');
-  const [isInputFocused, setIsInputFocused] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSessionConfirmed, setIsSessionConfirmed] = useState(false);
   const [showProposeChanges, setShowProposeChanges] = useState(false);
@@ -387,8 +386,6 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
             value={inputText}
             onChange={handleInputChange}
             onKeyPress={handleKeyPress}
-            onFocus={() => setIsInputFocused(true)}
-            onBlur={() => setIsInputFocused(false)}
             placeholder="Type a message..."
             className="flex-1 px-4 py-3 rounded-full bg-slate-50 border-2 border-transparent focus:border-emerald-400 focus:outline-none transition-colors"
           />
@@ -400,15 +397,13 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
             <Send className="w-5 h-5" />
           </button>
         </div>
-        {!isInputFocused && (
-          <button
-            onClick={() => { setShowWorkoutRequest(true); setWorkoutStep(1); }}
-            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-semibold transition-colors"
-          >
-            <Dumbbell className="w-4 h-4" />
-            Request Workout
-          </button>
-        )}
+        <button
+          onClick={() => { setShowWorkoutRequest(true); setWorkoutStep(1); }}
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-semibold transition-colors"
+        >
+          <Dumbbell className="w-4 h-4" />
+          Request Workout
+        </button>
       </div>
 
       {/* Confirmation Modal */}
