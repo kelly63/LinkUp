@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { Socket } from 'socket.io-client';
-import { getSocket, disconnectSocket } from '../lib/socket';
+import { Capacitor } from '@capacitor/core';
+import { App as CapApp } from '@capacitor/app';
+import { getSocket, reconnectSocket } from '../lib/socket';
 
 export interface Notification {
   type:
@@ -48,6 +50,20 @@ export function useSocket({ token, onNotification, onPresenceChange }: UseSocket
       if (onPresenceChange) s.off('user:presence');
     };
   }, [token]);
+
+  // iOS suspends the WebView's network activity while backgrounded, which can
+  // leave the socket disconnected (or mid-backoff) when the app returns to the
+  // foreground. Force an immediate reconnect attempt on resume instead of
+  // waiting for the next backoff tick.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const listener = CapApp.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) reconnectSocket();
+    });
+    return () => {
+      listener.then((l) => l.remove());
+    };
+  }, []);
 
   const queryPresence = useCallback((userIds: string[]): Promise<Record<string, boolean>> => {
     return new Promise((resolve) => {
