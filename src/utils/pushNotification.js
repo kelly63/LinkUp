@@ -45,7 +45,7 @@ const BUNDLE_ID = process.env.APN_BUNDLE_ID || 'com.linkupathletics.app';
  * @param {string[]} tokens
  * @param {{ title: string, body: string, data?: object }} payload
  */
-async function sendPush(tokens, { title, body, data = {}, sandbox = false }) {
+async function sendPush(tokens, { title, body, data = {}, sandbox = process.env.APN_SANDBOX === 'true' }) {
   const p = getProvider(sandbox);
   if (!p || !tokens?.length) return;
 
