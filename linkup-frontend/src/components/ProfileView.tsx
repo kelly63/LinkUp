@@ -74,37 +74,25 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   useEffect(() => {
     if (!isNative) return;
     PushNotifications.checkPermissions().then(async (s) => {
-      toast.info(`APNs permission: ${s.receive}`);
       if (s.receive === 'granted') {
         setPushEnabled(true);
-        const errListener = await PushNotifications.addListener('registrationError', (err: any) => {
+        const errListener = await PushNotifications.addListener('registrationError', () => {
           errListener.remove();
-          toast.error(`APNs error: ${JSON.stringify(err)}`);
         });
         const listener = await PushNotifications.addListener('registration', async (tokenData) => {
           listener.remove();
           errListener.remove();
-          toast.success(`Token: ${tokenData.value.slice(0, 10)}…`);
           if (token) {
-            try {
-              const res = await fetch(`${API}/api/notifications/device-token`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ token: tokenData.value }),
-              });
-              if (!res.ok) toast.error(`Save failed: ${res.status}`);
-            } catch (e: any) {
-              toast.error(`Save error: ${e?.message}`);
-            }
+            await fetch(`${API}/api/notifications/device-token`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+              body: JSON.stringify({ token: tokenData.value }),
+            }).catch(() => {});
           }
         });
-        PushNotifications.register().catch((e: any) => {
-          toast.error(`register() failed: ${e?.message}`);
-        });
+        PushNotifications.register().catch(() => {});
       }
-    }).catch((e: any) => {
-      toast.error(`checkPermissions failed: ${e?.message}`);
-    });
+    }).catch(() => {});
   }, [isNative, token]);
 
   const togglePush = async () => {
