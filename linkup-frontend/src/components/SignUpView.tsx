@@ -135,66 +135,6 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     }
   };
 
-  const toggleLevel = (level: string) => {
-    if (formData.allowedLevels.includes(level)) {
-      setFormData({
-        ...formData,
-        allowedLevels: formData.allowedLevels.filter(l => l !== level)
-      });
-    } else {
-      setFormData({
-        ...formData,
-        allowedLevels: [...formData.allowedLevels, level]
-      });
-    }
-  };
-
-  const toggleAllLevels = () => {
-    if (formData.allowedLevels.length === skillLevels.length) {
-      // Deselect all
-      setFormData({
-        ...formData,
-        allowedLevels: []
-      });
-    } else {
-      // Select all
-      setFormData({
-        ...formData,
-        allowedLevels: [...skillLevels]
-      });
-    }
-  };
-
-  const toggleSport = (sport: string) => {
-    if (formData.allowedSports.includes(sport)) {
-      setFormData({
-        ...formData,
-        allowedSports: formData.allowedSports.filter(s => s !== sport)
-      });
-    } else {
-      setFormData({
-        ...formData,
-        allowedSports: [...formData.allowedSports, sport]
-      });
-    }
-  };
-
-  const toggleAllSports = () => {
-    if (formData.allowedSports.length === availableSports.length) {
-      // Deselect all
-      setFormData({
-        ...formData,
-        allowedSports: []
-      });
-    } else {
-      // Select all
-      setFormData({
-        ...formData,
-        allowedSports: [...availableSports]
-      });
-    }
-  };
-
   const handleNext = () => {
     setStep(step + 1);
   };
@@ -402,6 +342,13 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
 
   // Step 2: Basic Information
   if (step === 2) {
+    const passwordStrong = formData.password.length >= 8 && /[A-Z]/.test(formData.password) && /[0-9]/.test(formData.password) && /[^A-Za-z0-9]/.test(formData.password);
+    const step2CanContinue =
+      formData.fullName.trim().length > 0 &&
+      formData.email.trim().length > 0 &&
+      formData.location.trim().length > 0 &&
+      passwordStrong &&
+      formData.confirmPassword === formData.password;
     return (
       <div className="h-full overflow-y-auto bg-slate-50">
         {/* Header */}
@@ -435,7 +382,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <User className="w-4 h-4" />
-                Full Name
+                Full Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -450,7 +397,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <Mail className="w-4 h-4" />
-                Email Address
+                Email Address <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
@@ -481,7 +428,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
-                Location
+                Location <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -496,7 +443,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <Lock className="w-4 h-4" />
-                Password
+                Password <span className="text-red-500">*</span>
               </label>
               <input
                 type="password"
@@ -529,7 +476,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
                 <Lock className="w-4 h-4" />
-                Confirm Password
+                Confirm Password <span className="text-red-500">*</span>
               </label>
               <input
                 type="password"
@@ -539,12 +486,20 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 autoComplete="new-password"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors"
               />
+              {formData.confirmPassword.length > 0 && formData.confirmPassword !== formData.password && (
+                <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+              )}
             </div>
 
             {/* Continue Button */}
-            <button 
+            <button
               onClick={handleNext}
-              className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-emerald-500/20 hover:shadow-xl active:scale-[0.98]"
+              disabled={!step2CanContinue}
+              className={`w-full py-4 rounded-xl transition-all mt-8 shadow-lg active:scale-[0.98] ${
+                step2CanContinue
+                  ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-emerald-500/20 hover:shadow-xl'
+                  : 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+              }`}
             >
               Continue
             </button>
@@ -791,6 +746,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
 
   // Step 4: Sport/Position Details (for Athletes)
   if (step === 4 && userType === 'athlete') {
+    const step4CanContinue = formData.teamType.length > 0 && formData.sport.length > 0 && formData.skillLevel.length > 0;
     return (
       <div className="h-full overflow-y-auto bg-slate-50">
         {/* Header */}
@@ -821,7 +777,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             {/* Team Type */}
             <div>
               <label className="text-sm text-slate-700 mb-2 block">
-                Team Type
+                Team Type <span className="text-red-500">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
                 {([['mens', "Men's"], ['womens', "Women's"]] as const).map(([val, label]) => (
@@ -881,7 +837,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             {/* Primary Sport */}
             <div>
               <label className="text-sm text-slate-700 mb-2 block">
-                Primary Sport
+                Primary Sport <span className="text-red-500">*</span>
               </label>
               <select 
                 value={formData.sport}
@@ -989,7 +945,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             {/* Playing Level */}
             <div>
               <label className="text-sm text-slate-700 mb-2 block">
-                Playing Level
+                Playing Level <span className="text-red-500">*</span>
               </label>
               <select 
                 value={formData.skillLevel}
@@ -1004,9 +960,14 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             </div>
 
             {/* Continue Button */}
-            <button 
+            <button
               onClick={handleNext}
-              className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-emerald-500/20 hover:shadow-xl active:scale-[0.98]"
+              disabled={!step4CanContinue}
+              className={`w-full py-4 rounded-xl transition-all mt-8 shadow-lg active:scale-[0.98] ${
+                step4CanContinue
+                  ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-emerald-500/20 hover:shadow-xl'
+                  : 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+              }`}
             >
               Continue
             </button>
@@ -1205,44 +1166,6 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 Set your search area to control how far away athletes can find you
               </p>
             </div>
-
-            {/* Visibility — always everyone, no UI needed */}
-
-            {formData.visibilityMode === 'filtered' && (
-              <>
-                {/* Sports (kept for filtered legacy path, hidden since filtered removed) */}
-                <div className="hidden">
-                  <div className="flex flex-wrap gap-2">
-                    {availableSports.map((sport) => (
-                      <button
-                        key={sport}
-                        onClick={() => toggleSport(sport)}
-                        className={`px-3 py-2 rounded-lg text-xs transition-all ${
-                          formData.allowedSports.includes(sport)
-                            ? 'bg-green-600 text-white border-2 border-green-500'
-                            : 'bg-white text-slate-700 border-2 border-slate-300'
-                        }`}
-                      >
-                        {sport}
-                      </button>
-                    ))}
-                    <button
-                      onClick={toggleAllSports}
-                      className={`px-3 py-2 rounded-lg text-xs transition-all ${
-                        formData.allowedSports.length === availableSports.length
-                          ? 'bg-red-600 text-white border-2 border-red-500'
-                          : 'bg-emerald-500 text-white border-2 border-emerald-500'
-                      }`}
-                    >
-                      {formData.allowedSports.length === availableSports.length ? 'Deselect All' : 'Select All'}
-                    </button>
-                  </div>
-                </div>
-
-               
-                
-              </>
-            )}
 
             {/* Search Area */}
             <div className="bg-white rounded-2xl p-4 border-2 border-slate-200">
