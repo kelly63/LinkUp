@@ -746,7 +746,12 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
 
   // Step 4: Sport/Position Details (for Athletes)
   if (step === 4 && userType === 'athlete') {
-    const step4CanContinue = formData.teamType.length > 0 && formData.sport.length > 0 && formData.skillLevel.length > 0;
+    const sportPositions = positionsBySport[formData.sport] ?? [];
+    const step4CanContinue =
+      formData.teamType.length > 0 &&
+      formData.sport.length > 0 &&
+      formData.skillLevel.length > 0 &&
+      (sportPositions.length === 0 || formData.position.length > 0);
     return (
       <div className="h-full overflow-y-auto bg-slate-50">
         {/* Header */}
@@ -938,9 +943,29 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             </div>
 
             {/* Position */}
-        
-              
-      
+            {sportPositions.length > 0 && (
+              <div>
+                <label className="text-sm text-slate-700 mb-2 block">
+                  Position <span className="text-red-500">*</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {sportPositions.map((pos) => (
+                    <button
+                      key={pos}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, position: pos })}
+                      className={`px-3 py-2 rounded-xl border-2 text-sm font-medium transition-all ${
+                        formData.position === pos
+                          ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                          : 'border-slate-300 bg-white text-slate-700 hover:border-emerald-300'
+                      }`}
+                    >
+                      {pos}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Playing Level */}
             <div>
