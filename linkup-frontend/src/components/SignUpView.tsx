@@ -1,4 +1,4 @@
-import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Award, Users, Check, Upload, Shield, FileCheck, Camera, Plus, X, Info, Eye, Map, Bell } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Award, Users, Check, Upload, Shield, FileCheck, Camera, Plus, X, Info, Bell } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -1004,10 +1004,10 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div className="w-2 h-2 bg-emerald-500 rounded-full" />
             <div className="w-10 h-1 bg-emerald-500 rounded" />
             <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-            <div className="w-10 h-1 bg-slate-300 rounded" />
-            <div className="w-2 h-2 bg-slate-300 rounded-full" />
+            <div className="w-10 h-1 bg-emerald-500 rounded" />
+            <div className="w-2 h-2 bg-emerald-500 rounded-full" />
           </div>
-          <p className="text-center text-xs text-slate-600 mt-2">Step 5 of 6</p>
+          <p className="text-center text-xs text-slate-600 mt-2">Final Step!</p>
         </div>
 
         <div className="p-6">
@@ -1098,16 +1098,26 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               )}
             </div>
 
+            {submitError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
+                {submitError}
+              </p>
+            )}
+
             <button
-              onClick={handleNext}
-              disabled={!canContinue}
-              className={`w-full py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] ${
-                canContinue
+              onClick={handleSubmit}
+              disabled={!canContinue || submitting}
+              className={`w-full py-4 rounded-xl transition-all shadow-lg active:scale-[0.98] flex items-center justify-center gap-2 ${
+                canContinue && !submitting
                   ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-emerald-500/20'
                   : 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
               }`}
             >
-              Submit for Review &amp; Continue
+              {submitting ? (
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <><Check className="w-5 h-5" /> Submit for Review &amp; Complete Setup</>
+              )}
             </button>
 
             <button
@@ -1115,127 +1125,12 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                 setVerificationRosterUrl('');
                 setVerificationNote('');
                 setVerificationOption(null);
-                handleNext();
+                handleSubmit();
               }}
-              className="w-full text-center text-sm text-slate-500 hover:text-slate-700 py-2"
+              disabled={submitting}
+              className="w-full text-center text-sm text-slate-500 hover:text-slate-700 py-2 disabled:opacity-50"
             >
               Skip for now — I'll verify later
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Step 6: Privacy & Visibility Settings
-  if (step === 6) {
-    return (
-      <div className="h-full overflow-y-auto bg-slate-50">
-        {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center gap-3">
-          <button 
-            onClick={handleBack}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors -ml-2"
-          >
-            <ArrowLeft className="w-5 h-5 text-slate-700" />
-          </button>
-          <h2 className="text-slate-900">Privacy Settings</h2>
-        </div>
-
-        {/* Progress Indicator */}
-        <div className="bg-white px-6 py-3 border-b border-slate-200">
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-            <div className="w-16 h-1 bg-emerald-500 rounded"></div>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-            <div className="w-16 h-1 bg-emerald-500 rounded"></div>
-            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-          </div>
-          <p className="text-center text-xs text-slate-600 mt-2">Final Step!</p>
-        </div>
-
-        <div className="p-6">
-          <div className="max-w-md mx-auto space-y-5">
-            {/* Intro */}
-            <div className="text-center mb-4">
-              <div className="w-16 h-16 bg-emerald-100 rounded-full mx-auto flex items-center justify-center mb-3">
-                <Eye className="w-8 h-8 text-emerald-600" />
-              </div>
-              <h3 className="text-slate-900 font-semibold mb-2">Almost Done!</h3>
-              <p className="text-sm text-slate-600">
-                Set your search area to control how far away athletes can find you
-              </p>
-            </div>
-
-            {/* Search Area */}
-            <div className="bg-white rounded-2xl p-4 border-2 border-slate-200">
-              <div className="flex items-center gap-2 mb-3">
-                <Map className="w-4 h-4 text-slate-700" />
-                <label className="text-sm text-slate-700 font-semibold">Search Area</label>
-              </div>
-
-              {/* North America toggle */}
-              <label className="flex items-start gap-3 cursor-pointer mb-3">
-                <input
-                  type="checkbox"
-                  checked={formData.searchNorthAmerica}
-                  onChange={(e) => setFormData({ ...formData, searchNorthAmerica: e.target.checked })}
-                  className="w-5 h-5 mt-0.5 flex-shrink-0 accent-blue-600 cursor-pointer"
-                />
-                <div>
-                  <p className="text-sm font-medium text-slate-900">Search throughout all of North America</p>
-                  <p className="text-xs text-slate-500 mt-0.5">Athletes anywhere in North America can find your profile</p>
-                </div>
-              </label>
-
-              {/* Radius slider — only when North America is off */}
-              {!formData.searchNorthAmerica && (
-                <div className="pt-3 border-t border-slate-100 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="range"
-                      min="5"
-                      max="100"
-                      step="5"
-                      value={formData.searchRadius}
-                      onChange={(e) => setFormData({ ...formData, searchRadius: e.target.value })}
-                      className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                    />
-                    <div className="w-14 text-right">
-                      <span className="text-lg font-semibold text-slate-900">{formData.searchRadius}</span>
-                      <span className="text-sm text-slate-500 ml-0.5">mi</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-600">Maximum distance for profile visibility</p>
-                </div>
-              )}
-            </div>
-
-            {/* Info Note */}
-            <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl p-4">
-              <p className="text-xs text-emerald-900 leading-relaxed">
-                <strong>Note:</strong> You can always change these settings later in your profile settings.
-              </p>
-            </div>
-
-            {/* Error */}
-            {submitError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">
-                {submitError}
-              </p>
-            )}
-
-            {/* Complete Setup Button */}
-            <button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="w-full bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white py-4 rounded-xl transition-all shadow-lg shadow-emerald-600/20 hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              {submitting ? (
-                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <><Check className="w-5 h-5" /> Complete Setup</>
-              )}
             </button>
           </div>
         </div>

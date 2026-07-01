@@ -250,7 +250,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const [y, m, d] = dateString.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
