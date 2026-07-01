@@ -3,7 +3,7 @@ import { HeaderBar } from './HeaderBar';
 import { BottomTabBar } from './BottomTabBar';
 import { MainContent } from './MainContent';
 import { NotificationPanel } from './NotificationPanel';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { useSocket, Notification } from '../hooks/useSocket';
 import { usePushNotifications } from '../hooks/usePushNotifications';
@@ -13,6 +13,7 @@ import { ExpiredSessionsModal } from './ExpiredSessionsModal';
 import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { PushNotifications } from '@capacitor/push-notifications';
+import { toast } from 'sonner';
 
 type PendingNav = { view: string; data?: any } | null;
 
@@ -112,22 +113,14 @@ export function MobileFrame() {
   const [chatUnread, setChatUnread] = useState(0);
   const [liveQueue, setLiveQueue] = useState<StoredNotification[]>([]);
   const [pendingNav, setPendingNav] = useState<PendingNav>(null);
-  const [banner, setBanner] = useState<{ title: string; description: string } | null>(null);
   const [expiredDismissed, setExpiredDismissed] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Auth state comes directly from context — survives page refresh automatically
   const { token, isAuthenticated } = useAuth();
 
   usePushNotifications(token);
   useNativePush(token); // auto-registers APNs device token if permission already granted
-
-  const showBanner = useCallback((title: string, description: string) => {
-    if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
-    setBanner({ title, description });
-    bannerTimerRef.current = setTimeout(() => setBanner(null), 4500);
-  }, []);
 
   const handleNotification = useCallback((notification: Notification) => {
     setUnreadCount((c) => c + 1);
@@ -143,9 +136,9 @@ export function MobileFrame() {
     const builder = NOTIFICATION_MESSAGES[notification.type];
     if (builder) {
       const { title, description } = builder(notification.data);
-      showBanner(title, description);
+      toast(title, { description });
     }
-  }, [showBanner]);
+  }, []);
 
   // Badge counts are otherwise only updated by live socket events, so a
   // notification that arrives while the app is closed/backgrounded (or a
@@ -297,10 +290,6 @@ export function MobileFrame() {
 
   const isNative = Capacitor.isNativePlatform();
 
-  // On native: safe-area-inset-top + 56px header height
-  // On web: 44px status bar + 56px header = 100px
-  const bannerTop = isNative ? 'calc(env(safe-area-inset-top, 0px) + 56px)' : '100px';
-
   const inner = (
     <div className="relative h-full flex flex-col">
       {/* Fake status bar only shown in web demo frame */}
@@ -312,34 +301,6 @@ export function MobileFrame() {
         unreadCount={unreadCount}
         panelOpen={panelOpen}
       />
-
-      {/* In-app notification banner — slides in from above the content */}
-      {isAuthenticated && (
-        <div
-          className="absolute left-0 right-0 z-50 px-3 transition-all duration-300 ease-out"
-          style={{
-            top: bannerTop,
-            transform: banner ? 'translateY(0)' : 'translateY(-100%)',
-            opacity: banner ? 1 : 0,
-            pointerEvents: banner ? 'auto' : 'none',
-          }}
-        >
-          <div className="bg-zinc-800 border border-zinc-700/60 rounded-2xl shadow-2xl px-4 py-3 flex items-start gap-3">
-            <div className="w-2 h-2 mt-1.5 rounded-full bg-emerald-400 shrink-0 animate-pulse" />
-            <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-semibold leading-tight">{banner?.title}</p>
-              <p className="text-zinc-400 text-xs mt-0.5 leading-tight">{banner?.description}</p>
-            </div>
-            <button
-              onClick={() => setBanner(null)}
-              className="text-zinc-500 hover:text-zinc-300 text-lg leading-none ml-1 shrink-0"
-              aria-label="Dismiss notification"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-      )}
 
       {isAuthenticated && !expiredDismissed && (
         <ExpiredSessionsModal onDismiss={() => setExpiredDismissed(true)} />
