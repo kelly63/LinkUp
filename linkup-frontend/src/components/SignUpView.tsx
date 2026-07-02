@@ -572,43 +572,58 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                     <p>You must be at least 18 years old to use this platform. By registering, you confirm you meet this requirement.</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">3. Accurate Information</h4>
+                    <h4 className="font-semibold text-slate-900 mb-1">3. Our Role</h4>
+                    <p>LinkUp Athletics is a connection platform. Our sole purpose is to help athletes find each other for training. We do not organize, supervise, or participate in any in-person sessions. What users do after connecting is entirely their own responsibility.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">4. Accurate Information</h4>
                     <p>You agree to provide truthful, accurate information about yourself, including your athletic background, identity, and credentials. Misrepresentation may result in immediate account termination.</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">4. Prohibited Conduct</h4>
+                    <h4 className="font-semibold text-slate-900 mb-1">5. Content Standards</h4>
+                    <p className="mb-1">All content you post, share, or send — including messages, profile information, photos, and Locker Room posts — must meet these standards:</p>
+                    <ul className="list-disc list-inside space-y-1 ml-2 text-slate-600">
+                      <li>Use respectful, professional language at all times. Profanity, slurs, and abusive language are not permitted.</li>
+                      <li>No explicit, sexual, nude, or sexually suggestive photos or content of any kind.</li>
+                      <li>No graphic violence, threats, or content intended to intimidate others.</li>
+                      <li>Content must be sports- and training-related. This is an athletic platform, not a social dating app.</li>
+                    </ul>
+                    <p className="mt-2">Violations will result in immediate content removal and may result in account suspension or termination.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-900 mb-1">6. Prohibited Conduct</h4>
                     <p className="mb-1">You agree NOT to:</p>
                     <ul className="list-disc list-inside space-y-1 ml-2 text-slate-600">
-                      <li>Harass, threaten, or harm other users</li>
-                      <li>Send unsolicited sexual or offensive content</li>
+                      <li>Harass, threaten, bully, or harm other users</li>
+                      <li>Send unsolicited sexual messages or explicit content</li>
                       <li>Impersonate another person or create false profiles</li>
-                      <li>Use the platform for solicitation, spam, or scams</li>
+                      <li>Use the platform for solicitation, spam, recruiting, or scams</li>
                       <li>Attempt to circumvent safety or privacy features</li>
-                      <li>Share another user's personal information without consent</li>
+                      <li>Share another user's personal information without their consent</li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">5. In-Person Meetings</h4>
-                    <p>LinkUp Athletics facilitates introductions only. We do not verify user identities, conduct background checks, or supervise in-person sessions. You are solely responsible for your safety when meeting other users. Always meet in public locations and inform someone of your plans.</p>
+                    <h4 className="font-semibold text-slate-900 mb-1">7. In-Person Meetings — Your Risk</h4>
+                    <p>Any in-person meeting or training session arranged through LinkUp Athletics is entirely at your own risk. We are a connection tool only. We do not verify user identities, conduct background checks, guarantee user conduct, or supervise any sessions. You are solely responsible for your personal safety. We strongly encourage you to meet in public places, bring a friend, and tell someone where you are going before meeting anyone from the platform.</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">6. No Background Checks</h4>
-                    <p>LinkUp Athletics does not perform criminal background checks on users. You acknowledge this and accept full responsibility for exercising personal judgment and caution.</p>
+                    <h4 className="font-semibold text-slate-900 mb-1">8. No Background Checks</h4>
+                    <p>LinkUp Athletics does not perform criminal background checks on users. You acknowledge this and accept full responsibility for exercising personal judgment and caution when interacting with other users on or off the platform.</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">7. Limitation of Liability</h4>
-                    <p>LinkUp Athletics is not liable for any injuries, losses, or damages resulting from use of the platform or meetings arranged through it. Your use of this platform is at your own risk.</p>
+                    <h4 className="font-semibold text-slate-900 mb-1">9. Limitation of Liability</h4>
+                    <p>LinkUp Athletics is not liable for any injuries, losses, damages, or harm of any kind resulting from use of the platform or from meetings, training sessions, or interactions arranged through it. Your use of this platform is entirely at your own risk.</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">8. Payments</h4>
+                    <h4 className="font-semibold text-slate-900 mb-1">10. Payments</h4>
                     <p>All financial arrangements between users occur outside the platform. LinkUp Athletics does not process payments and bears no responsibility for payment disputes.</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">9. Termination</h4>
-                    <p>We reserve the right to suspend or terminate any account that violates these Terms, endangers other users, or engages in fraudulent activity, at our sole discretion.</p>
+                    <h4 className="font-semibold text-slate-900 mb-1">11. Termination</h4>
+                    <p>We reserve the right to suspend or terminate any account that violates these Terms, posts prohibited content, endangers other users, or engages in fraudulent activity, at our sole discretion and without prior notice.</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-slate-900 mb-1">10. Governing Law</h4>
+                    <h4 className="font-semibold text-slate-900 mb-1">12. Governing Law</h4>
                     <p>These Terms are governed by the laws of the State of New York. Any disputes will be resolved in the courts of New York.</p>
                   </div>
                 </div>
@@ -661,7 +676,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                   </div>
                   <div>
                     <h4 className="font-semibold text-slate-900 mb-1">Data Retention</h4>
-                    <p>Your data is retained as long as your account is active. You may request account deletion by contacting us at kelly@linkupathlethics.com. Upon deletion, your personal data will be removed within 30 days.</p>
+                    <p>Your data is retained as long as your account is active. You may request account deletion by contacting us at support@linkupathletics.com. Upon deletion, your personal data will be removed within 30 days.</p>
                   </div>
                   <div>
                     <h4 className="font-semibold text-slate-900 mb-1">Security</h4>
@@ -669,7 +684,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
                   </div>
                   <div>
                     <h4 className="font-semibold text-slate-900 mb-1">Contact</h4>
-                    <p>Questions about your privacy? Email kelly@linkupathlethics.com.</p>
+                    <p>Questions about your privacy? Email support@linkupathletics.com.</p>
                   </div>
                 </div>
                 <div className="px-4 py-3 border-t border-slate-200">
