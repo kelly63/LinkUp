@@ -357,4 +357,20 @@ async function sendInviteEmail({ toEmail, fromName, inviteUrl }) {
   if (error) throw new Error(error.message);
 }
 
-module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail, sendVerifiedEmail, sendInviteEmail };
+async function addToResendAudience({ email, name }) {
+  const audienceId = process.env.RESEND_AUDIENCE_ID;
+  if (!audienceId) return;
+  const parts = (name || '').trim().split(' ');
+  const firstName = parts[0] || '';
+  const lastName = parts.slice(1).join(' ') || '';
+  const { error } = await getResend().contacts.create({
+    audienceId,
+    email,
+    firstName,
+    lastName,
+    unsubscribed: false,
+  });
+  if (error) throw new Error(error.message);
+}
+
+module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail, sendVerifiedEmail, sendInviteEmail, addToResendAudience };

@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
-const { sendVerificationEmail, sendPasswordResetEmail } = require('../utils/email');
+const { sendVerificationEmail, sendPasswordResetEmail, addToResendAudience } = require('../utils/email');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'linkup-admin-secret';
@@ -118,6 +118,9 @@ const register = async (req, res) => {
     if (verificationRosterUrl || verificationNote) userData.verificationStatus = 'pending';
 
     const user = await User.create(userData);
+    addToResendAudience({ email: user.email, name: user.name }).catch(err =>
+      console.error('[resend audience]', err.message)
+    );
     const token = generateToken(user._id);
 
     if (incomingRole === 'athlete') {
@@ -227,6 +230,9 @@ const googleAuth = async (req, res) => {
         role: 'athlete',
       });
       isNewUser = true;
+      addToResendAudience({ email: user.email, name: user.name }).catch(err =>
+        console.error('[resend audience]', err.message)
+      );
     }
 
     // Send verification email for new Google-registered athletes
