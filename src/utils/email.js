@@ -306,4 +306,55 @@ async function sendVerifiedEmail({ user }) {
   if (error) throw new Error(error.message);
 }
 
-module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail, sendVerifiedEmail };
+async function sendInviteEmail({ toEmail, fromName, inviteUrl }) {
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+    <div style="background:linear-gradient(135deg,#052e16,#16a34a);padding:28px 32px;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:22px">LinkUp Athletics</h1>
+      <p style="color:#86efac;margin:6px 0 0;font-size:14px">Find Your Training Partner</p>
+    </div>
+
+    <div style="padding:28px 32px">
+      <p style="color:#374151;font-size:16px;margin-bottom:16px">Hey there,</p>
+      <p style="color:#374151;margin-bottom:20px">
+        <strong>${fromName}</strong> invited you to join <strong>LinkUp Athletics</strong> — the app that connects college athletes for training sessions, practice, and workouts.
+      </p>
+
+      <div style="background:#f0fdf4;border-radius:12px;padding:20px;margin-bottom:24px;text-align:center">
+        <p style="color:#166534;font-weight:600;margin:0 0 4px;font-size:15px">🏆 Find athletes at your level</p>
+        <p style="color:#166534;margin:0 0 4px;font-size:14px">📅 Schedule training sessions</p>
+        <p style="color:#166534;margin:0;font-size:14px">💬 Connect and message teammates</p>
+      </div>
+
+      <a href="${inviteUrl}" style="display:block;text-align:center;background:#16a34a;color:#fff;text-decoration:none;padding:16px 32px;border-radius:10px;font-weight:700;font-size:16px;margin-bottom:24px">
+        Download LinkUp Athletics
+      </a>
+
+      <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0">
+        If the button doesn't work, copy this link: <a href="${inviteUrl}" style="color:#16a34a">${inviteUrl}</a>
+      </p>
+    </div>
+
+    <div style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb">
+      <p style="color:#9ca3af;font-size:12px;margin:0;text-align:center">
+        LinkUp Athletics · <a href="https://linkup-swpu.onrender.com/privacy.html" style="color:#9ca3af">Privacy Policy</a> · <a href="https://linkup-swpu.onrender.com/terms.html" style="color:#9ca3af">Terms</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: toEmail,
+    subject: `${fromName} invited you to join LinkUp Athletics`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+}
+
+module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail, sendVerifiedEmail, sendInviteEmail };

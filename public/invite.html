@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join LinkUp Athletics</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #052e16;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 24px;
+      max-width: 400px;
+      width: 100%;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,.4);
+    }
+    .hero {
+      background: linear-gradient(135deg, #052e16, #16a34a);
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+    .logo {
+      width: 72px;
+      height: 72px;
+      background: rgba(255,255,255,.15);
+      border-radius: 18px;
+      margin: 0 auto 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,.2);
+    }
+    .logo img { width: 48px; height: 48px; object-fit: contain; }
+    h1 { color: #fff; font-size: 1.6rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .tagline { color: #86efac; font-size: 0.95rem; }
+    .body { padding: 2rem; }
+    .features { margin: 0 0 1.5rem; list-style: none; }
+    .features li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.95rem;
+      color: #334155;
+    }
+    .features li:last-child { border-bottom: none; }
+    .icon { font-size: 1.3rem; flex-shrink: 0; }
+    .btn {
+      display: block;
+      width: 100%;
+      background: #16a34a;
+      color: #fff;
+      text-decoration: none;
+      text-align: center;
+      padding: 1rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      transition: background 0.15s;
+    }
+    .btn:hover { background: #15803d; }
+    .sub { font-size: 0.8rem; color: #94a3b8; text-align: center; }
+    .sub a { color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="hero">
+      <div class="logo">
+        <img src="https://i.imgur.com/LnXJJ04.png" alt="LinkUp Athletics" />
+      </div>
+      <h1>LinkUp Athletics</h1>
+      <p class="tagline">Find Your Training Partner</p>
+    </div>
+    <div class="body">
+      <ul class="features">
+        <li><span class="icon">🏆</span> Connect with college athletes at your level</li>
+        <li><span class="icon">📅</span> Schedule training sessions and workouts</li>
+        <li><span class="icon">💬</span> Message and connect with teammates</li>
+        <li><span class="icon">✅</span> Verified athlete profiles</li>
+      </ul>
+      <a id="download-btn" href="https://apps.apple.com/search?term=linkup+athletics" class="btn">
+        Download on the App Store
+      </a>
+      <p class="sub">
+        Free · For college athletes · 18+ ·
+        <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a>
+      </p>
+    </div>
+  </div>
+  <script>
+    // Update App Store link once env-injected URL is available
+    const appStoreUrl = "VITE_APP_STORE_URL";
+    if (appStoreUrl && appStoreUrl !== "VITE_APP_STORE_URL") {
+      document.getElementById('download-btn').href = appStoreUrl;
+    }
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import { Settings, Star, Award, Shield, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera, KeyRound, Eye, EyeOff, Bell } from 'lucide-react';
+import { Settings, Star, Award, Shield, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera, KeyRound, Eye, EyeOff, Bell, Mail, MessageSquare, Copy, X, UserPlus } from 'lucide-react';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
@@ -184,6 +184,9 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [showAboutMeEdit, setShowAboutMeEdit] = useState(false);
   const [showPhilosophyEdit, setShowPhilosophyEdit] = useState(false);
   const [showQRCodeModal, setShowQRCodeModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteSending, setInviteSending] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
@@ -788,13 +791,22 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
             </div>
           </div>
           
-          {/* View Full Size Button */}
-          <button 
-            onClick={() => setShowQRCodeModal(true)}
-            className="w-full mt-4 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white py-3 rounded-xl transition-all border border-white/30"
-          >
-            View Full Size
-          </button>
+          {/* Buttons */}
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => setShowQRCodeModal(true)}
+              className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white py-3 rounded-xl transition-all border border-white/30 text-sm"
+            >
+              View Full Size
+            </button>
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white py-3 rounded-xl transition-all border border-white/30 text-sm flex items-center justify-center gap-1.5"
+            >
+              <UserPlus className="w-4 h-4" />
+              Invite a Friend
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1178,6 +1190,127 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                   {savingLinks ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4" onClick={() => setShowInviteModal(false)}>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-slate-900 font-semibold text-lg">Invite a Friend</h3>
+              <button onClick={() => setShowInviteModal(false)} className="text-slate-400 hover:text-slate-600 p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Native Share / Text / Instagram */}
+            <div className="space-y-2 mb-5">
+              {typeof navigator !== 'undefined' && 'share' in navigator && (
+                <button
+                  onClick={() => {
+                    const inviteUrl = `${import.meta.env.VITE_API_URL || 'https://linkup-swpu.onrender.com'}/invite`;
+                    navigator.share({
+                      title: 'Join me on LinkUp Athletics',
+                      text: `${user?.name} invited you to join LinkUp Athletics — the app to find college training partners. Download it here:`,
+                      url: inviteUrl,
+                    }).catch(() => {});
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors text-left"
+                >
+                  <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">Text or Share</p>
+                    <p className="text-xs text-slate-500">Messages, Instagram, WhatsApp & more</p>
+                  </div>
+                </button>
+              )}
+
+              <button
+                onClick={() => {
+                  const inviteUrl = `${import.meta.env.VITE_API_URL || 'https://linkup-swpu.onrender.com'}/invite`;
+                  const smsBody = encodeURIComponent(`Hey! I'm using LinkUp Athletics to find training partners. Download the app: ${inviteUrl}`);
+                  window.open(`sms:?body=${smsBody}`, '_self');
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors text-left"
+              >
+                <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <MessageSquare className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Send a Text</p>
+                  <p className="text-xs text-slate-500">Open Messages with a pre-filled invite</p>
+                </div>
+              </button>
+
+              <button
+                onClick={async () => {
+                  const inviteUrl = `${import.meta.env.VITE_API_URL || 'https://linkup-swpu.onrender.com'}/invite`;
+                  await navigator.clipboard.writeText(inviteUrl).catch(() => {});
+                  toast.success('Link copied! Paste it in Instagram DMs');
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors text-left"
+              >
+                <div className="w-9 h-9 bg-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Instagram className="w-4 h-4 text-pink-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Instagram</p>
+                  <p className="text-xs text-slate-500">Copy link to paste in a DM</p>
+                </div>
+              </button>
+            </div>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-slate-200" />
+              <span className="text-xs text-slate-400">or send via email</span>
+              <div className="flex-1 h-px bg-slate-200" />
+            </div>
+
+            {/* Email invite */}
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="friend@email.com"
+                className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:outline-none text-sm text-slate-900 placeholder-slate-400"
+              />
+              <button
+                disabled={!inviteEmail.trim() || inviteSending}
+                onClick={async () => {
+                  if (!token) return;
+                  setInviteSending(true);
+                  try {
+                    const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/invite`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                      body: JSON.stringify({ email: inviteEmail.trim() }),
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      toast.success('Invite sent!');
+                      setInviteEmail('');
+                      setShowInviteModal(false);
+                    } else {
+                      toast.error(data.message || 'Could not send invite');
+                    }
+                  } catch {
+                    toast.error('Could not send invite');
+                  } finally {
+                    setInviteSending(false);
+                  }
+                }}
+                className="px-4 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl transition-colors flex items-center gap-1.5 text-sm font-semibold"
+              >
+                {inviteSending ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Mail className="w-4 h-4" />}
+                Send
+              </button>
             </div>
           </div>
         </div>
