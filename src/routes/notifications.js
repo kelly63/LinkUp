@@ -79,8 +79,11 @@ router.post('/device-token', auth, async (req, res) => {
   try {
     const { token } = req.body;
     if (!token) return res.status(400).json({ message: 'token is required' });
+    // Reject debug strings and anything that isn't a plausible APNs hex token (32-100 hex chars)
+    if (!/^[0-9a-f]{32,100}$/i.test(token)) {
+      return res.status(400).json({ message: 'invalid token format' });
+    }
     const User = require('../models/User');
-    console.log(`[apn] registering token for user ${req.user.id}: ${token.slice(0, 12)}...${token.slice(-6)}`);
     await User.findByIdAndUpdate(req.user.id, {
       $addToSet: { deviceTokens: token },
     });

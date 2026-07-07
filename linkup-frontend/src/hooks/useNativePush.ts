@@ -35,22 +35,12 @@ export function useNativePush(authToken: string | null) {
       try { await saveToken(token.value, authToken); } catch {}
     });
 
-    const errListener = PushNotifications.addListener('registrationError', (err: any) => {
+    const errListener = PushNotifications.addListener('registrationError', () => {
       setEnabled(false);
-      fetch(`${API}/api/notifications/device-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-        body: JSON.stringify({ token: `DEBUG:registrationError=${JSON.stringify(err)}` }),
-      }).catch(() => {});
     });
 
     // Check current permission state on mount — set enabled immediately if already granted
     PushNotifications.checkPermissions().then((status) => {
-      fetch(`${API}/api/notifications/device-token`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-        body: JSON.stringify({ token: `DEBUG:permission=${status.receive}` }),
-      }).catch(() => {});
       if (status.receive === 'granted') {
         setEnabled(true);
         PushNotifications.register();
