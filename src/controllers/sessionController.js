@@ -189,7 +189,7 @@ const createSession = async (req, res) => {
 // GET /api/sessions/available — open sessions not posted by current user
 const getAvailableSessions = async (req, res) => {
   try {
-    const { sport, skillLevel, location, source, page = 1, limit = 20 } = req.query;
+    const { sport, skillLevel, location, source, sort = 'latest', page = 1, limit = 20 } = req.query;
 
     const targetSource = source || 'athletics';
     const now = new Date();
@@ -204,6 +204,22 @@ const getAvailableSessions = async (req, res) => {
     if (sport) query.sport = { $regex: sport, $options: 'i' };
     if (skillLevel) query.skillLevelRequired = skillLevel;
     if (location) query.location = { $regex: location.trim(), $options: 'i' };
+
+    // new_to_me: exclude athletes the current user has already trained with
+    if (sort === 'new_to_me') {
+      const pastSessions = await Session.find({
+        $or: [{ postedBy: req.user._id }, { partner: req.user._id }],
+        status: 'completed',
+      }).select('postedBy partner').lean();
+
+      const trainedIds = new Set();
+      pastSessions.forEach((s) => {
+        if (s.postedBy.toString() !== req.user._id.toString()) trainedIds.add(s.postedBy.toString());
+        if (s.partner && s.partner.toString() !== req.user._id.toString()) trainedIds.add(s.partner.toString());
+      });
+
+      query.postedBy = { $nin: [req.user._id, ...trainedIds] };
+    }
 
     // Team-type filtering: men see men's sessions, women see women's sessions.
     // Roster connections are always visible regardless of team type (social aspect).
@@ -230,12 +246,26 @@ const getAvailableSessions = async (req, res) => {
       ];
     }
 
+    const sortMap = {
+      latest:    { createdAt: -1 },
+      soonest:   { dateWindowStart: 1, createdAt: 1 },
+      top_rated: { createdAt: -1 }, // fetched then sorted in JS by rating
+      new_to_me: { createdAt: -1 },
+    };
+    const mongoSort = sortMap[sort] || { createdAt: -1 };
+
     const skip = (Number(page) - 1) * Number(limit);
-    const sessions = await Session.find(query)
+    let sessions = await Session.find(query)
       .populate('postedBy', USER_FIELDS)
-      .sort({ createdAt: -1 })
+      .sort(mongoSort)
       .skip(skip)
       .limit(Number(limit));
+
+    if (sort === 'top_rated') {
+      sessions = sessions.sort((a, b) =>
+        (b.postedBy?.averageRating || 0) - (a.postedBy?.averageRating || 0)
+      );
+    }
 
     const total = await Session.countDocuments(query);
     res.json({ sessions, total, page: Number(page), pages: Math.ceil(total / limit) });

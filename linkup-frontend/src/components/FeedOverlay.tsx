@@ -4,6 +4,15 @@ import { NeedCard } from './NeedCard';
 import { sessions as sessionsApi, connections as connectionsApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
 
+type SortKey = 'latest' | 'soonest' | 'top_rated' | 'new_to_me';
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'latest',    label: 'Latest' },
+  { key: 'soonest',  label: 'Soonest' },
+  { key: 'top_rated', label: 'Top Rated' },
+  { key: 'new_to_me', label: 'New to Me' },
+];
+
 function firstLastInitial(fullName: string): string {
   if (!fullName) return '';
   const parts = fullName.trim().split(/\s+/);
@@ -38,13 +47,15 @@ function formatSessionTime(dateStr: string) {
 export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
   const { token, user } = useAuth();
   const [expanded, setExpanded] = useState(false);
+  const [sort, setSort] = useState<SortKey>('latest');
   const [availableSessions, setAvailableSessions] = useState<any[]>([]);
   const [rosterIds, setRosterIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!token) return;
-    const params: Record<string, string> = {};
+    setLoading(true);
+    const params: Record<string, string> = { sort };
     if (filters.skillLevel && filters.skillLevel !== 'all') params.skillLevel = filters.skillLevel;
     if (user?.location) params.location = user.location;
     Promise.all([
@@ -57,7 +68,7 @@ export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
       setRosterIds(ids);
     }).catch(() => setAvailableSessions([]))
       .finally(() => setLoading(false));
-  }, [token, filters.skillLevel, user?.location]);
+  }, [token, filters.skillLevel, user?.location, sort]);
 
   const needs = availableSessions.map((s) => {
     const posterId = s.postedBy?._id ?? '';
@@ -89,7 +100,7 @@ export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
       </button>
 
       {/* Header */}
-      <div className="px-6 pb-3 flex items-center justify-between">
+      <div className="px-6 pb-2 flex items-center justify-between">
         <div>
           <h3 className="text-slate-900">Available Sessions</h3>
           <p className="text-sm text-slate-500">
@@ -104,8 +115,25 @@ export function FeedOverlay({ filters, onCardClick }: FeedOverlayProps) {
         </button>
       </div>
 
+      {/* Sort chips */}
+      <div className="flex gap-2 px-6 pb-3 overflow-x-auto scrollbar-none">
+        {SORT_OPTIONS.map((opt) => (
+          <button
+            key={opt.key}
+            onClick={() => setSort(opt.key)}
+            className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+              sort === opt.key
+                ? 'bg-emerald-500 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {/* Scrollable Card List */}
-      <div className="overflow-y-auto px-6 pb-6 space-y-3" style={{ maxHeight: 'calc(100% - 80px)' }}>
+      <div className="overflow-y-auto px-6 pb-6 space-y-3" style={{ maxHeight: 'calc(100% - 110px)' }}>
         {!loading && needs.length === 0 ? (
           <div className="text-center py-8 text-slate-500 text-sm">No sessions available nearby</div>
         ) : (

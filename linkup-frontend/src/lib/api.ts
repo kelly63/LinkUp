@@ -249,7 +249,7 @@ export const users = {
 export const sessions = {
   getAvailable: (
     token: string,
-    params: { sport?: string; skillLevel?: string; location?: string; page?: number; limit?: number } = {}
+    params: { sport?: string; skillLevel?: string; location?: string; sort?: string; page?: number; limit?: number } = {}
   ) => {
     const q = new URLSearchParams(
       Object.entries(params)
