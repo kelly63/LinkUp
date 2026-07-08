@@ -477,7 +477,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           <div className="px-6 -mt-6 mb-6">
             <div className="bg-white rounded-2xl shadow-lg p-5">
               {/* School / level header */}
-              <div className="bg-gradient-to-r from-slate-800 to-slate-700 -mx-5 -mt-5 px-5 pt-5 pb-4 rounded-t-2xl">
+              <div style={{ background: 'linear-gradient(125deg, #0F172A 0%, #1E3A5F 100%)' }} className="-mx-5 -mt-5 px-5 pt-5 pb-4 rounded-t-2xl">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">College</p>

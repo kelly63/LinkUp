@@ -173,7 +173,7 @@ export function UserProfileView({
       </div>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-6 pt-6 pb-8">
+      <div style={{ background: 'linear-gradient(135deg, #0F172A 0%, #1E3A5F 60%, #064E3B 100%)' }} className="px-6 pt-6 pb-8">
         <div className="text-center">
           {/* Avatar */}
           <div className="w-24 h-24 bg-white rounded-full mx-auto mb-4 flex items-center justify-center text-2xl text-slate-700 shadow-lg font-semibold overflow-hidden">
@@ -248,7 +248,7 @@ export function UserProfileView({
         <div className="px-6 -mt-4 mb-6">
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {/* Dark header — school + badges */}
-            <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-5 pt-5 pb-4">
+            <div style={{ background: 'linear-gradient(125deg, #0F172A 0%, #1E3A5F 100%)' }} className="px-5 pt-5 pb-4">
               <div className="header-eyebrow text-slate-400 text-xs uppercase tracking-widest mb-1 font-semibold">College</div>
               <div className="text-white font-extrabold text-lg leading-tight tracking-tight">
                 {(profileUser as any).school || '—'}
