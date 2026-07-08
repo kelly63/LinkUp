@@ -476,63 +476,91 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           {/* Athlete Profile Section */}
           <div className="px-6 -mt-6 mb-6">
             <div className="bg-white rounded-2xl shadow-lg p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h4 className="text-slate-900">Athlete Profile</h4>
-                <button className="text-sm text-emerald-600 hover:text-emerald-700" onClick={handleOpenAthleteEdit}>Edit</button>
-              </div>
-              
-              {/* Athlete Info Grid */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2 border-b border-slate-200">
-                  <span className="text-sm text-slate-500">Primary Sport</span>
-                  <span className="text-slate-900">{athleteSport}</span>
-                </div>
-                
-                <div className="flex items-center justify-between py-2 border-b border-slate-200">
-                  <span className="text-sm text-slate-500">Primary Position</span>
-                  <span className="text-slate-900">{athletePosition}</span>
-                </div>
-                
-                <div className="flex items-center justify-between py-2 border-b border-slate-200">
-                  <span className="text-sm text-slate-500">Athletic Level</span>
-                  <span className="text-slate-900">{athleteLevel || '—'}</span>
-                </div>
-
-                {(athleteSchool || athleteYear) && (
-                  <div className="flex items-center justify-between py-2 border-b border-slate-200">
-                    <span className="text-sm text-slate-500">School</span>
-                    <span className="text-slate-900 text-right">
-                      {athleteSchool || '—'}
-                      {athleteYear ? <span className="text-slate-500 ml-1">· {athleteYear}</span> : null}
-                    </span>
+              {/* School / level header */}
+              <div className="bg-gradient-to-r from-slate-800 to-slate-700 -mx-5 -mt-5 px-5 pt-5 pb-4 rounded-t-2xl">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">College</p>
+                    <h4 className="text-white font-bold text-lg leading-tight">{athleteSchool || 'Add your school'}</h4>
                   </div>
-                )}
-
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-slate-500">Location</span>
-                  <span className="text-slate-900">{user?.location || '—'}</span>
+                  <button className="text-slate-400 hover:text-white text-xs transition-colors" onClick={handleOpenAthleteEdit}>Edit</button>
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  {athleteLevel && (
+                    <span className="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                      {athleteLevel}
+                    </span>
+                  )}
+                  {athleteYear && (
+                    <span className="bg-white/10 text-slate-300 text-xs px-2.5 py-0.5 rounded-full">
+                      {athleteYear}
+                    </span>
+                  )}
                 </div>
               </div>
-              
-              {/* Verification Badge — driven by user.verificationStatus */}
+
+              {/* Sport · Position · Location stat row */}
+              <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 -mx-5">
+                <div className="px-4 py-3 text-center">
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Sport</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate">{athleteSport || '—'}</p>
+                </div>
+                <div className="px-4 py-3 text-center">
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Position</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate">{athletePosition || '—'}</p>
+                </div>
+                <div className="px-4 py-3 text-center">
+                  <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Location</p>
+                  <p className="text-sm font-semibold text-slate-900 truncate">{user?.location || '—'}</p>
+                </div>
+              </div>
+
+              {/* Roster link */}
+              {rosterUrl ? (
+                <a
+                  href={rosterUrl.startsWith('http') ? rosterUrl : `https://${rosterUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="-mx-5 flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors border-b border-slate-100"
+                >
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-emerald-600" />
+                    <span className="text-sm font-medium text-emerald-700">View College Roster</span>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-emerald-500" />
+                </a>
+              ) : (
+                <button
+                  onClick={handleOpenLinksEdit}
+                  className="-mx-5 w-[calc(100%+2.5rem)] flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors border-b border-slate-100"
+                >
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-slate-300" />
+                    <span className="text-sm text-slate-400">Add your college roster link</span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-300" />
+                </button>
+              )}
+
+              {/* Verification badge */}
               {user?.verificationStatus === 'approved' && (
-                <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
                   <p className="text-xs text-emerald-800">
                     <span className="font-semibold">✓ Verified Athlete:</span> Identity confirmed by LinkUp Athletics
                   </p>
                 </div>
               )}
               {user?.verificationStatus === 'pending' && (
-                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                   <p className="text-xs text-amber-800">
                     <span className="font-semibold">⏳ Verification Pending:</span> We're reviewing your credentials
                   </p>
                 </div>
               )}
               {user?.verificationStatus === 'rejected' && (
-                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl">
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl">
                   <p className="text-xs text-red-800">
-                    <span className="font-semibold">Verification Not Approved.</span> Contact kelly@linkupathlethics.com for help.
+                    <span className="font-semibold">Verification Not Approved.</span> Contact support@linkupathletics.com for help.
                   </p>
                 </div>
               )}
@@ -597,7 +625,6 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
                 <button onClick={handleOpenLinksEdit} className="text-sm text-emerald-600 hover:text-emerald-700">Edit</button>
               </div>
               <div className="space-y-3">
-                <LinkRow icon={<Shield className="w-5 h-5 text-emerald-600" />} bg="bg-emerald-100" label="College Roster Page" value={rosterUrl} placeholder="Add your team roster link" />
                 <LinkRow icon={<ExternalLink className="w-5 h-5 text-orange-600" />} bg="bg-orange-100" label="Hudl Profile" value={hudlUrl} placeholder="Add your Hudl link" />
                 <LinkRow icon={<Instagram className="w-5 h-5 text-pink-600" />} bg="bg-pink-100" label="Instagram" value={instagramUrl} placeholder="Add your Instagram" />
                 <LinkRow icon={<Link className="w-5 h-5 text-sky-600" />} bg="bg-sky-100" label="Twitter / X" value={twitterUrl} placeholder="Add your Twitter/X" />
