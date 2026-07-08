@@ -1,4 +1,4 @@
-import { ArrowLeft, MapPin, Star, Award, Calendar, MessageSquare, Users, TrendingUp, Target, Zap, CheckCircle, ExternalLink, Instagram, Link as LinkIcon, UserPlus, Clock } from 'lucide-react';
+import { ArrowLeft, MapPin, Star, Award, Calendar, MessageSquare, Users, TrendingUp, Target, Zap, CheckCircle, ExternalLink, Instagram, Link as LinkIcon, UserPlus, Clock, Shield } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { RatingModal } from './RatingModal';
 import { useAuth } from '../lib/auth';
@@ -173,7 +173,7 @@ export function UserProfileView({
       </div>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-900 via-blue-800 to-blue-900 px-6 pt-6 pb-8">
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-6 pt-6 pb-8">
         <div className="text-center">
           {/* Avatar */}
           <div className="w-24 h-24 bg-white rounded-full mx-auto mb-4 flex items-center justify-center text-2xl text-slate-700 shadow-lg font-semibold overflow-hidden">
@@ -243,22 +243,84 @@ export function UserProfileView({
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="px-6 -mt-4 mb-6">
-        <div className="bg-white rounded-2xl shadow-lg p-4">
-          <div className="grid grid-cols-4 gap-3">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="w-10 h-10 bg-emerald-100 rounded-full mx-auto mb-2 flex items-center justify-center">
-                  <stat.icon className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div className="text-base font-semibold text-slate-900 truncate">{stat.value}</div>
-                <div className="text-xs text-slate-600">{stat.label}</div>
+      {/* Athlete Profile Card */}
+      {isAthlete ? (
+        <div className="px-6 -mt-4 mb-6">
+          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+            {/* Dark header — school + badges */}
+            <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-5 pt-5 pb-4">
+              <div className="header-eyebrow text-slate-400 text-xs uppercase tracking-widest mb-1 font-semibold">College</div>
+              <div className="text-white font-extrabold text-lg leading-tight tracking-tight">
+                {(profileUser as any).school || '—'}
               </div>
-            ))}
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                {profileUser.skillLevel && (
+                  <span className="bg-emerald-500/20 text-emerald-400 text-xs px-2.5 py-0.5 rounded-full border border-emerald-500/30 font-semibold">
+                    {profileUser.skillLevel}
+                  </span>
+                )}
+                {(profileUser as any).year && (
+                  <span className="bg-white/10 text-slate-300 text-xs px-2.5 py-0.5 rounded-full font-medium">
+                    {(profileUser as any).year}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Stat strip */}
+            <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
+              <div className="px-4 py-3 text-center">
+                <div className="text-xs text-slate-400 uppercase tracking-wide font-semibold mb-0.5">Sport</div>
+                <div className="text-sm font-bold text-slate-900 truncate">{profileUser.sport || '—'}</div>
+              </div>
+              <div className="px-4 py-3 text-center">
+                <div className="text-xs text-slate-400 uppercase tracking-wide font-semibold mb-0.5">Position</div>
+                <div className="text-sm font-bold text-slate-900 truncate">{profileUser.position || '—'}</div>
+              </div>
+              <div className="px-4 py-3 text-center">
+                <div className="text-xs text-slate-400 uppercase tracking-wide font-semibold mb-0.5">Rating</div>
+                <div className="text-sm font-bold text-slate-900 flex items-center justify-center gap-1">
+                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  {profileUser.averageRating ? profileUser.averageRating.toFixed(1) : '—'}
+                </div>
+              </div>
+            </div>
+
+            {/* Roster link */}
+            {(profileUser as any).rosterUrl && (
+              <a
+                href={(profileUser as any).rosterUrl.startsWith('http') ? (profileUser as any).rosterUrl : `https://${(profileUser as any).rosterUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-emerald-600" />
+                  <span className="text-sm font-semibold text-emerald-700">View College Roster</span>
+                </div>
+                <ExternalLink className="w-4 h-4 text-emerald-500" />
+              </a>
+            )}
           </div>
         </div>
-      </div>
+      ) : (
+        /* Coach stats grid */
+        <div className="px-6 -mt-4 mb-6">
+          <div className="bg-white rounded-2xl shadow-lg p-4">
+            <div className="grid grid-cols-4 gap-3">
+              {stats.map((stat, index) => (
+                <div key={index} className="text-center">
+                  <div className="w-10 h-10 bg-emerald-100 rounded-full mx-auto mb-2 flex items-center justify-center">
+                    <stat.icon className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div className="text-base font-semibold text-slate-900 truncate">{stat.value}</div>
+                  <div className="text-xs text-slate-600">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="px-6 mb-6 space-y-3">
