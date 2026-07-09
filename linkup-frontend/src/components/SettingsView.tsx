@@ -63,6 +63,7 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Account</p>
           </div>
 
+          {/* Privacy & Visibility hidden — re-enable by restoring the button below
           <button
             onClick={() => onNavigate('preferences')}
             className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors border-b border-slate-100"
@@ -76,6 +77,7 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
             </div>
             <ArrowLeft className="w-5 h-5 text-slate-400 rotate-180" />
           </button>
+          */}
 
           <button
             onClick={() => setShowChangePw(true)}
