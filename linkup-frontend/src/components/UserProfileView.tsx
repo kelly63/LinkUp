@@ -108,6 +108,18 @@ export function UserProfileView({
     }
   };
 
+  const handleRemoveFromRoster = async () => {
+    if (!token || !connectionId) return;
+    try {
+      await connectionsApi.remove(token, connectionId);
+      setConnStatus('none');
+      setConnectionId(null);
+      toast.success('Removed from roster');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not remove from roster');
+    }
+  };
+
   const handleRatingSubmit = async (rating: number, review: string) => {
     if (!token || !profileUser) return;
     try {
@@ -355,9 +367,17 @@ export function UserProfileView({
           <>
             {/* Connection status row */}
             {connStatus === 'accepted' ? (
-              <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl py-3 flex items-center justify-center gap-2">
-                <CheckCircle className="w-5 h-5 text-emerald-600" />
-                <span className="text-sm font-semibold text-emerald-900">Connected</span>
+              <div className="flex gap-2">
+                <div className="flex-1 bg-emerald-50 border-2 border-emerald-200 rounded-xl py-3 flex items-center justify-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-emerald-600" />
+                  <span className="text-sm font-semibold text-emerald-900">On Roster</span>
+                </div>
+                <button
+                  onClick={handleRemoveFromRoster}
+                  className="px-4 py-3 bg-slate-100 hover:bg-red-50 hover:border-red-200 text-slate-500 hover:text-red-600 rounded-xl border-2 border-slate-200 transition-all text-sm font-semibold"
+                >
+                  Remove
+                </button>
               </div>
             ) : connStatus === 'pending' ? (
               <div className="flex flex-col gap-2">
