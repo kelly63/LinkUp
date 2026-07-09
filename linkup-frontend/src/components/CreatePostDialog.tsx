@@ -1,5 +1,7 @@
-import { X, Link2, Type, Trophy, ExternalLink, Loader2 } from 'lucide-react';
+import { X, Link2, Type, Trophy, ExternalLink, Loader2, ImageIcon, Camera } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
 import { posts as postsApi, Post, User } from '../lib/api';
 import { toast } from 'sonner';
 
@@ -28,11 +30,17 @@ function isValidUrl(str: string) {
 }
 
 export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }: CreatePostDialogProps) {
-  const [postType, setPostType] = useState<'thought' | 'article' | null>(null);
+  const [postType, setPostType] = useState<'thought' | 'article' | 'photo' | null>(null);
   const [content, setContent] = useState('');
   const [articleUrl, setArticleUrl] = useState('');
   const [articleTitle, setArticleTitle] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Photo state
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoBlob, setPhotoBlob] = useState<Blob | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [preview, setPreview] = useState<LinkPreview | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -71,22 +79,70 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
     setArticleUrl('');
     setArticleTitle('');
     setPreview(null);
+    setPhotoPreview(null);
+    setPhotoBlob(null);
     onClose();
+  };
+
+  const handlePickPhoto = async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const photo = await CapCamera.getPhoto({
+          resultType: CameraResultType.DataUrl,
+          source: CameraSource.Photos,
+          quality: 85,
+          allowEditing: false,
+        });
+        if (!photo.dataUrl) return;
+        setPhotoPreview(photo.dataUrl);
+        // Convert data URL to blob
+        const res = await fetch(photo.dataUrl);
+        setPhotoBlob(await res.blob());
+      } catch (err: any) {
+        if (err?.message !== 'User cancelled photos app') {
+          toast.error('Could not access photo library');
+        }
+      }
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoBlob(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const handlePost = async () => {
     if (!token) { toast.error('You must be logged in to post'); return; }
     if (postType === 'thought' && !content.trim()) { toast.error('Write something first'); return; }
     if (postType === 'article' && !articleUrl.trim()) { toast.error('Paste an article URL'); return; }
+    if (postType === 'photo' && !photoBlob) { toast.error('Select a photo first'); return; }
 
     setSubmitting(true);
     try {
-      const body: Parameters<typeof postsApi.create>[1] = { type: postType! };
+      let imageUrl: string | undefined;
+
+      if (postType === 'photo' && photoBlob) {
+        setUploadingPhoto(true);
+        imageUrl = await postsApi.uploadImage(token, photoBlob);
+        setUploadingPhoto(false);
+      }
+
+      const body: Parameters<typeof postsApi.create>[1] = {
+        type: postType === 'photo' ? 'thought' : postType!,
+      };
       if (content.trim()) body.content = content.trim();
       if (postType === 'article') {
         body.sharedUrl = articleUrl.trim();
         if (articleTitle.trim()) body.articleTitle = articleTitle.trim();
       }
+      if (imageUrl) body.imageUrl = imageUrl;
       if (user?.sport) body.sport = user.sport;
 
       const { post } = await postsApi.create(token, body);
@@ -94,6 +150,7 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
       toast.success('Posted!');
       handleClose();
     } catch (err: any) {
+      setUploadingPhoto(false);
       toast.error(err?.message || 'Could not create post');
     } finally {
       setSubmitting(false);
@@ -101,6 +158,8 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
   };
 
   const initials = user ? getInitials(user.name) : '??';
+
+  const submitLabel = uploadingPhoto ? 'Uploading photo…' : submitting ? 'Posting…' : 'Post';
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
@@ -145,6 +204,19 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
             </button>
 
             <button
+              onClick={() => { setPostType('photo'); handlePickPhoto(); }}
+              className="w-full bg-gradient-to-br from-violet-50 to-pink-50 border-2 border-emerald-200 rounded-2xl p-5 flex items-start gap-4 hover:border-emerald-400 transition-all"
+            >
+              <div className="w-12 h-12 bg-violet-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left flex-1">
+                <h4 className="text-slate-900 mb-1">Share a Photo</h4>
+                <p className="text-sm text-slate-600">Post training moments or highlights</p>
+              </div>
+            </button>
+
+            <button
               onClick={() => setPostType('article')}
               className="w-full bg-gradient-to-br from-emerald-50 to-blue-50 border-2 border-emerald-200 rounded-2xl p-5 flex items-start gap-4 hover:border-emerald-400 transition-all"
             >
@@ -179,6 +251,53 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
               className="w-full min-h-[200px] p-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-400 resize-none text-slate-900"
               autoFocus
             />
+          </div>
+        )}
+
+        {/* Photo Post Form */}
+        {postType === 'photo' && (
+          <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-4">
+            {/* Hidden file input for web */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileInput}
+            />
+
+            {photoPreview ? (
+              <div className="relative">
+                <img
+                  src={photoPreview}
+                  alt="Selected"
+                  className="w-full rounded-2xl object-cover max-h-64"
+                />
+                <button
+                  onClick={() => { setPhotoPreview(null); setPhotoBlob(null); }}
+                  className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1.5"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handlePickPhoto}
+                className="w-full h-40 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center gap-2 text-slate-400 hover:border-emerald-400 hover:text-emerald-500 transition-colors"
+              >
+                <ImageIcon className="w-8 h-8" />
+                <span className="text-sm">Tap to select a photo</span>
+              </button>
+            )}
+
+            <textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Add a caption... (optional)"
+              className="w-full min-h-[100px] p-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-emerald-400 resize-none text-slate-900"
+            />
+
+            <p className="text-xs text-slate-400">Only post photos appropriate for an athletic training platform. Inappropriate content will result in account suspension.</p>
           </div>
         )}
 
@@ -264,7 +383,7 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
         {postType && (
           <div className="px-6 py-4 border-t border-slate-200 flex gap-3 flex-shrink-0">
             <button
-              onClick={() => { setPostType(null); setPreview(null); }}
+              onClick={() => { setPostType(null); setPreview(null); setPhotoPreview(null); setPhotoBlob(null); }}
               disabled={submitting}
               className="flex-1 py-3 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-colors disabled:opacity-60"
             >
@@ -272,10 +391,10 @@ export function CreatePostDialog({ isOpen, onClose, token, user, onPostCreated }
             </button>
             <button
               onClick={handlePost}
-              disabled={submitting}
+              disabled={submitting || (postType === 'photo' && !photoBlob)}
               className="flex-1 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-colors disabled:opacity-60"
             >
-              {submitting ? 'Posting…' : 'Post'}
+              {submitLabel}
             </button>
           </div>
         )}

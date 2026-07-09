@@ -100,7 +100,7 @@ export interface Message {
 export interface Post {
   _id: string;
   author: User;
-  type: 'session_completion' | 'thought' | 'article';
+  type: 'session_completion' | 'thought' | 'article' | 'photo';
   content: string;
   sport: string;
   session: Session | null;
@@ -108,6 +108,7 @@ export interface Post {
   sessionSummary: string;
   sharedUrl: string;
   articleTitle: string;
+  imageUrl: string;
   likes: string[];
   comments: Array<{ _id: string; author: User; text: string; createdAt: string }>;
   createdAt: string;
@@ -430,12 +431,22 @@ export const posts = {
 
   create: (
     token: string,
-    body: { type: string; content?: string; sport?: string; sessionId?: string; sessionPartnerId?: string; sessionSummary?: string; sharedUrl?: string; articleTitle?: string }
+    body: { type: string; content?: string; sport?: string; sessionId?: string; sessionPartnerId?: string; sessionSummary?: string; sharedUrl?: string; articleTitle?: string; imageUrl?: string }
   ) =>
     request<{ post: Post }>('/api/posts', {
       method: 'POST',
       body: JSON.stringify(body),
     }, token),
+
+  uploadImage: async (token: string, blob: Blob): Promise<string> => {
+    const formData = new FormData();
+    formData.append('image', blob, 'photo.jpg');
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    const res = await fetch('/api/posts/upload-image', { method: 'POST', headers, body: formData });
+    if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error((e as any).message || 'Upload failed'); }
+    const data = await res.json();
+    return data.url as string;
+  },
 
   toggleLike: (token: string, postId: string) =>
     request<{ liked: boolean; likeCount: number }>(`/api/posts/${postId}/like`, {

@@ -203,10 +203,22 @@ function PostCard({
       </div>
 
       {/* Content */}
-      <div className="px-4 pb-3">
-        {post.type === 'session_completion' && <SessionContent post={post} />}
-        {post.type === 'thought' && <p className="text-slate-900 leading-relaxed text-sm">{post.content}</p>}
-        {post.type === 'article' && <ArticleContent post={post} />}
+      <div className="pb-3">
+        {post.type === 'session_completion' && <div className="px-4"><SessionContent post={post} /></div>}
+        {post.type === 'article' && <div className="px-4"><ArticleContent post={post} /></div>}
+        {(post.type === 'thought' || !post.type) && (
+          <div>
+            {post.content && <p className="px-4 text-slate-900 leading-relaxed text-sm mb-2">{post.content}</p>}
+            {post.imageUrl && (
+              <img
+                src={post.imageUrl}
+                alt="Post"
+                className="w-full object-cover max-h-80"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Actions */}

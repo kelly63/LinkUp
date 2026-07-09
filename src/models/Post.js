@@ -68,6 +68,12 @@ const postSchema = new mongoose.Schema(
       default: '',
     },
 
+    // For photo posts
+    imageUrl: {
+      type: String,
+      default: '',
+    },
+
     // Engagement
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     comments: [commentSchema],
