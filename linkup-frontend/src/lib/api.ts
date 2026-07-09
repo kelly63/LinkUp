@@ -189,17 +189,32 @@ export const auth = {
       body: JSON.stringify({ idToken }),
     }),
 
+  appleLogin: (idToken: string, name?: string, email?: string) =>
+    request<{ token: string; user: User; isNewUser: boolean }>('/api/auth/apple', {
+      method: 'POST',
+      body: JSON.stringify({ idToken, name, email }),
+    }),
+
   changePassword: (token: string, currentPassword: string, newPassword: string) =>
     request<{ message: string }>('/api/auth/change-password', {
       method: 'POST',
       body: JSON.stringify({ currentPassword, newPassword }),
     }, token),
 
+  deleteAccount: (token: string) =>
+    request<{ message: string }>('/api/auth/account', { method: 'DELETE' }, token),
+
   forgotPassword: (email: string) =>
     request<{ message: string }>('/api/auth/forgot-password', {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),
+
+  reportPost: (token: string, postId: string, reason?: string) =>
+    request<{ message: string }>(`/api/posts/${postId}/report`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }, token),
 };
 
 // ─── Users ────────────────────────────────────────────────────────────────────

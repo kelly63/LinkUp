@@ -18,7 +18,7 @@ export function HeaderBar({
     <div className="h-14 px-6 flex items-center justify-between">
       {/* App Logo/Name */}
       <div className="flex items-center gap-2">
-        <img src="https://i.imgur.com/LnXJJ04.png" alt="LinkUp Athletics" className="w-6 h-6 object-contain" />
+        <img src="/logo.png" alt="LinkUp Athletics" className="w-6 h-6 object-contain" />
         <span className="font-semibold text-gray-100 font-[Magra]">LinkUp Athletics</span>
       </div>
 

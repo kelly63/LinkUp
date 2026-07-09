@@ -4,6 +4,31 @@ const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const { sendVerificationEmail, sendPasswordResetEmail, addToResendAudience } = require('../utils/email');
 
+// ── Apple Sign-In helpers ─────────────────────────────────────────────────────
+let _appleKeys = null;
+let _appleKeysFetchedAt = 0;
+async function getApplePublicKeys() {
+  if (_appleKeys && Date.now() - _appleKeysFetchedAt < 3_600_000) return _appleKeys;
+  const res = await fetch('https://appleid.apple.com/auth/keys');
+  const { keys } = await res.json();
+  _appleKeys = keys;
+  _appleKeysFetchedAt = Date.now();
+  return keys;
+}
+async function verifyAppleToken(idToken) {
+  const keys = await getApplePublicKeys();
+  const [headerB64] = idToken.split('.');
+  const header = JSON.parse(Buffer.from(headerB64, 'base64url').toString());
+  const jwk = keys.find((k) => k.kid === header.kid);
+  if (!jwk) throw new Error('No matching Apple public key');
+  const publicKey = crypto.createPublicKey({ key: jwk, format: 'jwk' });
+  return jwt.verify(idToken, publicKey, {
+    algorithms: ['RS256'],
+    issuer: 'https://appleid.apple.com',
+    audience: process.env.APPLE_BUNDLE_ID || 'com.linkupathletics.app',
+  });
+}
+
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'linkup-admin-secret';
 const APP_URL = process.env.APP_URL || 'http://localhost:5000';
@@ -349,4 +374,93 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout, getMe, googleAuth, changePassword, forgotPassword, resetPassword };
+// POST /api/auth/apple
+const appleAuth = async (req, res) => {
+  try {
+    const { idToken, name, email: emailFromClient } = req.body;
+    if (!idToken) return res.status(400).json({ message: 'idToken is required' });
+
+    let payload;
+    try {
+      payload = await verifyAppleToken(idToken);
+    } catch (err) {
+      console.error('[apple-auth] token verify failed:', err.message);
+      return res.status(401).json({ message: 'Invalid Apple token' });
+    }
+
+    const appleId = payload.sub;
+    // Apple only returns email in the token on first sign-in; fall back to client-supplied
+    const email = (payload.email || emailFromClient || '').toLowerCase().trim();
+
+    let user = await User.findOne({ $or: [{ appleId }, ...(email ? [{ email }] : [])] });
+    let isNewUser = false;
+
+    if (user) {
+      if (!user.appleId) {
+        user.appleId = appleId;
+        await user.save({ validateBeforeSave: false });
+      }
+    } else {
+      if (!email) return res.status(400).json({ message: 'Email is required for first-time Apple sign-in' });
+      user = await User.create({
+        name: name || email.split('@')[0],
+        email,
+        appleId,
+        role: 'athlete',
+        agreedToTerms: false,
+      });
+      isNewUser = true;
+      addToResendAudience({ email: user.email, name: user.name }).catch((err) =>
+        console.error('[resend audience]', err.message)
+      );
+      if (user.role === 'athlete') {
+        const userIdStr = user._id.toString();
+        const approveToken = jwt.sign({ userId: userIdStr, action: 'approve' }, ADMIN_SECRET, { expiresIn: '30d' });
+        const clarifyToken = jwt.sign({ userId: userIdStr, action: 'clarify' }, ADMIN_SECRET, { expiresIn: '30d' });
+        sendVerificationEmail({
+          user,
+          approveUrl: `${APP_URL}/api/admin/verify/${userIdStr}/approve?token=${approveToken}`,
+          clarifyUrl: `${APP_URL}/api/admin/verify/${userIdStr}/clarify?token=${clarifyToken}`,
+        }).catch((err) => console.error('[verification email apple]', err.message));
+      }
+    }
+
+    const token = generateToken(user._id);
+    res.json({ token, user: user.toPublicJSON(), isNewUser: isNewUser || !user.agreedToTerms });
+  } catch (error) {
+    console.error('[apple-auth] error:', error);
+    res.status(500).json({ message: 'Apple sign-in failed' });
+  }
+};
+
+// DELETE /api/auth/account
+const deleteAccount = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Import models inline to avoid circular dependency issues at module load
+    const Connection = require('../models/Connection');
+    const Post = require('../models/Post');
+    const Session = require('../models/Session');
+    const Message = require('../models/Message');
+    const Notification = require('../models/Notification');
+    const Rating = require('../models/Rating');
+
+    await Promise.all([
+      Connection.deleteMany({ $or: [{ requester: userId }, { recipient: userId }] }),
+      Post.deleteMany({ author: userId }),
+      Session.deleteMany({ postedBy: userId }),
+      Message.deleteMany({ $or: [{ sender: userId }, { recipient: userId }] }),
+      Notification.deleteMany({ recipient: userId }),
+      Rating.deleteMany({ $or: [{ rater: userId }, { ratee: userId }] }),
+    ]);
+
+    await User.findByIdAndDelete(userId);
+    res.json({ message: 'Account deleted' });
+  } catch (error) {
+    console.error('[delete-account] error:', error);
+    res.status(500).json({ message: 'Could not delete account' });
+  }
+};
+
+module.exports = { register, login, logout, getMe, googleAuth, appleAuth, deleteAccount, changePassword, forgotPassword, resetPassword };

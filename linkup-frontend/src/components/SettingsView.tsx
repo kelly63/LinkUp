@@ -1,4 +1,4 @@
-import { ArrowLeft, Shield, KeyRound, LogOut, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Shield, KeyRound, LogOut, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { auth as authApi } from '../lib/api';
@@ -12,6 +12,25 @@ interface SettingsViewProps {
 
 export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps) {
   const { token } = useAuth();
+
+  // Delete account
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (!token) return;
+    setDeleting(true);
+    try {
+      await authApi.deleteAccount(token);
+      toast.success('Account deleted');
+      onLogout?.();
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not delete account');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   // Change password
   const [showChangePw, setShowChangePw] = useState(false);
@@ -109,7 +128,58 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
             </div>
           </button>
         </div>
+
+        {/* Delete Account */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full px-5 py-4 flex items-center gap-4 hover:bg-red-50 transition-colors"
+          >
+            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Trash2 className="w-5 h-5 text-red-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <h4 className="text-red-600">Delete Account</h4>
+              <p className="text-sm text-slate-500">Permanently delete your account and all data</p>
+            </div>
+          </button>
+        </div>
       </div>
+
+      {/* Delete Account Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="font-semibold text-red-600">Delete Account</h3>
+              <button onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }} className="text-slate-400 hover:text-slate-600 text-xl leading-none">✕</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <p className="text-sm text-red-700 font-medium mb-1">This cannot be undone.</p>
+                <p className="text-sm text-red-600">Your profile, sessions, connections, messages, and posts will be permanently deleted.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Type <span className="font-bold">DELETE</span> to confirm</label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={e => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                />
+              </div>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmText !== 'DELETE' || deleting}
+                className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-medium transition-colors disabled:opacity-40"
+              >
+                {deleting ? 'Deleting…' : 'Permanently Delete My Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Change Password Modal */}
       {showChangePw && (

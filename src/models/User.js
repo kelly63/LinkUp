@@ -27,6 +27,11 @@ const userSchema = new mongoose.Schema(
       default: null,
       sparse: true,
     },
+    appleId: {
+      type: String,
+      default: null,
+      sparse: true,
+    },
     phone: {
       type: String,
       default: '',

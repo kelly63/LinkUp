@@ -286,7 +286,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
               <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-white/40"></div>
               <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-white/40"></div>
               <div className="w-14 h-14 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
-                <img src="https://i.imgur.com/LnXJJ04.png" alt="LinkUp Athletics Logo" className="w-10 h-10 object-contain" />
+                <img src="/logo.png" alt="LinkUp Athletics Logo" className="w-10 h-10 object-contain" />
               </div>
             </div>
             <h1 className="text-white text-2xl mb-2 font-[Magra]">LinkUp Athletics</h1>

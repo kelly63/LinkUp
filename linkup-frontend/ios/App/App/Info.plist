@@ -48,17 +48,13 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>LinkUp Athletics needs camera access to update your profile photo.</string>
+	<string>LinkUp Athletics uses your camera to update your profile photo and share training moments in the Locker Room feed.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>LinkUp Athletics needs photo library access to update your profile photo.</string>
+	<string>LinkUp Athletics uses your photo library to update your profile photo and share training moments in the Locker Room feed.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>LinkUp Athletics needs permission to save photos.</string>
+	<string>LinkUp Athletics saves photos you select to your photo library.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>LinkUp Athletics uses your location to show nearby training sessions and connect you with athletes in your area.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>LinkUp Athletics uses your location to show nearby training sessions and connect you with athletes in your area.</string>
-	<key>NSUserNotificationsUsageDescription</key>
-	<string>LinkUp Athletics sends notifications for session updates, messages, and nearby training opportunities.</string>
 	<key>GIDClientID</key>
 	<string>432112410961-39m83q270cgj7q5140nl5kghnn8es4qd.apps.googleusercontent.com</string>
 	<key>GIDServerClientID</key>

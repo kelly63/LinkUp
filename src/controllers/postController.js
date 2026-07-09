@@ -137,4 +137,20 @@ const deletePost = async (req, res) => {
   }
 };
 
-module.exports = { getFeed, createPost, toggleLike, addComment, deletePost };
+// POST /api/posts/:id/report — report a post
+const reportPost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'Post not found' });
+
+    const { reason } = req.body;
+    // Log the report server-side so the admin can review
+    console.log(`[REPORT] Post ${post._id} reported by user ${req.user._id} (${req.user.email}). Reason: ${reason || 'none given'}`);
+
+    res.json({ message: 'Report submitted' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = { getFeed, createPost, toggleLike, addComment, reportPost, deletePost };

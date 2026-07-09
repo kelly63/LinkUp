@@ -62,7 +62,7 @@ export function SplashOverlay({ onDone }: SplashOverlayProps) {
           backdropFilter: 'blur(8px)',
         }}>
           <img
-            src="https://i.imgur.com/LnXJJ04.png"
+            src="/logo.png"
             alt="LinkUp Athletics"
             style={{ width: 52, height: 52, objectFit: 'contain' }}
           />

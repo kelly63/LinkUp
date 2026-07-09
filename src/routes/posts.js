@@ -8,6 +8,7 @@ const {
   createPost,
   toggleLike,
   addComment,
+  reportPost,
   deletePost,
 } = require('../controllers/postController');
 const { protect } = require('../middleware/auth');
@@ -47,6 +48,7 @@ router.get('/', getFeed);
 router.post('/', createPost);
 router.post('/:id/like', toggleLike);
 router.post('/:id/comment', addComment);
+router.post('/:id/report', reportPost);
 router.delete('/:id', deletePost);
 
 module.exports = router;

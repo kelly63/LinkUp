@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
-const { register, login, logout, getMe, googleAuth, changePassword, forgotPassword, resetPassword } = require('../controllers/authController');
+const { register, login, logout, getMe, googleAuth, appleAuth, deleteAccount, changePassword, forgotPassword, resetPassword } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 
 // Tight limit on credential endpoints: 10 attempts / 15 min per IP
@@ -17,9 +17,11 @@ const authLimiter = rateLimit({
 router.post('/register', authLimiter, register);
 router.post('/login', authLimiter, login);
 router.post('/google', authLimiter, googleAuth);
+router.post('/apple', authLimiter, appleAuth);
 router.post('/logout', protect, logout);
 router.get('/me', protect, getMe);
 router.post('/change-password', protect, changePassword);
+router.delete('/account', protect, deleteAccount);
 router.post('/forgot-password', authLimiter, forgotPassword);
 router.post('/reset-password/:token', resetPassword);
 

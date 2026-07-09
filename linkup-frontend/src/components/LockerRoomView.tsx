@@ -19,7 +19,7 @@ import {
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
 import { useAuth } from '../lib/auth';
-import { posts as postsApi, Post, avatarThumb } from '../lib/api';
+import { posts as postsApi, auth as authApi, Post, avatarThumb } from '../lib/api';
 import { toast } from 'sonner';
 
 type Filter = 'all' | 'session_completion' | 'thought' | 'article';
@@ -471,10 +471,16 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId, onNavigate }:
     }
   }, [token]);
 
-  const handleReportPost = useCallback((postId: string) => {
+  const handleReportPost = useCallback(async (postId: string) => {
     setOpenMenuPostId(null);
-    toast.success("Post reported. We'll review it shortly.");
-  }, []);
+    if (!token) return;
+    try {
+      await authApi.reportPost(token, postId);
+      toast.success("Post reported. We'll review it shortly.");
+    } catch {
+      toast.error('Could not submit report. Please try again.');
+    }
+  }, [token]);
 
   const handleAuthorClick = useCallback((userId: string) => {
     onNavigate?.('userProfile', { _id: userId });
