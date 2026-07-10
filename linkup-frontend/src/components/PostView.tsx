@@ -588,30 +588,6 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               </select>
             </div>
 
-            {/* Partner Role Needed */}
-            <div>
-              <label className="text-sm text-slate-700 mb-3 block flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                {selectedSport === 'Conditioning / Lifting' ? 'Training Partner Needed' : 'Partner Role Needed'}
-              </label>
-              <p className="text-xs text-slate-500 mb-2">Select all that apply</p>
-              <div className="flex flex-wrap gap-2">
-                {partnerRoles.map((role) => (
-                  <button
-                    key={role}
-                    onClick={() => togglePartnerRole(role)}
-                    className={`px-4 py-2.5 rounded-xl transition-all ${
-                      selectedPartnerRoles.includes(role)
-                        ? 'bg-blue-900 text-white border-2 border-blue-800 shadow-lg shadow-blue-900/20'
-                        : 'bg-white text-slate-700 border-2 border-slate-300 hover:border-slate-400'
-                    }`}
-                  >
-                    {role}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Date */}
             <SelectField
               label="Date"
@@ -732,6 +708,31 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               )}
             </div>
 
+            {/* Partner Role Needed — optional */}
+            <div>
+              <label className="text-sm text-slate-700 mb-1 block flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                {selectedSport === 'Conditioning / Lifting' ? 'Training Partner Needed' : 'Partner Role Needed'}
+                <span className="text-xs text-slate-400 font-normal">— optional</span>
+              </label>
+              <p className="text-xs text-slate-400 mb-2">Skip this or describe what you need in the notes below</p>
+              <div className="flex flex-wrap gap-2">
+                {partnerRoles.map((role) => (
+                  <button
+                    key={role}
+                    onClick={() => togglePartnerRole(role)}
+                    className={`px-4 py-2.5 rounded-xl transition-all ${
+                      selectedPartnerRoles.includes(role)
+                        ? 'bg-blue-900 text-white border-2 border-blue-800 shadow-lg shadow-blue-900/20'
+                        : 'bg-white text-slate-700 border-2 border-slate-300 hover:border-slate-400'
+                    }`}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Session Goal/Notes */}
             <div>
               <label className="text-sm text-slate-700 mb-2 block">
@@ -750,10 +751,6 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               disabled={submitting}
               onClick={async () => {
                 if (!token) return;
-                if (selectedPartnerRoles.length === 0) {
-                  toast.error('Please select at least one partner role.');
-                  return;
-                }
                 setSubmitting(true);
                 const resolvedPosterRole = posterRole || user?.position || '';
                 const notes = notesRef.current?.value || '';
@@ -769,7 +766,9 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     sport: selectedSport,
                     posterRole: resolvedPosterRole,
                     partnerRole: selectedPartnerRoles.join(', '),
-                    title: `${selectedSport} – ${selectedPartnerRoles.join(' / ')} needed`,
+                    title: selectedPartnerRoles.length > 0
+                      ? `${selectedSport} – ${selectedPartnerRoles.join(' / ')} needed`
+                      : `${selectedSport} – Training partner needed`,
                     date: sessionDate,
                     ...(isFlexible && {
                       dateWindowStart: now.toISOString(),
