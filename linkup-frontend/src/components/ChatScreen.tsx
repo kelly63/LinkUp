@@ -1,6 +1,6 @@
 import {
-  ArrowLeft, Send, Calendar, MapPin, CheckCircle, Edit3,
-  MessageCircle, UserCheck, X, ChevronRight, Heart, Dumbbell,
+  ArrowLeft, Send, MapPin, CheckCircle, Edit3,
+  MessageCircle, UserCheck, X, ChevronRight, Heart, Dumbbell, ChevronDown, Clock,
 } from 'lucide-react';
 import { avatarThumb } from '../lib/api';
 import { useState, useRef, useEffect } from 'react';
@@ -55,9 +55,9 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
   const [workoutStep, setWorkoutStep] = useState<1 | 2>(1);
   const [workoutMessage, setWorkoutMessage] = useState('');
   const [workoutDate, setWorkoutDate] = useState('');
-  const [workoutDateFlexible, setWorkoutDateFlexible] = useState(false);
+  const [workoutTime, setWorkoutTime] = useState('Flexible');
   const [workoutLocation, setWorkoutLocation] = useState('');
-  const [workoutDuration, setWorkoutDuration] = useState('1 hour');
+  const [workoutDuration, setWorkoutDuration] = useState('1 hr');
   const [workoutNotes, setWorkoutNotes] = useState('');
   const [workoutSubmitting, setWorkoutSubmitting] = useState(false);
 
@@ -109,9 +109,17 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
         await sendMessage(workoutMessage.trim());
       }
       // Create the session — sport auto-detected from the requester's primary sport
+      const isFlexibleDate = !workoutDate || workoutDate === 'Flexible';
+      const now = new Date();
+      const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
       const { session } = await sessionsApi.create(token, {
         sport: user?.sport || 'Other',
-        date: workoutDateFlexible ? 'Flexible' : workoutDate || 'Flexible',
+        date: isFlexibleDate ? 'Flexible' : workoutDate,
+        ...(isFlexibleDate && {
+          dateWindowStart: now.toISOString(),
+          dateWindowEnd: thirtyDaysOut.toISOString(),
+        }),
+        time: workoutTime,
         location: workoutLocation || 'TBD',
         duration: workoutDuration,
         notes: workoutNotes,
@@ -124,9 +132,9 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
       setWorkoutStep(1);
       setWorkoutMessage('');
       setWorkoutDate('');
-      setWorkoutDateFlexible(false);
+      setWorkoutTime('Flexible');
       setWorkoutLocation('');
-      setWorkoutDuration('1 hour');
+      setWorkoutDuration('1 hr');
       setWorkoutNotes('');
     } catch (err: any) {
       toast.error(err?.message || 'Could not send request');
@@ -597,26 +605,52 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
 
                   {/* Date */}
                   <div>
+                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Date</label>
+                    <div className="relative">
+                      <select
+                        value={workoutDate || 'Flexible'}
+                        onChange={(e) => setWorkoutDate(e.target.value === 'Flexible' ? '' : e.target.value)}
+                        className="w-full appearance-none px-4 py-3 pr-10 rounded-xl border-2 border-slate-200 bg-white text-slate-900 focus:border-emerald-400 focus:outline-none transition-colors"
+                      >
+                        {(() => {
+                          const opts = [{ val: 'Flexible', label: 'Flexible — open to discuss' }];
+                          const today = new Date(); today.setHours(0,0,0,0);
+                          for (let i = 0; i <= 30; i++) {
+                            const d = new Date(today); d.setDate(today.getDate() + i);
+                            const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                            const label = i === 0 ? `Today — ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}` :
+                                          i === 1 ? `Tomorrow — ${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}` :
+                                          d.toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
+                            opts.push({ val, label });
+                          }
+                          return opts.map(o => <option key={o.val} value={o.val}>{o.label}</option>);
+                        })()}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Time */}
+                  <div>
                     <label className="text-sm font-semibold text-slate-700 mb-2 block flex items-center gap-2">
-                      <Calendar className="w-4 h-4" /> Date
+                      <Clock className="w-4 h-4" /> Time
                     </label>
-                    {!workoutDateFlexible && (
-                      <input
-                        type="date"
-                        value={workoutDate}
-                        onChange={(e) => setWorkoutDate(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-900 focus:border-emerald-400 focus:outline-none transition-colors mb-2"
-                      />
-                    )}
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={workoutDateFlexible}
-                        onChange={(e) => setWorkoutDateFlexible(e.target.checked)}
-                        className="w-4 h-4 accent-emerald-600"
-                      />
-                      <span className="text-sm text-slate-600">Flexible on date</span>
-                    </label>
+                    <div className="relative">
+                      <select
+                        value={workoutTime}
+                        onChange={(e) => setWorkoutTime(e.target.value)}
+                        className="w-full appearance-none px-4 py-3 pr-10 rounded-xl border-2 border-slate-200 bg-white text-slate-900 focus:border-emerald-400 focus:outline-none transition-colors"
+                      >
+                        <option value="Flexible">Flexible — open to discuss</option>
+                        {Array.from({length: 17}, (_, i) => i + 6).map(h => {
+                          const val = `${String(h).padStart(2,'0')}:00`;
+                          const ampm = h >= 12 ? 'PM' : 'AM';
+                          const display = h % 12 === 0 ? 12 : h % 12;
+                          return <option key={val} value={val}>{display}:00 {ampm}</option>;
+                        })}
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
                   </div>
 
                   {/* Location */}
@@ -635,16 +669,22 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
 
                   {/* Duration */}
                   <div>
-                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Duration</label>
-                    <select
-                      value={workoutDuration}
-                      onChange={(e) => setWorkoutDuration(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-900 focus:border-emerald-400 focus:outline-none transition-colors"
-                    >
-                      {['30 minutes', '1 hour', '1.5 hours', '2 hours', '2.5 hours', '3 hours'].map(d => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </select>
+                    <label className="text-sm font-semibold text-slate-700 mb-2 block flex items-center gap-2">
+                      <Clock className="w-4 h-4" /> Duration
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={workoutDuration}
+                        onChange={(e) => setWorkoutDuration(e.target.value)}
+                        className="w-full appearance-none px-4 py-3 pr-10 rounded-xl border-2 border-slate-200 bg-white text-slate-900 focus:border-emerald-400 focus:outline-none transition-colors"
+                      >
+                        <option value="1 hr">1 hour</option>
+                        <option value="90 mins">90 minutes</option>
+                        <option value="2 hr">2 hours</option>
+                        <option value="Flexible">Flexible</option>
+                      </select>
+                      <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
                   </div>
 
                   {/* Notes */}
