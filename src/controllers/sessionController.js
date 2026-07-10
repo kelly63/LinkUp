@@ -197,8 +197,14 @@ const getAvailableSessions = async (req, res) => {
       status: 'open',
       postedBy: { $ne: req.user._id },
       source: { $in: [targetSource, null, undefined] },
-      // Hide sessions whose date window has passed
-      $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }],
+      // Only show sessions that are still valid:
+      // - future expiresAt, OR
+      // - truly open flexible session (date='Flexible' with no end window set yet)
+      // Fixed-date sessions with expiresAt:null (old/missing data) are excluded.
+      $or: [
+        { expiresAt: { $gt: now } },
+        { date: 'Flexible', expiresAt: null },
+      ],
     };
 
     if (sport) query.sport = { $regex: sport, $options: 'i' };
