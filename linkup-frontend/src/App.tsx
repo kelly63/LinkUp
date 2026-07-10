@@ -1,6 +1,7 @@
 import { MobileFrame } from './components/MobileFrame';
 import { SplashOverlay } from './components/SplashOverlay';
-import { AuthProvider } from './lib/auth';
+import { BiometricLockScreen } from './components/BiometricLockScreen';
+import { AuthProvider, useAuth } from './lib/auth';
 import { Toaster } from './components/ui/sonner';
 import { Capacitor } from '@capacitor/core';
 import { useState } from 'react';
@@ -21,21 +22,31 @@ function CrashFallback() {
   );
 }
 
-export default function App() {
+function AppContent() {
+  const { isLocked } = useAuth();
   const isNative = Capacitor.isNativePlatform();
   const [splashDone, setSplashDone] = useState(false);
 
   return (
+    <>
+      {!splashDone && <SplashOverlay onDone={() => setSplashDone(true)} />}
+      {isNative ? (
+        <MobileFrame />
+      ) : (
+        <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+          <MobileFrame />
+        </div>
+      )}
+      {isLocked && <BiometricLockScreen />}
+    </>
+  );
+}
+
+export default function App() {
+  return (
     <Sentry.ErrorBoundary fallback={<CrashFallback />}>
       <AuthProvider>
-        {!splashDone && <SplashOverlay onDone={() => setSplashDone(true)} />}
-        {isNative ? (
-          <MobileFrame />
-        ) : (
-          <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-            <MobileFrame />
-          </div>
-        )}
+        <AppContent />
         <Toaster position="top-center" richColors />
       </AuthProvider>
     </Sentry.ErrorBoundary>

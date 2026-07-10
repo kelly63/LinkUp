@@ -1,73 +1,111 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { User, auth as authApi } from './api';
 import { getSocket, disconnectSocket } from './socket';
+import { getBiometricEnabled, setBiometricEnabled, isBiometricAvailable, verifyBiometric } from './biometric';
 
 interface AuthState {
   token: string | null;
   user: User | null;
   isAuthenticated: boolean;
+  isLocked: boolean;
 }
 
 interface AuthContextValue extends AuthState {
   login: (token: string, user: User) => void;
   logout: () => void;
   updateUser: (user: User) => void;
+  unlock: () => Promise<void>;
+  enableBiometric: () => Promise<void>;
+  disableBiometric: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const STORAGE_KEY = 'linkup_auth';
 
+function readStorage(): { token: string; user: User } | null {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+  } catch {}
+  return null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        return { token: parsed.token, user: parsed.user, isAuthenticated: true };
-      }
-    } catch {}
-    return { token: null, user: null, isAuthenticated: false };
+  const stored = readStorage();
+
+  // If we have a stored session, start locked (pessimistic). The mount effect
+  // immediately unlocks if biometric is disabled, so the lock screen only
+  // appears for users who actually have biometric enabled.
+  const [state, setState] = useState<AuthState>({
+    token: stored?.token ?? null,
+    user: stored?.user ?? null,
+    isAuthenticated: !!stored,
+    isLocked: !!stored, // locked until we verify biometric preference
   });
 
-  // Reconnect socket if we restored a token from localStorage,
-  // and refresh user data so verification status / profile changes are always current
+  // On mount: check biometric preference and unlock immediately if not enabled
   useEffect(() => {
-    if (state.token) {
+    if (!stored) return;
+    getBiometricEnabled().then((enabled) => {
+      if (!enabled) {
+        setState((prev) => ({ ...prev, isLocked: false }));
+      }
+      // else stay locked — user must call unlock()
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // After unlock: reconnect socket and refresh user data
+  useEffect(() => {
+    if (state.token && !state.isLocked) {
       getSocket(state.token);
       authApi.getMe(state.token)
         .then(({ user }) => {
           localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: state.token, user }));
           setState((prev) => ({ ...prev, user }));
         })
-        .catch(() => {}); // silently ignore — stale cached data is still usable
+        .catch(() => {});
     }
-  }, []);
+  }, [state.isLocked]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const login = (token: string, user: User) => {
+  const login = useCallback((token: string, user: User) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, user }));
     getSocket(token);
-    setState({ token, user, isAuthenticated: true });
-  };
+    setState({ token, user, isAuthenticated: true, isLocked: false });
+  }, []);
 
-  const logout = () => {
-    if (state.token) {
-      authApi.logout(state.token).catch(() => {});
-    }
+  const logout = useCallback(() => {
+    setState((prev) => {
+      if (prev.token) authApi.logout(prev.token).catch(() => {});
+      return { token: null, user: null, isAuthenticated: false, isLocked: false };
+    });
     disconnectSocket();
     localStorage.removeItem(STORAGE_KEY);
-    setState({ token: null, user: null, isAuthenticated: false });
-  };
+  }, []);
 
-  const updateUser = (user: User) => {
-    if (state.token) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: state.token, user }));
-    }
-    setState((prev) => ({ ...prev, user }));
-  };
+  const updateUser = useCallback((user: User) => {
+    setState((prev) => {
+      if (prev.token) localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: prev.token, user }));
+      return { ...prev, user };
+    });
+  }, []);
+
+  const unlock = useCallback(async () => {
+    await verifyBiometric();
+    setState((prev) => ({ ...prev, isLocked: false }));
+  }, []);
+
+  const enableBiometric = useCallback(async () => {
+    await verifyBiometric(); // confirm identity before enabling
+    await setBiometricEnabled(true);
+  }, []);
+
+  const disableBiometric = useCallback(async () => {
+    await setBiometricEnabled(false);
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ ...state, login, logout, updateUser, unlock, enableBiometric, disableBiometric }}>
       {children}
     </AuthContext.Provider>
   );

@@ -55,6 +55,8 @@
 	<string>LinkUp Athletics saves photos you select to your photo library.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>LinkUp Athletics uses your location to show nearby training sessions and connect you with athletes in your area.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>LinkUp Athletics uses Face ID to quickly and securely unlock the app.</string>
 	<key>GIDClientID</key>
 	<string>432112410961-39m83q270cgj7q5140nl5kghnn8es4qd.apps.googleusercontent.com</string>
 	<key>GIDServerClientID</key>

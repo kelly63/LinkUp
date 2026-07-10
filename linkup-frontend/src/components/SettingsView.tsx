@@ -1,8 +1,10 @@
 import { ArrowLeft, Shield, KeyRound, LogOut, Eye, EyeOff, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { auth as authApi } from '../lib/api';
 import { toast } from 'sonner';
+import { isBiometricAvailable, getBiometricEnabled, BiometryType } from '../lib/biometric';
+import { Capacitor } from '@capacitor/core';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -11,7 +13,7 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps) {
-  const { token } = useAuth();
+  const { token, enableBiometric, disableBiometric } = useAuth();
 
   // Delete account
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -62,6 +64,45 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
     }
   };
 
+  // Biometric / Face ID
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricType, setBiometricType] = useState<BiometryType>(BiometryType.NONE);
+  const [biometricEnabled, setBiometricEnabledState] = useState(false);
+  const [biometricLoading, setBiometricLoading] = useState(false);
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    isBiometricAvailable().then(({ available, type }) => {
+      setBiometricAvailable(available);
+      setBiometricType(type);
+    });
+    getBiometricEnabled().then(setBiometricEnabledState);
+  }, []);
+
+  const biometricLabel = biometricType === BiometryType.FACE_ID ? 'Face ID' : 'Biometric Login';
+
+  const handleToggleBiometric = async () => {
+    setBiometricLoading(true);
+    try {
+      if (biometricEnabled) {
+        await disableBiometric();
+        setBiometricEnabledState(false);
+        toast.success(`${biometricLabel} disabled`);
+      } else {
+        await enableBiometric();
+        setBiometricEnabledState(true);
+        toast.success(`${biometricLabel} enabled`);
+      }
+    } catch (err: any) {
+      const msg = err?.message || '';
+      if (!msg.includes('cancel') && !msg.includes('Cancel')) {
+        toast.error('Biometric verification failed');
+      }
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
+
   return (
     <div className="h-full overflow-y-auto bg-slate-50">
       {/* Header */}
@@ -82,22 +123,6 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Account</p>
           </div>
 
-          {/* Privacy & Visibility hidden — re-enable by restoring the button below
-          <button
-            onClick={() => onNavigate('preferences')}
-            className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors border-b border-slate-100"
-          >
-            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <Shield className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div className="flex-1 text-left">
-              <h4 className="text-slate-900">Privacy & Visibility</h4>
-              <p className="text-sm text-slate-500">Control who can see your profile</p>
-            </div>
-            <ArrowLeft className="w-5 h-5 text-slate-400 rotate-180" />
-          </button>
-          */}
-
           <button
             onClick={() => setShowChangePw(true)}
             className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors"
@@ -112,6 +137,37 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
             <ArrowLeft className="w-5 h-5 text-slate-400 rotate-180" />
           </button>
         </div>
+
+        {/* Security — Face ID / Biometric (native only, when available) */}
+        {biometricAvailable && (
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-slate-100">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Security</p>
+            </div>
+            <div className="px-5 py-4 flex items-center gap-4">
+              <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Shield className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div className="flex-1 text-left">
+                <h4 className="text-slate-900">{biometricLabel}</h4>
+                <p className="text-sm text-slate-500">Require {biometricLabel} when opening the app</p>
+              </div>
+              <button
+                onClick={handleToggleBiometric}
+                disabled={biometricLoading}
+                className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+                  biometricEnabled ? 'bg-emerald-500' : 'bg-slate-200'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                    biometricEnabled ? 'translate-x-6' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Sign Out */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
