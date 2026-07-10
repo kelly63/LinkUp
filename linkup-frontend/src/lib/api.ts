@@ -65,6 +65,8 @@ export interface Session {
   pendingPartners?: User[];
   sessionType: 'need' | 'clinic';
   isTraveler: boolean;
+  dateWindowStart?: string | null;
+  dateWindowEnd?: string | null;
   createdAt: string;
   pendingChange?: {
     date: string;

@@ -803,13 +803,23 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 const resolvedPosterRole = posterRole || user?.position || '';
                 const notes = notesRef.current?.value || '';
                 try {
+                  const isFlexible = selectedDates.length === 0 && isDateFlexible;
+                  const sessionDate = selectedDates[0] || 'Flexible';
+                  const now = new Date();
+                  const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
                   await sessionsApi.create(token, {
                     teamType: selectedTeamType,
                     sport: selectedSport,
                     posterRole: resolvedPosterRole,
                     partnerRole: selectedPartnerRoles.join(', '),
                     title: `${selectedSport} – ${selectedPartnerRoles.join(' / ')} needed`,
-                    date: selectedDates[0] || 'Flexible',
+                    date: sessionDate,
+                    // Backend requires dateWindowStart/End when date is 'Flexible'
+                    ...(isFlexible && {
+                      dateWindowStart: now.toISOString(),
+                      dateWindowEnd: thirtyDaysOut.toISOString(),
+                    }),
                     time: selectedTimes[0] || (isTimeFlexible ? 'Flexible' : ''),
                     duration: durationRef.current?.value || '1 hr',
                     location: locationValue,
