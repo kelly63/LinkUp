@@ -147,7 +147,8 @@ export interface Rating {
 async function request<T>(
   path: string,
   options: RequestInit = {},
-  token?: string | null
+  token?: string | null,
+  _attempt = 1
 ): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -155,9 +156,19 @@ async function request<T>(
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
-  const data = await res.json();
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  } catch {
+    // Network failure (cold-start, no connection) — retry once after 3 s
+    if (_attempt < 2) {
+      await new Promise(r => setTimeout(r, 3000));
+      return request<T>(path, options, token, 2);
+    }
+    throw new Error('Could not reach the server. Please check your connection and try again.');
+  }
 
+  const data = await res.json();
   if (!res.ok) {
     throw new Error(data.message || `Request failed: ${res.status}`);
   }
