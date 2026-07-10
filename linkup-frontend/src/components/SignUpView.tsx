@@ -34,13 +34,17 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
   const [verificationNote, setVerificationNote] = useState('');
   const [ngbMemberId, setNgbMemberId] = useState('');
 
-  // Post-registration state (Steps 7 & 8)
+  // Post-registration state (Steps 7, 8 & 9)
   const [regToken, setRegToken] = useState<string | null>(null);
   const [regUser, setRegUser] = useState<any>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [cropSource, setCropSource] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // About Me state (Step 7)
+  const [bio, setBio] = useState('');
+  const [bioSaving, setBioSaving] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -190,7 +194,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
       const { token, user } = await authApi.register(body);
       setRegToken(token);
       setRegUser(user);
-      setStep(7);
+      setStep(7); // → About Me
     } catch (err: any) {
       setSubmitError(err.message || 'Registration failed. Please try again.');
       setSubmitting(false);
@@ -240,8 +244,21 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     setCropSource(null);
   };
 
+  const handleBioSaveAndContinue = async () => {
+    if (!regToken || !bio.trim()) { setStep(8); return; }
+    setBioSaving(true);
+    try {
+      await usersApi.updateProfile(regToken, { bio: bio.trim() });
+    } catch (err) {
+      console.error('Bio save failed', err);
+    } finally {
+      setBioSaving(false);
+      setStep(8); // → Profile Photo
+    }
+  };
+
   const handlePhotoUploadAndContinue = async () => {
-    if (!regToken || !avatarPreview) { setStep(8); return; }
+    if (!regToken || !avatarPreview) { setStep(9); return; }
     setAvatarUploading(true);
     try {
       const base64 = avatarPreview.split(',')[1];
@@ -256,7 +273,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
       console.error('Avatar upload failed', err);
     } finally {
       setAvatarUploading(false);
-      setStep(8);
+      setStep(9); // → Notifications
     }
   };
 
@@ -1178,8 +1195,74 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     );
   }
 
-  // Step 7: Profile Photo
+  // Step 7: About Me
   if (step === 7) {
+    const charCount = bio.length;
+    const maxChars = 500;
+    return (
+      <div className="h-full overflow-y-auto bg-slate-50">
+        <div className="bg-white border-b border-slate-200 px-6 py-4">
+          <h2 className="text-slate-900">About You</h2>
+        </div>
+        <div className="p-6">
+          <div className="max-w-md mx-auto space-y-5">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-emerald-100 rounded-full mx-auto flex items-center justify-center mb-3">
+                <User className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h3 className="text-slate-900 font-semibold mb-1">Tell athletes who you are</h3>
+              <p className="text-sm text-slate-500">This is the first thing people read on your profile — make it count.</p>
+            </div>
+
+            {/* Prompt cards */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { emoji: '🏆', label: 'Career highlights', example: 'Teams, titles, years played' },
+                { emoji: '🎯', label: 'Your goals', example: 'What you\'re training toward' },
+                { emoji: '📏', label: 'Height / weight', example: '6\'2", 210 lbs — if relevant' },
+              ].map(({ emoji, label, example }) => (
+                <div key={label} className="bg-white rounded-xl border border-slate-200 p-3 text-center">
+                  <div className="text-xl mb-1">{emoji}</div>
+                  <p className="text-xs font-semibold text-slate-700 leading-tight">{label}</p>
+                  <p className="text-[10px] text-slate-400 leading-tight mt-0.5">{example}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value.slice(0, maxChars))}
+                placeholder={`e.g., D1 soccer midfielder at University of Maryland (2021–present). Three-time conference champion. Training to improve my positioning and first touch. 5'10", 165 lbs.`}
+                rows={6}
+                className="w-full px-4 py-3 text-sm text-slate-900 placeholder-slate-400 resize-none focus:outline-none"
+              />
+              <div className="px-4 py-2 border-t border-slate-100 flex justify-end">
+                <span className={`text-xs ${charCount > maxChars * 0.9 ? 'text-amber-500' : 'text-slate-400'}`}>
+                  {charCount}/{maxChars}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleBioSaveAndContinue}
+                disabled={bioSaving}
+                className="w-full bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-60 text-white py-4 rounded-xl font-medium flex items-center justify-center gap-2"
+              >
+                {bioSaving ? (
+                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : bio.trim() ? 'Save & Continue' : 'Skip for Now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 8: Profile Photo
+  if (step === 8) {
     return (
       <>
         <div className="h-full overflow-y-auto bg-slate-50">
@@ -1189,7 +1272,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
           <div className="p-6">
             <div className="max-w-md mx-auto space-y-6">
               <div className="text-center">
-                <p className="text-sm text-slate-600 mt-1">Add a photo so other athletes and coaches can recognize you</p>
+                <p className="text-sm text-slate-600 mt-1">Add a photo so other athletes can recognize you</p>
               </div>
 
               {/* Avatar preview / picker */}
@@ -1236,8 +1319,8 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     );
   }
 
-  // Step 8: Push Notifications
-  if (step === 8) {
+  // Step 9: Push Notifications
+  if (step === 9) {
     const requestAndFinish = async () => {
       try {
         if (Capacitor.isNativePlatform()) {
@@ -1269,7 +1352,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
             <div className="bg-white rounded-2xl shadow-sm p-4 space-y-3">
               {[
                 { icon: '🤝', text: 'New connection requests' },
-                { icon: '💬', text: 'Messages from teammates & coaches' },
+                { icon: '💬', text: 'Messages from teammates' },
                 { icon: '📅', text: 'Session confirmations & updates' },
               ].map(({ icon, text }) => (
                 <div key={text} className="flex items-center gap-3">
