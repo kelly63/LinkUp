@@ -459,7 +459,7 @@ export const posts = {
     const formData = new FormData();
     formData.append('image', blob, 'photo.jpg');
     const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
-    const res = await fetch('/api/posts/upload-image', { method: 'POST', headers, body: formData });
+    const res = await fetch(`${BASE_URL}/api/posts/upload-image`, { method: 'POST', headers, body: formData });
     if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error((e as any).message || 'Upload failed'); }
     const data = await res.json();
     return data.url as string;
