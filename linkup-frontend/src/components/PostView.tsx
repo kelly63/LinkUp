@@ -1,4 +1,4 @@
-import { Calendar, Award, MapPin, Clock, ArrowLeft, Users, X, Search, Filter, Plane, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Award, MapPin, Clock, ArrowLeft, Users, Search, Filter, Plane, ChevronDown } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { NeedCard } from './NeedCard';
 import { AvailableSessionView } from './AvailableSessionView';
@@ -34,7 +34,71 @@ interface PostViewProps {
   }) => void;
 }
 
-function MonthCalendar({
+// Generate date dropdown options: Flexible + today through 30 days out
+function buildDateOptions() {
+  const opts: { val: string; label: string }[] = [
+    { val: 'Flexible', label: 'Flexible — open to discuss' },
+  ];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = 0; i <= 30; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const label =
+      i === 0 ? `Today — ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` :
+      i === 1 ? `Tomorrow — ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` :
+      d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    opts.push({ val, label });
+  }
+  return opts;
+}
+
+function buildTimeOptions() {
+  const opts: { val: string; label: string }[] = [
+    { val: 'Flexible', label: 'Flexible — open to discuss' },
+  ];
+  for (let h = 6; h <= 22; h++) {
+    const val = `${String(h).padStart(2, '0')}:00`;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const display = h % 12 === 0 ? 12 : h % 12;
+    opts.push({ val, label: `${display}:00 ${ampm}` });
+  }
+  return opts;
+}
+
+const DATE_OPTIONS = buildDateOptions();
+const TIME_OPTIONS = buildTimeOptions();
+
+function SelectField({ label, icon, value, onChange, children }: {
+  label: string;
+  icon?: React.ReactNode;
+  value: string;
+  onChange: (v: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="text-sm text-slate-700 mb-2 flex items-center gap-2">
+        {icon}
+        {label}
+      </label>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className="w-full appearance-none px-4 py-3 pr-10 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
+        >
+          {children}
+        </select>
+        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+      </div>
+    </div>
+  );
+}
+
+// Kept for potential future use — not rendered in the post form anymore
+function _MonthCalendarUnused({
   selectedDates,
   onToggle,
 }: {
@@ -68,21 +132,12 @@ function MonthCalendar({
   return (
     <div className="bg-white rounded-xl border-2 border-slate-200 p-3">
       <div className="flex items-center justify-between mb-2">
-        <button
-          type="button"
-          onClick={() => setViewDate(new Date(year, month - 1, 1))}
-          disabled={!canGoPrev}
-          className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-30"
-        >
-          <ChevronLeft className="w-4 h-4 text-slate-600" />
+        <button type="button" onClick={() => setViewDate(new Date(year, month - 1, 1))} disabled={!canGoPrev} className="p-1.5 hover:bg-slate-100 rounded-lg disabled:opacity-30">
+          ‹
         </button>
         <span className="text-sm font-semibold text-slate-800">{monthLabel}</span>
-        <button
-          type="button"
-          onClick={() => setViewDate(new Date(year, month + 1, 1))}
-          className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
-        >
-          <ChevronRight className="w-4 h-4 text-slate-600" />
+        <button type="button" onClick={() => setViewDate(new Date(year, month + 1, 1))} className="p-1.5 hover:bg-slate-100 rounded-lg">
+          ›
         </button>
       </div>
 
@@ -133,11 +188,12 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [selectedPartnerRoles, setSelectedPartnerRoles] = useState<string[]>([]);
   const [posterRole, setPosterRole] = useState('');
   const [selectedTeamType, setSelectedTeamType] = useState<string>(user?.teamType || '');
-  const [selectedDates, setSelectedDates] = useState<string[]>([]);
-  const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
-  const [isDateFlexible, setIsDateFlexible] = useState(false);
-  const [isTimeFlexible, setIsTimeFlexible] = useState(false);
-  
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('Flexible');
+  const [allLevels, setAllLevels] = useState(true);
+  const [duration, setDuration] = useState('1 hr');
+  const [showSavePrefsModal, setShowSavePrefsModal] = useState(false);
+
   // Find Sessions filters
   const [showFilters, setShowFilters] = useState(false);
   const [filterSport, setFilterSport] = useState<string[]>([]);
@@ -151,7 +207,6 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [locationValue, setLocationValue] = useState('');
   const [isPostTraveling, setIsPostTraveling] = useState(false);
   const notesRef = useRef<HTMLTextAreaElement>(null);
-  const durationRef = useRef<HTMLSelectElement>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Find sessions API data
@@ -238,40 +293,6 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   };
 
   const activeFilterCount = filterSport.length + filterPositions.length + filterSkillLevels.length + (filterDistance !== '10' ? 1 : 0) + (isFindTraveling && findTravelLocation.trim() ? 1 : 0);
-
-  const handleDateAdd = (date: string) => {
-    if (date && !selectedDates.includes(date)) {
-      setSelectedDates([...selectedDates, date]);
-    }
-  };
-
-  const handleDateRemove = (dateToRemove: string) => {
-    setSelectedDates(selectedDates.filter(date => date !== dateToRemove));
-  };
-
-  const formatDate = (dateString: string) => {
-    const [y, m, d] = dateString.split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  const handleTimeAdd = (time: string) => {
-    if (time && !selectedTimes.includes(time)) {
-      setSelectedTimes([...selectedTimes, time]);
-    }
-  };
-
-  const handleTimeRemove = (timeToRemove: string) => {
-    setSelectedTimes(selectedTimes.filter(time => time !== timeToRemove));
-  };
-
-  const formatTime = (timeString: string) => {
-    const [hours, minutes] = timeString.split(':');
-    const hour = parseInt(hours);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    return `${displayHour}:${minutes} ${ampm}`;
-  };
 
   // Fetch available sessions when switching to find tab or filters change (resets to page 1)
   useEffect(() => {
@@ -388,6 +409,20 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   };
   
   const availableFilterPositions = getAvailablePositions();
+
+  // Load saved posting prefs on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('linkup_session_prefs');
+      if (!saved) return;
+      const prefs = JSON.parse(saved);
+      if (prefs.sport && userSports.includes(prefs.sport)) setSelectedSport(prefs.sport);
+      if (prefs.location) setLocationValue(prefs.location);
+      if (prefs.teamType) setSelectedTeamType(prefs.teamType);
+      if (prefs.duration) setDuration(prefs.duration);
+      if (prefs.posterRole) setPosterRole(prefs.posterRole);
+    } catch {}
+  }, []);
 
   // Profile overlay — shown on top of a session or the list; back returns to previous context
   if (viewingPosterId) {
@@ -578,143 +613,39 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
             </div>
 
             {/* Date */}
-            <div>
-              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Date <span className="text-xs text-slate-400 font-normal">— tap dates to select</span>
-              </label>
-
-              <MonthCalendar
-                selectedDates={selectedDates}
-                onToggle={(val) => selectedDates.includes(val) ? handleDateRemove(val) : handleDateAdd(val)}
-              />
-
-              {/* Selected dates summary */}
-              {selectedDates.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {[...selectedDates].sort().map((date) => (
-                    <div key={date} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 text-emerald-900 rounded-lg border border-emerald-200">
-                      <span className="text-sm font-medium">{formatDate(date)}</span>
-                      <button type="button" onClick={() => handleDateRemove(date)} className="hover:bg-emerald-200 rounded-full p-0.5 transition-colors">
-                        <X className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Flexible Date Option */}
-              <label className="flex items-center gap-2 mt-3 cursor-pointer group">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={isDateFlexible}
-                    onChange={() => setIsDateFlexible(!isDateFlexible)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-emerald-500 peer-checked:border-emerald-600 transition-all flex items-center justify-center">
-                    {isDateFlexible && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">
-                  Flexible on date <span className="text-xs text-slate-400">(Will discuss with partner)</span>
-                </span>
-              </label>
-            </div>
+            <SelectField
+              label="Date"
+              value={selectedDate || 'Flexible'}
+              onChange={(v) => setSelectedDate(v === 'Flexible' ? '' : v)}
+            >
+              {DATE_OPTIONS.map((o) => (
+                <option key={o.val} value={o.val}>{o.label}</option>
+              ))}
+            </SelectField>
 
             {/* Time */}
-            <div>
-              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Time <span className="text-xs text-slate-400 font-normal">— tap a slot to select it</span>
-              </label>
+            <SelectField
+              label="Time"
+              icon={<Clock className="w-4 h-4" />}
+              value={selectedTime}
+              onChange={setSelectedTime}
+            >
+              {TIME_OPTIONS.map((o) => (
+                <option key={o.val} value={o.val}>{o.label}</option>
+              ))}
+            </SelectField>
 
-              {/* Quick-pick time slots */}
-              {(['Morning', 'Afternoon', 'Evening'] as const).map((period) => {
-                const slots: Record<string, string[]> = {
-                  Morning:   ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00'],
-                  Afternoon: ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00'],
-                  Evening:   ['18:00', '19:00', '20:00', '21:00'],
-                };
-                return (
-                  <div key={period} className="mb-2">
-                    <p className="text-xs text-slate-500 mb-1.5">{period}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {slots[period].map((t) => {
-                        const isSelected = selectedTimes.includes(t);
-                        return (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => isSelected ? handleTimeRemove(t) : handleTimeAdd(t)}
-                            className={`px-3 py-2 rounded-xl border-2 text-sm transition-all ${
-                              isSelected
-                                ? 'bg-emerald-500 border-emerald-600 text-white shadow-sm'
-                                : 'bg-white border-slate-300 text-slate-700 hover:border-emerald-400 active:border-emerald-500'
-                            }`}
-                          >
-                            {formatTime(t)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Custom time — auto-adds when picker closes, no Add button */}
-              <div className="mt-2">
-                <p className="text-xs text-slate-500 mb-1">Or pick a specific time:</p>
-                <input
-                  type="time"
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      handleTimeAdd(e.target.value);
-                      e.target.value = '';
-                    }
-                  }}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
-                />
-              </div>
-
-              {/* Flexible Time Option */}
-              <label className="flex items-center gap-2 mt-3 cursor-pointer group">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={isTimeFlexible}
-                    onChange={() => setIsTimeFlexible(!isTimeFlexible)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-emerald-500 peer-checked:border-emerald-600 transition-all flex items-center justify-center">
-                    {isTimeFlexible && (
-                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <span className="text-sm text-slate-600 group-hover:text-slate-900 transition-colors">
-                  Flexible on time <span className="text-xs text-slate-400">(Will discuss with partner)</span>
-                </span>
-              </label>
-            </div>
-
-            <div>
-              <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2">
-                <Clock className="w-4 h-4" />
-                Duration
-              </label>
-              <select ref={durationRef} className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors">
-                <option>1 hr</option>
-                <option>90 mins</option>
-                <option>2 hr</option>
-              </select>
-            </div>
+            <SelectField
+              label="Duration"
+              icon={<Clock className="w-4 h-4" />}
+              value={duration}
+              onChange={setDuration}
+            >
+              <option value="1 hr">1 hour</option>
+              <option value="90 mins">90 minutes</option>
+              <option value="2 hr">2 hours</option>
+              <option value="Flexible">Flexible</option>
+            </SelectField>
 
             {/* Location */}
             <div>
@@ -755,22 +686,50 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 <Award className="w-4 h-4" />
                 Partner Skill Level
               </label>
-              <p className="text-xs text-slate-500 mb-2">Select all that apply</p>
-              <div className="flex flex-wrap gap-2">
-                {skillLevels.map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => toggleSkillLevel(level)}
-                    className={`px-4 py-2.5 rounded-xl transition-all ${
-                      selectedSkillLevels.includes(level)
-                        ? 'bg-blue-900 text-white border-2 border-blue-800 shadow-lg shadow-blue-900/20'
-                        : 'bg-white text-slate-700 border-2 border-slate-300 hover:border-slate-400'
-                    }`}
-                  >
-                    {level}
-                  </button>
-                ))}
-              </div>
+              {/* All Levels toggle */}
+              <label className="flex items-center gap-2 mb-3 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={allLevels}
+                    onChange={() => {
+                      setAllLevels(!allLevels);
+                      if (!allLevels) setSelectedSkillLevels([]);
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-5 h-5 border-2 border-slate-300 rounded bg-white peer-checked:bg-emerald-500 peer-checked:border-emerald-600 transition-all flex items-center justify-center">
+                    {allLevels && (
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
+                  All Levels
+                </span>
+              </label>
+              {!allLevels && (
+                <>
+                  <p className="text-xs text-slate-500 mb-2">Select all that apply</p>
+                  <div className="flex flex-wrap gap-2">
+                    {skillLevels.map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => toggleSkillLevel(level)}
+                        className={`px-4 py-2.5 rounded-xl transition-all ${
+                          selectedSkillLevels.includes(level)
+                            ? 'bg-blue-900 text-white border-2 border-blue-800 shadow-lg shadow-blue-900/20'
+                            : 'bg-white text-slate-700 border-2 border-slate-300 hover:border-slate-400'
+                        }`}
+                      >
+                        {level}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Session Goal/Notes */}
@@ -795,18 +754,15 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   toast.error('Please select at least one partner role.');
                   return;
                 }
-                if (selectedDates.length === 0 && !isDateFlexible) {
-                  toast.error('Please add a date or mark as flexible.');
-                  return;
-                }
                 setSubmitting(true);
                 const resolvedPosterRole = posterRole || user?.position || '';
                 const notes = notesRef.current?.value || '';
                 try {
-                  const isFlexible = selectedDates.length === 0 && isDateFlexible;
-                  const sessionDate = selectedDates[0] || 'Flexible';
+                  const isFlexible = !selectedDate || selectedDate === 'Flexible';
+                  const sessionDate = isFlexible ? 'Flexible' : selectedDate;
                   const now = new Date();
                   const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                  const skillLevelValue = allLevels ? 'All Levels' : selectedSkillLevels.join(', ');
 
                   await sessionsApi.create(token, {
                     teamType: selectedTeamType,
@@ -815,15 +771,14 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     partnerRole: selectedPartnerRoles.join(', '),
                     title: `${selectedSport} – ${selectedPartnerRoles.join(' / ')} needed`,
                     date: sessionDate,
-                    // Backend requires dateWindowStart/End when date is 'Flexible'
                     ...(isFlexible && {
                       dateWindowStart: now.toISOString(),
                       dateWindowEnd: thirtyDaysOut.toISOString(),
                     }),
-                    time: selectedTimes[0] || (isTimeFlexible ? 'Flexible' : ''),
-                    duration: durationRef.current?.value || '1 hr',
+                    time: selectedTime,
+                    duration,
                     location: locationValue,
-                    skillLevelRequired: selectedSkillLevels.join(', '),
+                    skillLevelRequired: skillLevelValue,
                     notes,
                     goals: notes,
                     sessionType: 'need',
@@ -835,13 +790,14 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   setSelectedPartnerRoles([]);
                   setPosterRole('');
                   setSelectedTeamType(user?.teamType || '');
-                  setSelectedDates([]);
-                  setSelectedTimes([]);
+                  setSelectedDate('');
+                  setSelectedTime('Flexible');
+                  setAllLevels(true);
                   setSelectedSkillLevels([]);
                   setLocationValue('');
                   setIsPostTraveling(false);
                   if (notesRef.current) notesRef.current.value = '';
-                  onNavigateToDashboard?.('upcoming-sessions');
+                  setShowSavePrefsModal(true);
                 } catch (err: any) {
                   toast.error(err.message || 'Failed to post session.');
                 } finally {
@@ -1104,6 +1060,47 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 <span className="text-sm text-emerald-700">Clear filters to see all available sessions</span>
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Save Preferences Modal */}
+      {showSavePrefsModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
+          <div className="bg-white w-full max-w-sm rounded-t-3xl p-6 pb-10 space-y-4">
+            <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-2" />
+            <h3 className="text-lg font-bold text-slate-900 text-center">Save Preferences?</h3>
+            <p className="text-sm text-slate-500 text-center">
+              Save your sport, location, and duration as defaults for future sessions.
+            </p>
+            <button
+              onClick={() => {
+                try {
+                  localStorage.setItem('linkup_session_prefs', JSON.stringify({
+                    sport: selectedSport,
+                    location: locationValue,
+                    teamType: selectedTeamType,
+                    duration,
+                    posterRole,
+                  }));
+                  toast.success('Preferences saved!');
+                } catch {}
+                setShowSavePrefsModal(false);
+                onNavigateToDashboard?.('upcoming-sessions');
+              }}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3.5 rounded-xl font-semibold transition-colors"
+            >
+              Save Preferences
+            </button>
+            <button
+              onClick={() => {
+                setShowSavePrefsModal(false);
+                onNavigateToDashboard?.('upcoming-sessions');
+              }}
+              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-3.5 rounded-xl font-semibold transition-colors"
+            >
+              No Thanks
+            </button>
           </div>
         </div>
       )}
