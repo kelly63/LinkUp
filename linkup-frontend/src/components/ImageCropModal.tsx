@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, useLayoutEffect } from 'react';
 
 interface Props {
   imageUrl: string;
@@ -8,24 +8,16 @@ interface Props {
 
 export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
   const [dims, setDims] = useState({ w: 0, h: 0 });
-  // Track container size so the crop circle adapts to the available space
   const containerSizeRef = useRef({ w: 0, h: 0 });
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Refs for hot values — pointer callbacks read these without going stale
   const scaleRef = useRef(1);
   const offsetRef = useRef({ x: 0, y: 0 });
   const [, setTick] = useState(0);
   const forceRender = useCallback(() => setTick(t => t + 1), []);
 
-  const dragging = useRef(false);
-  const lastPos = useRef({ x: 0, y: 0 });
-  const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const pinchStartDist = useRef(0);
-  const pinchStartScale = useRef(1);
-
-  // Measure the crop stage and keep a ref in sync for pointer callbacks
+  // Measure crop stage; keep ref in sync for use inside imperative handlers
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -38,7 +30,6 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
     return () => ro.disconnect();
   }, []);
 
-  // Crop circle fills ~44% of the smaller container dimension
   const cropRadius = useMemo(() => {
     if (containerSize.w === 0 || containerSize.h === 0) return 140;
     return Math.floor(Math.min(containerSize.w, containerSize.h) * 0.44);
@@ -63,6 +54,29 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
     [dims, cropRadius]
   );
 
+  // Refs so imperative handlers always call the latest clamp/zoomTo
+  const clampRef = useRef(clamp);
+  useLayoutEffect(() => { clampRef.current = clamp; }, [clamp]);
+
+  const zoomTo = useCallback(
+    (newScale: number) => {
+      const s = Math.max(minScale, Math.min(maxScale, newScale));
+      const { w: cw, h: ch } = containerSizeRef.current;
+      const cx = cw / 2, cy = ch / 2;
+      const prev = offsetRef.current;
+      const oldS = scaleRef.current;
+      const imgCx = (cx - prev.x) / oldS;
+      const imgCy = (cy - prev.y) / oldS;
+      scaleRef.current = s;
+      offsetRef.current = clampRef.current(cx - imgCx * s, cy - imgCy * s, s);
+      forceRender();
+    },
+    [minScale, maxScale, forceRender]
+  );
+
+  const zoomToRef = useRef(zoomTo);
+  useLayoutEffect(() => { zoomToRef.current = zoomTo; }, [zoomTo]);
+
   // Load image; set initial scale so it fills the crop circle
   useEffect(() => {
     if (!imageUrl || containerSize.w === 0) return;
@@ -82,78 +96,117 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
     img.src = imageUrl;
   }, [imageUrl, containerSize.w, cropRadius, forceRender]);
 
-  const zoomTo = useCallback(
-    (newScale: number) => {
-      const s = Math.max(minScale, Math.min(maxScale, newScale));
-      const { w: cw, h: ch } = containerSizeRef.current;
-      const cx = cw / 2, cy = ch / 2;
-      const prev = offsetRef.current;
-      const oldS = scaleRef.current;
-      const imgCx = (cx - prev.x) / oldS;
-      const imgCy = (cy - prev.y) / oldS;
-      scaleRef.current = s;
-      offsetRef.current = clamp(cx - imgCx * s, cy - imgCy * s, s);
-      forceRender();
-    },
-    [minScale, maxScale, clamp, forceRender]
-  );
+  // ── Imperative touch + mouse handlers ─────────────────────────────────────
+  // Touch handlers use { passive: false } so preventDefault() actually blocks
+  // iOS from stealing the gesture. Pointer events alone aren't reliable in
+  // Capacitor's WKWebView — switching to raw touch events fixes drag on iOS.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
 
-  // ── Pointer handlers ──────────────────────────────────────────────────────
+    let dragging = false;
+    let lastX = 0, lastY = 0;
+    let pinchDist0 = 0, pinchScale0 = 1;
 
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    if (activePointers.current.size === 1) {
-      dragging.current = true;
-      lastPos.current = { x: e.clientX, y: e.clientY };
-    } else if (activePointers.current.size === 2) {
-      dragging.current = false;
-      const pts = Array.from(activePointers.current.values());
-      pinchStartDist.current = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
-      pinchStartScale.current = scaleRef.current;
-    }
-  }, []);
+    // ── Touch ──────────────────────────────────────────────────────────────
+    const onTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length === 1) {
+        dragging = true;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        dragging = false;
+        pinchDist0 = Math.hypot(
+          e.touches[1].clientX - e.touches[0].clientX,
+          e.touches[1].clientY - e.touches[0].clientY,
+        );
+        pinchScale0 = scaleRef.current;
+      }
+    };
 
-  const onPointerMove = useCallback(
-    (e: React.PointerEvent) => {
-      activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-      if (activePointers.current.size === 2) {
-        const pts = Array.from(activePointers.current.values());
-        const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
-        zoomTo(pinchStartScale.current * (dist / pinchStartDist.current));
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length === 2) {
+        const dist = Math.hypot(
+          e.touches[1].clientX - e.touches[0].clientX,
+          e.touches[1].clientY - e.touches[0].clientY,
+        );
+        zoomToRef.current(pinchScale0 * (dist / pinchDist0));
         return;
       }
-
-      if (!dragging.current) return;
-      const dx = e.clientX - lastPos.current.x;
-      const dy = e.clientY - lastPos.current.y;
-      lastPos.current = { x: e.clientX, y: e.clientY };
-      const prev = offsetRef.current;
-      offsetRef.current = clamp(prev.x + dx, prev.y + dy, scaleRef.current);
+      if (!dragging || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - lastX;
+      const dy = e.touches[0].clientY - lastY;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+      offsetRef.current = clampRef.current(
+        offsetRef.current.x + dx,
+        offsetRef.current.y + dy,
+        scaleRef.current,
+      );
       forceRender();
-    },
-    [clamp, zoomTo, forceRender]
-  );
+    };
 
-  const onPointerUp = useCallback((e: React.PointerEvent) => {
-    activePointers.current.delete(e.pointerId);
-    if (activePointers.current.size === 0) {
-      dragging.current = false;
-    } else if (activePointers.current.size === 1) {
-      const [pt] = activePointers.current.values();
-      lastPos.current = { x: pt.x, y: pt.y };
-      dragging.current = true;
-    }
-  }, []);
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        dragging = false;
+      } else if (e.touches.length === 1) {
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+        dragging = true;
+      }
+    };
 
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
+    // ── Mouse (web / desktop preview) ──────────────────────────────────────
+    const onMouseDown = (e: MouseEvent) => {
+      dragging = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      offsetRef.current = clampRef.current(
+        offsetRef.current.x + dx,
+        offsetRef.current.y + dy,
+        scaleRef.current,
+      );
+      forceRender();
+    };
+
+    const onMouseUp = () => { dragging = false; };
+
+    const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      zoomTo(scaleRef.current * (e.deltaY < 0 ? 1.08 : 0.93));
-    },
-    [zoomTo]
-  );
+      zoomToRef.current(scaleRef.current * (e.deltaY < 0 ? 1.08 : 0.93));
+    };
+
+    el.addEventListener('touchstart', onTouchStart, { passive: false });
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    el.addEventListener('touchend', onTouchEnd);
+    el.addEventListener('touchcancel', onTouchEnd);
+    el.addEventListener('mousedown', onMouseDown);
+    el.addEventListener('wheel', onWheel, { passive: false });
+    // mousemove/mouseup on window so drag works even if cursor leaves the box
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+
+    return () => {
+      el.removeEventListener('touchstart', onTouchStart);
+      el.removeEventListener('touchmove', onTouchMove);
+      el.removeEventListener('touchend', onTouchEnd);
+      el.removeEventListener('touchcancel', onTouchEnd);
+      el.removeEventListener('mousedown', onMouseDown);
+      el.removeEventListener('wheel', onWheel);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [forceRender]); // stable dep — handlers read live values via refs
 
   // ── Export ────────────────────────────────────────────────────────────────
 
@@ -212,19 +265,12 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
         </button>
       </div>
 
-      {/* Crop stage — fills all space between header and controls */}
+      {/* Crop stage */}
       <div
         ref={containerRef}
         className="flex-1 relative overflow-hidden select-none"
-        style={{ cursor: 'grab', touchAction: 'none' }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onWheel={handleWheel}
+        style={{ touchAction: 'none', cursor: 'grab' }}
       >
-        {/* Image — draggable */}
         {dims.w > 0 && (
           <img
             src={imageUrl}
@@ -243,7 +289,6 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
           />
         )}
 
-        {/* SVG overlay: dark vignette with circular cutout + white ring */}
         {containerSize.w > 0 && containerSize.h > 0 && (
           <svg
             className="absolute inset-0 pointer-events-none"
@@ -283,10 +328,9 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
           max={100}
           step={0.5}
           value={sliderValue}
-          onPointerDown={e => e.stopPropagation()}
           onChange={e => {
             const pct = Number(e.target.value) / 100;
-            zoomTo(minScale + pct * (maxScale - minScale));
+            zoomToRef.current(minScale + pct * (maxScale - minScale));
           }}
           className="w-full h-1.5 rounded-full"
           style={{ accentColor: '#10b981' }}
