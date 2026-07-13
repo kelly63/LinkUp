@@ -136,9 +136,15 @@ export function MobileFrame() {
     const builder = NOTIFICATION_MESSAGES[notification.type];
     if (builder) {
       const { title, description } = builder(notification.data);
-      toast(title, { description });
+      toast(title, {
+        description,
+        action: {
+          label: 'View',
+          onClick: () => handleNotificationNavigate(notification.type, notification.data),
+        },
+      });
     }
-  }, []);
+  }, [handleNotificationNavigate]);
 
   // Badge counts are otherwise only updated by live socket events, so a
   // notification that arrives while the app is closed/backgrounded (or a
@@ -284,6 +290,12 @@ export function MobileFrame() {
       case 'partner_approved':
       case 'partner_declined':
         setPendingNav({ view: 'mySessions', data: null });
+        break;
+      case 'session_nearby':
+        setActiveTab('post');
+        break;
+      case 'rating_reminder':
+        setPendingNav({ view: 'receivedRatings', data: null });
         break;
     }
   }, []);

@@ -7,6 +7,8 @@ import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, Session, avatarThumb } from '../lib/api';
 import { toast } from 'sonner';
 import { RosterInviteModal } from './RosterInviteModal';
+import { App } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 interface SessionDetailsViewProps {
   session: Session;
@@ -30,9 +32,23 @@ function getInitials(name: string): string {
 function isSessionPast(session: { date?: string; time?: string; status: string }): boolean {
   if (!session.date || session.date === 'Flexible') return false;
   if (session.status === 'completed' || session.status === 'cancelled') return false;
-  const dateTime = session.time && session.time !== 'Flexible'
-    ? new Date(`${session.date} ${session.time}`)
-    : (() => { const d = new Date(session.date!); d.setHours(23, 59, 59, 999); return d; })();
+  const [y, m, d] = session.date.split('-').map(Number);
+  let dateTime: Date;
+  if (session.time && session.time !== 'Flexible') {
+    const match = session.time.match(/(\d+):?(\d*)\s*(AM|PM)?/i);
+    if (match) {
+      let h = parseInt(match[1]);
+      const min = parseInt(match[2] || '0');
+      const ampm = match[3]?.toUpperCase();
+      if (ampm === 'PM' && h !== 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+      dateTime = new Date(y, m - 1, d, h, min, 0, 0);
+    } else {
+      dateTime = new Date(y, m - 1, d, 23, 59, 59, 999);
+    }
+  } else {
+    dateTime = new Date(y, m - 1, d, 23, 59, 59, 999);
+  }
   return !isNaN(dateTime.getTime()) && dateTime < new Date();
 }
 
@@ -153,16 +169,17 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     let startDate: Date;
     if (session.date && session.date !== 'Flexible') {
-      startDate = new Date(session.date);
-      if (session.time) {
-        const match = session.time.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+      const [sy, sm, sd] = session.date.split('-').map(Number);
+      startDate = new Date(sy, sm - 1, sd);
+      if (session.time && session.time !== 'Flexible') {
+        const match = session.time.match(/(\d+):?(\d*)\s*(AM|PM)?/i);
         if (match) {
           let h = parseInt(match[1]);
-          const m = parseInt(match[2]);
+          const min = parseInt(match[2] || '0');
           const ampm = match[3]?.toUpperCase();
           if (ampm === 'PM' && h !== 12) h += 12;
           if (ampm === 'AM' && h === 12) h = 0;
-          startDate.setHours(h, m, 0, 0);
+          startDate.setHours(h, min, 0, 0);
         } else {
           startDate.setHours(14, 0, 0, 0);
         }
@@ -189,30 +206,17 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     setShowCalendarMenu(false);
   };
 
-  const handleAddToAppleCalendar = () => {
-    const eventTitle = `${session.sport} Practice${partner ? ` with ${partner.name}` : ''}`;
-    const eventDescription = session.notes || session.goals || '';
-    const { startDate, endDate, fmt } = buildEventDates();
-    const ics = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//LinkUp Athletics//EN',
-      'BEGIN:VEVENT',
-      `DTSTART:${fmt(startDate)}`,
-      `DTEND:${fmt(endDate)}`,
-      `SUMMARY:${eventTitle.replace(/,/g, '\\,')}`,
-      `DESCRIPTION:${eventDescription.replace(/\n/g, '\\n').replace(/,/g, '\\,')}`,
-      `LOCATION:${session.location.replace(/,/g, '\\,')}`,
-      'END:VEVENT',
-      'END:VCALENDAR',
-    ].join('\r\n');
-    const blob = new Blob([ics], { type: 'text/calendar' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'session.ics';
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleAddToAppleCalendar = async () => {
+    const icsUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/sessions/${session._id}/ics`;
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await App.openUrl({ url: icsUrl });
+      } else {
+        window.open(icsUrl, '_blank');
+      }
+    } catch {
+      window.open(icsUrl, '_blank');
+    }
     setShowCalendarMenu(false);
   };
 

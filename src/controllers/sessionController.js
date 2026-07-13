@@ -954,6 +954,66 @@ const inviteToSession = async (req, res) => {
   }
 };
 
+// GET /api/sessions/:id/ics — public, no auth needed (ObjectId is unguessable)
+const getSessionICS = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id)
+      .populate('postedBy', 'name')
+      .populate('partner', 'name');
+    if (!session) return res.status(404).send('Not found');
+
+    const title = (session.title || `${session.sport} Practice`).replace(/[\\;,]/g, '\\$&');
+    const description = (session.notes || session.goals || '').replace(/\n/g, '\\n').replace(/[\\;,]/g, '\\$&');
+    const location = (session.location || '').replace(/[\\;,]/g, '\\$&');
+
+    const fmt = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    let startDate = new Date();
+    if (session.date && session.date !== 'Flexible') {
+      const [y, m, d] = session.date.split('-').map(Number);
+      startDate = new Date(y, m - 1, d);
+      if (session.time && session.time !== 'Flexible') {
+        const match = session.time.match(/(\d+):?(\d*)\s*(AM|PM)?/i);
+        if (match) {
+          let h = parseInt(match[1]);
+          const min = parseInt(match[2] || '0');
+          const ampm = match[3]?.toUpperCase();
+          if (ampm === 'PM' && h !== 12) h += 12;
+          if (ampm === 'AM' && h === 12) h = 0;
+          startDate.setHours(h, min, 0, 0);
+        } else {
+          startDate.setHours(14, 0, 0, 0);
+        }
+      } else {
+        startDate.setHours(14, 0, 0, 0);
+      }
+    } else {
+      startDate.setDate(startDate.getDate() + 1);
+      startDate.setHours(14, 0, 0, 0);
+    }
+    const endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//LinkUp Athletics//EN',
+      'BEGIN:VEVENT',
+      `DTSTART:${fmt(startDate)}`,
+      `DTEND:${fmt(endDate)}`,
+      `SUMMARY:${title}`,
+      `DESCRIPTION:${description}`,
+      `LOCATION:${location}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', `inline; filename="session-${session._id}.ics"`);
+    res.send(ics);
+  } catch (err) {
+    res.status(500).send('Server error');
+  }
+};
+
 module.exports = {
   createSession,
   getAvailableSessions,
@@ -970,4 +1030,5 @@ module.exports = {
   approvePartner,
   declinePartner,
   inviteToSession,
+  getSessionICS,
 };

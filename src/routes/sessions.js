@@ -16,8 +16,12 @@ const {
   approvePartner,
   declinePartner,
   inviteToSession,
+  getSessionICS,
 } = require('../controllers/sessionController');
 const { protect } = require('../middleware/auth');
+
+// Public route — no auth (ObjectId is unguessable; iOS Calendar needs a plain URL)
+router.get('/:id/ics', getSessionICS);
 
 router.use(protect);
 
