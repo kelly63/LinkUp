@@ -63,6 +63,7 @@ export interface Session {
   status: 'open' | 'confirmed' | 'completed' | 'cancelled';
   partner: User | null;
   pendingPartners?: User[];
+  additionalPartners?: User[];
   sessionType: 'need' | 'clinic';
   isTraveler: boolean;
   dateWindowStart?: string | null;
@@ -345,6 +346,11 @@ export const sessions = {
   declinePartner: (token: string, id: string, partnerId: string) =>
     request<{ session: Session }>(`/api/sessions/${id}/decline-partner`, {
       method: 'POST', body: JSON.stringify({ partnerId }),
+    }, token),
+
+  invite: (token: string, id: string, userIds: string[]) =>
+    request<{ session: Session }>(`/api/sessions/${id}/invite`, {
+      method: 'POST', body: JSON.stringify({ userIds }),
     }, token),
 };
 

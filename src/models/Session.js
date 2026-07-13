@@ -98,6 +98,12 @@ const sessionSchema = new mongoose.Schema(
       ref: 'User',
     }],
 
+    // Athletes invited to a confirmed session by the poster or partner
+    additionalPartners: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    }],
+
     // Pending change proposed by the poster, awaiting partner approval
     pendingChange: {
       type: {

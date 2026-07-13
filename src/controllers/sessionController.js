@@ -886,6 +886,74 @@ const getExpiredSessions = async (req, res) => {
   }
 };
 
+// POST /api/sessions/:id/invite
+// Invite one or more roster athletes to a confirmed session.
+// Only the poster or confirmed partner may invite.
+const inviteToSession = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id)
+      .populate('postedBy', 'name avatar')
+      .populate('partner', 'name avatar')
+      .populate('additionalPartners', 'name avatar position skillLevel');
+
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+    if (session.status !== 'confirmed') {
+      return res.status(400).json({ message: 'Can only invite athletes to confirmed sessions' });
+    }
+
+    const userId = req.user._id.toString();
+    const posterId = session.postedBy._id ? session.postedBy._id.toString() : session.postedBy.toString();
+    const partnerId = session.partner
+      ? (session.partner._id ? session.partner._id.toString() : session.partner.toString())
+      : null;
+
+    if (userId !== posterId && userId !== partnerId) {
+      return res.status(403).json({ message: 'Only the poster or confirmed partner may invite athletes' });
+    }
+
+    const { userIds } = req.body;
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({ message: 'userIds must be a non-empty array' });
+    }
+
+    // Filter out anyone already in the session
+    const existing = new Set([
+      posterId,
+      ...(partnerId ? [partnerId] : []),
+      ...session.additionalPartners.map(u => u._id ? u._id.toString() : u.toString()),
+    ]);
+    const toAdd = userIds.filter(id => !existing.has(id));
+
+    if (toAdd.length > 0) {
+      session.additionalPartners.push(...toAdd);
+      await session.save();
+    }
+
+    // Send each invited athlete a session link via chat
+    const io = req.app.get('io');
+    for (const inviteeId of toAdd) {
+      await postSystemMessage(
+        io,
+        req.user._id,
+        inviteeId,
+        `You've been invited to join a ${session.sport} session on ${session.date}${session.location ? ` at ${session.location}` : ''}.`,
+        session._id
+      );
+    }
+
+    const updated = await Session.findById(session._id)
+      .populate('postedBy', 'name avatar position skillLevel')
+      .populate('partner', 'name avatar position skillLevel averageRating ratingCount')
+      .populate('additionalPartners', 'name avatar position skillLevel averageRating ratingCount')
+      .populate('pendingPartners', 'name avatar position skillLevel');
+
+    res.json({ session: updated });
+  } catch (err) {
+    console.error('inviteToSession error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createSession,
   getAvailableSessions,
@@ -901,4 +969,5 @@ module.exports = {
   suggestNewTime,
   approvePartner,
   declinePartner,
+  inviteToSession,
 };

@@ -1,11 +1,12 @@
 import {
   ChevronLeft, Calendar, MapPin, Clock, Users, Trophy, MessageCircle,
-  Star, Navigation, CheckCircle, AlertCircle, XCircle, Flag, RefreshCw, UserCheck,
+  Star, Navigation, CheckCircle, AlertCircle, XCircle, Flag, RefreshCw, UserCheck, UserPlus,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
-import { sessions as sessionsApi, Session } from '../lib/api';
+import { sessions as sessionsApi, Session, avatarThumb } from '../lib/api';
 import { toast } from 'sonner';
+import { RosterInviteModal } from './RosterInviteModal';
 
 interface SessionDetailsViewProps {
   session: Session;
@@ -42,6 +43,7 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
   const [showSuggestModal, setShowSuggestModal] = useState(false);
   const [suggestDate, setSuggestDate] = useState('');
   const [suggestTime, setSuggestTime] = useState('');
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   // Determine the "other person" in this session
   const isPostedByMe = user?._id === (localSession.postedBy?._id ?? localSession.postedBy);
@@ -324,6 +326,36 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
 
       {/* Content */}
       <div className="px-6 py-6">
+        {/* Additional (invited) partners */}
+        {localSession.additionalPartners && localSession.additionalPartners.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 mb-4">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Also Invited</p>
+            <div className="space-y-3">
+              {localSession.additionalPartners.map(ap => {
+                if (typeof ap !== 'object') return null;
+                const thumb = avatarThumb(ap.avatar, 80);
+                const initials = ap.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+                return (
+                  <div key={ap._id} className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-semibold text-sm">
+                      {thumb
+                        ? <img src={thumb} alt={ap.name} className="w-full h-full object-cover" />
+                        : initials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 truncate">{ap.name}</p>
+                      <p className="text-xs text-slate-500 truncate">
+                        {[ap.sport, ap.position].filter(Boolean).join(' · ')}
+                      </p>
+                    </div>
+                    <span className="text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-0.5 rounded-full">Invited</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Partner Card (only if there's a partner) */}
         {partner && typeof partner === 'object' && (
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 mb-4">
@@ -659,13 +691,22 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
                 )}
 
                 {localSession.status === 'confirmed' && (
-                  <button
-                    disabled={!!actionLoading}
-                    onClick={handleComplete}
-                    className="w-full py-3.5 bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-medium transition-all shadow-sm disabled:opacity-60"
-                  >
-                    {actionLoading === 'complete' ? 'Completing…' : 'Mark as Complete & Rate'}
-                  </button>
+                  <>
+                    <button
+                      disabled={!!actionLoading}
+                      onClick={handleComplete}
+                      className="w-full py-3.5 bg-gradient-to-br from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl font-medium transition-all shadow-sm disabled:opacity-60"
+                    >
+                      {actionLoading === 'complete' ? 'Completing…' : 'Mark as Complete & Rate'}
+                    </button>
+                    <button
+                      onClick={() => setShowInviteModal(true)}
+                      className="w-full py-3.5 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl font-medium transition-all flex items-center justify-center gap-2"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      Invite Athletes
+                    </button>
+                  </>
                 )}
 
                 <div className="relative">
@@ -780,6 +821,22 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
             </div>
           </div>
         </div>
+      )}
+
+      {/* Roster invite modal */}
+      {showInviteModal && (
+        <RosterInviteModal
+          sessionId={localSession._id}
+          alreadyInvited={[
+            typeof localSession.postedBy === 'object' ? localSession.postedBy._id : localSession.postedBy,
+            ...(localSession.partner && typeof localSession.partner === 'object' ? [localSession.partner._id] : []),
+            ...(localSession.additionalPartners || []).map(ap =>
+              typeof ap === 'object' ? ap._id : ap
+            ),
+          ].filter(Boolean)}
+          onClose={() => setShowInviteModal(false)}
+          onInvited={(updated) => setLocalSession(updated)}
+        />
       )}
     </div>
   );
