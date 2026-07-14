@@ -8,6 +8,7 @@ import { useMessages } from '../hooks/useMessages';
 import { messages as messagesApi, sessions as sessionsApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { toast } from 'sonner';
+import { hapticLight } from '../lib/haptics';
 
 interface RequestInfo {
   status: 'pending' | 'accepted' | 'declined';
@@ -153,6 +154,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
     if (!text) return;
     setInputText('');
     sendTypingStop();
+    hapticLight();
     await sendMessage(text);
   };
 

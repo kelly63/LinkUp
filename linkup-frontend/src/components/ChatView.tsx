@@ -465,10 +465,17 @@ export function ChatView({
             <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
               <Search className="w-10 h-10 text-slate-300" />
             </div>
-            <h3 className="text-slate-900 font-semibold mb-2">No conversations</h3>
-            <p className="text-slate-500 text-sm max-w-xs">
-              Find athletes and send them a message to get started
-            </p>
+            {searchQuery ? (
+              <>
+                <h3 className="text-slate-900 font-semibold mb-2">No results for "{searchQuery}"</h3>
+                <p className="text-slate-500 text-sm max-w-xs">Try a different name</p>
+              </>
+            ) : (
+              <>
+                <h3 className="text-slate-900 font-semibold mb-2">No conversations yet</h3>
+                <p className="text-slate-500 text-sm max-w-xs">Find athletes and send them a message to get started</p>
+              </>
+            )}
           </div>
         )}
       </div>

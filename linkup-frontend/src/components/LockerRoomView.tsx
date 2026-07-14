@@ -21,6 +21,7 @@ import { CreatePostDialog } from './CreatePostDialog';
 import { useAuth } from '../lib/auth';
 import { posts as postsApi, auth as authApi, Post, avatarThumb } from '../lib/api';
 import { toast } from 'sonner';
+import { hapticLight } from '../lib/haptics';
 
 type Filter = 'all' | 'session_completion' | 'thought' | 'article';
 
@@ -432,6 +433,7 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId, onNavigate }:
 
   const handleLike = useCallback(async (postId: string) => {
     if (!token) return;
+    hapticLight();
     const wasLiked = likedMap[postId] ?? false;
     setLikedMap((prev) => ({ ...prev, [postId]: !wasLiked }));
     setLikeCounts((prev) => ({ ...prev, [postId]: (prev[postId] ?? 0) + (wasLiked ? -1 : 1) }));

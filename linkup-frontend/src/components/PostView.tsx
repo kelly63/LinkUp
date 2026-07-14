@@ -7,6 +7,7 @@ import { LocationAutocomplete } from './LocationAutocomplete';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, connections as connectionsApi, Session } from '../lib/api';
 import { toast } from 'sonner';
+import { hapticMedium } from '../lib/haptics';
 
 function firstLastInitial(fullName: string): string {
   if (!fullName) return '';
@@ -773,6 +774,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               disabled={submitting}
               onClick={async () => {
                 if (!token) return;
+                if (!locationValue.trim()) { toast.error('Please enter a location for your session'); return; }
                 setSubmitting(true);
                 const resolvedPosterRole = posterRole || user?.position || '';
                 const notes = notesRef.current?.value || '';
@@ -806,6 +808,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                     status: 'open',
                     isTraveler: isPostTraveling,
                   });
+                  hapticMedium();
                   toast.success('Session posted! It\'s now visible to other athletes.');
                   // Reset form
                   setSelectedPartnerRoles([]);
@@ -1035,6 +1038,33 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               {loadingFind && (
                 <div className="flex justify-center py-8">
                   <span className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+              {!loadingFind && filteredNeeds.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                  <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
+                    <MapPin className="w-10 h-10 text-emerald-300" />
+                  </div>
+                  <h3 className="text-slate-800 font-semibold text-lg mb-2">No sessions nearby</h3>
+                  <p className="text-slate-500 text-sm max-w-xs mb-6">
+                    {activeFilterCount > 0
+                      ? 'No sessions match your current filters. Try clearing them or post your own.'
+                      : 'No open sessions in your area yet. Be the first to post one!'}
+                  </p>
+                  <button
+                    onClick={() => setViewMode('post')}
+                    className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium transition-colors shadow-sm"
+                  >
+                    Post a Session
+                  </button>
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={() => { clearFilters(); setShowFilters(false); }}
+                      className="mt-3 text-sm text-emerald-600 underline underline-offset-2"
+                    >
+                      Clear filters
+                    </button>
+                  )}
                 </div>
               )}
               {!loadingFind && filteredNeeds.map((need) => (
