@@ -87,13 +87,14 @@ function timeAgo(iso: string): string {
   return `${days}d ago`;
 }
 
-function getInitials(name: string): string {
+function getInitials(name?: string | null): string {
+  if (!name) return '?';
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
-function Avatar({ url, name, size = 48 }: { url: string | null; name: string; size?: number }) {
-  const thumb = avatarThumb(url, size);
-  if (thumb) return <img src={thumb} alt={name} className="w-full h-full object-cover rounded-full" />;
+function Avatar({ url, name, size = 48 }: { url?: string | null; name?: string | null; size?: number }) {
+  const thumb = avatarThumb(url ?? null, size);
+  if (thumb) return <img src={thumb} alt={name ?? ''} className="w-full h-full object-cover rounded-full" />;
   return <>{getInitials(name)}</>;
 }
 
@@ -149,7 +150,7 @@ export function ChatView({
       });
       const data = await res.json();
       setRosterAthletes(
-        (data.connections || []).map((c: any) => c.user)
+        (data.connections || []).map((c: any) => c.user).filter(Boolean)
       );
     } catch (err: any) {
       toast.error(err?.message || 'Could not load roster');
@@ -374,7 +375,7 @@ export function ChatView({
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-slate-900 font-semibold text-sm">{conv.partner.name}</h4>
-                  <p className="text-xs text-slate-500 truncate">{conv.lastMessage.text}</p>
+                  <p className="text-xs text-slate-500 truncate">{conv.lastMessage?.text ?? ''}</p>
                 </div>
                 <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full flex-shrink-0">
                   Request
@@ -421,12 +422,12 @@ export function ChatView({
                       )}
                     </h4>
                     <span className="text-xs text-slate-500">
-                      {timeAgo(conv.lastMessage.createdAt)}
+                      {conv.lastMessage ? timeAgo(conv.lastMessage.createdAt) : ''}
                     </span>
                   </div>
                   <p className={`text-sm truncate ${conv.unread > 0 ? 'text-slate-900 font-medium' : 'text-slate-500'}`}>
-                    {conv.lastMessage.sender === currentUserId ? 'You: ' : ''}
-                    {conv.lastMessage.text}
+                    {conv.lastMessage?.sender === currentUserId ? 'You: ' : ''}
+                    {conv.lastMessage?.text ?? ''}
                   </p>
                 </div>
 
