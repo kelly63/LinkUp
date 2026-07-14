@@ -101,7 +101,12 @@ app.use('/profile', profileRoutes);
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
-// 404
+// Serve React app for any non-API GET request (supports client-side routing)
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
+
+// 404 for unknown API routes
 app.use((req, res) => res.status(404).json({ message: 'Route not found' }));
 
 // Sentry error handler must come before the generic error handler
