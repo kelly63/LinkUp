@@ -214,6 +214,8 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
             </div>
           </button>
         </div>
+
+        <p className="text-center text-xs text-slate-400 pb-2">LinkUp Athletics · Build 2026.07.14</p>
       </div>
 
       {/* Delete Account Modal */}
