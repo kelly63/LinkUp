@@ -418,12 +418,12 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
 
             <label className="flex items-start gap-3 cursor-pointer bg-slate-50 rounded-xl p-3">
               <input type="checkbox" checked={gtAgreedTerms} onChange={(e) => setGtAgreedTerms(e.target.checked)} className="w-5 h-5 mt-0.5 flex-shrink-0 accent-blue-600" />
-              <p className="text-sm text-slate-700">I agree to the <span className="text-emerald-600 font-medium">Terms of Service</span> — including the no background check disclosure and in-person meeting liability waiver</p>
+              <p className="text-sm text-slate-700">I agree to the <a href={`${import.meta.env.VITE_API_URL || 'https://linkup-swpu.onrender.com'}/terms.html`} target="_blank" rel="noreferrer" className="text-emerald-600 font-medium underline">Terms of Service</a> — including the no background check disclosure and in-person meeting liability waiver</p>
             </label>
 
             <label className="flex items-start gap-3 cursor-pointer bg-slate-50 rounded-xl p-3">
               <input type="checkbox" checked={gtAgreedPrivacy} onChange={(e) => setGtAgreedPrivacy(e.target.checked)} className="w-5 h-5 mt-0.5 flex-shrink-0 accent-blue-600" />
-              <p className="text-sm text-slate-700">I agree to the <span className="text-emerald-600 font-medium">Privacy Policy</span></p>
+              <p className="text-sm text-slate-700">I agree to the <a href={`${import.meta.env.VITE_API_URL || 'https://linkup-swpu.onrender.com'}/privacy.html`} target="_blank" rel="noreferrer" className="text-emerald-600 font-medium underline">Privacy Policy</a></p>
             </label>
 
             <label className="flex items-start gap-3 cursor-pointer bg-slate-50 rounded-xl p-3">
