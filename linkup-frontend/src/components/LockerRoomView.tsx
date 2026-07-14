@@ -35,7 +35,8 @@ function timeAgo(iso: string): string {
   return days === 1 ? 'Yesterday' : `${days}d ago`;
 }
 
-function getInitials(name: string) {
+function getInitials(name?: string | null) {
+  if (!name) return '?';
   return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
