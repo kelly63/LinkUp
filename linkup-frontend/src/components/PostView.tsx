@@ -188,6 +188,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [selectedPartnerRoles, setSelectedPartnerRoles] = useState<string[]>([]);
   const [posterRole, setPosterRole] = useState('');
   const [selectedTeamType, setSelectedTeamType] = useState<string>(user?.teamType || '');
+  useEffect(() => { const t = user?.teamType; if (t) setSelectedTeamType(prev => prev || t); }, [user?.teamType]);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('Flexible');
   const [allLevels, setAllLevels] = useState(true);
