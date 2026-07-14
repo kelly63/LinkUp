@@ -11,7 +11,11 @@ function CrashFallback() {
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 p-8 text-center">
       <p className="text-white font-semibold text-lg">Something went wrong</p>
-      <p className="text-zinc-400 text-sm">Please restart the app. If it keeps happening, contact support.</p>
+      <p className="text-zinc-400 text-sm">Please restart the app. If it keeps happening, email us at{' '}
+        <a href="mailto:support@linkupathletics.com" className="text-emerald-400 underline">
+          support@linkupathletics.com
+        </a>
+      </p>
       <button
         onClick={() => window.location.reload()}
         className="mt-2 px-6 py-2 bg-emerald-500 text-white rounded-xl font-medium"

@@ -1,4 +1,4 @@
-import { ArrowLeft, Shield, KeyRound, LogOut, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { ArrowLeft, Shield, KeyRound, LogOut, Eye, EyeOff, Trash2, Mail } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { auth as authApi } from '../lib/api';
@@ -168,6 +168,23 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
             </div>
           </div>
         )}
+
+        {/* Support */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <a
+            href="mailto:support@linkupathletics.com"
+            className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors"
+          >
+            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Mail className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <h4 className="text-slate-900">Contact Support</h4>
+              <p className="text-sm text-slate-500">support@linkupathletics.com</p>
+            </div>
+            <ArrowLeft className="w-5 h-5 text-slate-400 rotate-180" />
+          </a>
+        </div>
 
         {/* Sign Out */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
