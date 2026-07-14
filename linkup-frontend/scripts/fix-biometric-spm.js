@@ -21,14 +21,24 @@ if (!fs.existsSync(pluginRoot)) {
 // Ensure SPM source directory exists
 fs.mkdirSync(spmSrcDir, { recursive: true });
 
-// Copy Swift + ObjC source files from old CocoaPods location if SPM location is missing
-for (const file of ['Plugin.swift', 'Plugin.m']) {
+// Copy Swift source files from old CocoaPods location if SPM location is missing.
+// Only copy .swift — ObjC .m files create mixed Swift+ObjC SPM targets that fail
+// Xcode 26 package resolution with "Missing package product 'CapApp-SPM'".
+// Capacitor 8 discovers plugins via ObjC runtime from @objc(NativeBiometric) alone.
+for (const file of ['Plugin.swift']) {
   const src = path.join(oldSrcDir, file);
   const destName = file.replace('Plugin', 'NativeBiometricPlugin');
   const dest = path.join(spmSrcDir, destName);
   if (fs.existsSync(src) && !fs.existsSync(dest)) {
     fs.copyFileSync(src, dest);
   }
+}
+
+// Remove any .m files that may have been copied in a previous run — they cause
+// Xcode 26 to fail resolving the mixed-language SPM target.
+for (const mFile of fs.readdirSync(spmSrcDir).filter(f => f.endsWith('.m'))) {
+  fs.rmSync(path.join(spmSrcDir, mFile));
+  console.log(`[fix-biometric-spm] Removed ObjC file ${mFile} from SPM source dir`);
 }
 
 // Remove `typealias JSObject = [String:Any]` — conflicts with Capacitor 8's built-in JSObject type,
