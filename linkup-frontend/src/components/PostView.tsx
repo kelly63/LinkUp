@@ -589,15 +589,36 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
             </div>
 
             {/* Date */}
-            <SelectField
-              label="Date"
-              value={selectedDate || 'Flexible'}
-              onChange={(v) => setSelectedDate(v === 'Flexible' ? '' : v)}
-            >
-              {DATE_OPTIONS.map((o) => (
-                <option key={o.val} value={o.val}>{o.label}</option>
-              ))}
-            </SelectField>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm text-slate-700">Date</label>
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate('')}
+                  className={`text-xs px-3 py-1 rounded-full font-medium transition-colors ${
+                    !selectedDate
+                      ? 'bg-emerald-500 text-white'
+                      : 'bg-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600'
+                  }`}
+                >
+                  Flexible (2 weeks)
+                </button>
+              </div>
+              <div className="relative">
+                <select
+                  value={selectedDate || 'Flexible'}
+                  onChange={(e) => setSelectedDate(e.target.value === 'Flexible' ? '' : e.target.value)}
+                  className="w-full appearance-none px-4 py-3 pr-10 rounded-xl border-2 border-slate-300 bg-white text-slate-900 focus:border-emerald-500 focus:outline-none transition-colors"
+                >
+                  {DATE_OPTIONS.map((o) => (
+                    <option key={o.val} value={o.val}>{o.label}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                  <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
+            </div>
 
             {/* Time */}
             <SelectField
@@ -758,7 +779,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   const isFlexible = !selectedDate || selectedDate === 'Flexible';
                   const sessionDate = isFlexible ? 'Flexible' : selectedDate;
                   const now = new Date();
-                  const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+                  const thirtyDaysOut = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
                   const skillLevelValue = allLevels ? 'All Levels' : selectedSkillLevels.join(', ');
 
                   await sessionsApi.create(token, {
