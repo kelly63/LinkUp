@@ -791,6 +791,32 @@ const approvePartner = async (req, res) => {
   }
 };
 
+// DELETE /api/sessions/:id/withdraw — requester cancels their own pending request
+const withdrawRequest = async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.id);
+    if (!session) return res.status(404).json({ message: 'Session not found' });
+
+    const userId = req.user._id.toString();
+    const isPending = session.pendingPartners.some((id) => id.toString() === userId);
+    if (!isPending) {
+      return res.status(400).json({ message: 'You do not have a pending request for this session' });
+    }
+
+    session.pendingPartners = session.pendingPartners.filter(
+      (id) => id.toString() !== userId
+    );
+    await session.save();
+    await session.populate('postedBy', USER_FIELDS);
+    await session.populate('partner', USER_FIELDS);
+    await session.populate('pendingPartners', USER_FIELDS);
+
+    res.json({ session });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // POST /api/sessions/:id/decline-partner — poster declines one pending requester
 // Body: { partnerId } — which requester to decline
 const declinePartner = async (req, res) => {
@@ -1016,6 +1042,7 @@ const getSessionICS = async (req, res) => {
 
 module.exports = {
   createSession,
+  withdrawRequest,
   getAvailableSessions,
   getMySessions,
   getExpiredSessions,

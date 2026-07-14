@@ -352,6 +352,9 @@ export const sessions = {
     request<{ session: Session }>(`/api/sessions/${id}/invite`, {
       method: 'POST', body: JSON.stringify({ userIds }),
     }, token),
+
+  withdrawRequest: (token: string, id: string) =>
+    request<{ session: Session }>(`/api/sessions/${id}/withdraw`, { method: 'DELETE' }, token),
 };
 
 // ─── Connections ──────────────────────────────────────────────────────────────

@@ -234,6 +234,20 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
     }
   };
 
+  const handleWithdrawRequest = async () => {
+    if (!token) return;
+    setActionLoading('withdraw');
+    try {
+      const { session: updated } = await sessionsApi.withdrawRequest(token, session._id);
+      setLocalSession(updated);
+      toast.success('Request cancelled');
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not cancel request');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleCancel = async () => {
     if (!token) return;
     setActionLoading('cancel');
@@ -485,9 +499,16 @@ export function SessionDetailsView({ session, onBack, onNavigate, onOpenChat }: 
               <div className="w-9 h-9 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
                 <AlertCircle className="w-4 h-4 text-amber-600" />
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-900 mb-0.5">Pending Approval</p>
                 <p className="text-sm text-amber-700">Your request is awaiting approval from the session poster.</p>
+                <button
+                  onClick={handleWithdrawRequest}
+                  disabled={actionLoading === 'withdraw'}
+                  className="mt-3 px-4 py-1.5 rounded-lg bg-white border border-amber-300 text-amber-700 text-sm font-medium hover:bg-amber-100 transition-colors disabled:opacity-50"
+                >
+                  {actionLoading === 'withdraw' ? 'Cancelling…' : 'Cancel Request'}
+                </button>
               </div>
             </div>
           </div>

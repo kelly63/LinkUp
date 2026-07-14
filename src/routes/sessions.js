@@ -16,6 +16,7 @@ const {
   approvePartner,
   declinePartner,
   inviteToSession,
+  withdrawRequest,
   getSessionICS,
 } = require('../controllers/sessionController');
 const { protect } = require('../middleware/auth');
@@ -40,5 +41,6 @@ router.post('/:id/suggest-time', suggestNewTime);
 router.post('/:id/approve-partner', approvePartner);
 router.post('/:id/decline-partner', declinePartner);
 router.post('/:id/invite', inviteToSession);
+router.delete('/:id/withdraw', withdrawRequest);
 
 module.exports = router;
