@@ -2,6 +2,8 @@
  * Patches capacitor-native-biometric to work with Capacitor 8 / SPM.
  * - Ensures Package.swift and SPM source directory exist
  * - Removes `typealias JSObject` which conflicts with Capacitor 8's built-in type
+ * - Removes ObjC .m files (mixed Swift+ObjC breaks Xcode 26 SPM resolution)
+ * - Adds CAPBridgedPlugin conformance (required for Capacitor 8 SPM plugin discovery)
  *
  * Run automatically via the `postinstall` npm hook.
  */
@@ -22,9 +24,7 @@ if (!fs.existsSync(pluginRoot)) {
 fs.mkdirSync(spmSrcDir, { recursive: true });
 
 // Copy Swift source files from old CocoaPods location if SPM location is missing.
-// Only copy .swift — ObjC .m files create mixed Swift+ObjC SPM targets that fail
-// Xcode 26 package resolution with "Missing package product 'CapApp-SPM'".
-// Capacitor 8 discovers plugins via ObjC runtime from @objc(NativeBiometric) alone.
+// Do NOT copy .m files — mixed Swift+ObjC SPM targets break Xcode 26 package resolution.
 for (const file of ['Plugin.swift']) {
   const src = path.join(oldSrcDir, file);
   const destName = file.replace('Plugin', 'NativeBiometricPlugin');
@@ -34,23 +34,39 @@ for (const file of ['Plugin.swift']) {
   }
 }
 
-// Remove any .m files that may have been copied in a previous run — they cause
-// Xcode 26 to fail resolving the mixed-language SPM target.
+// Remove any .m files — they create a mixed Swift+ObjC target that Xcode 26 rejects.
 for (const mFile of fs.readdirSync(spmSrcDir).filter(f => f.endsWith('.m'))) {
   fs.rmSync(path.join(spmSrcDir, mFile));
   console.log(`[fix-biometric-spm] Removed ObjC file ${mFile} from SPM source dir`);
 }
 
-// Remove `typealias JSObject = [String:Any]` — conflicts with Capacitor 8's built-in JSObject type,
-// causing SPM to fail with "invalid redeclaration of JSObject" and breaking the entire CapApp-SPM build.
+// Patch the Swift source file:
+// 1. Remove typealias JSObject conflict
+// 2. Add CAPBridgedPlugin conformance so Capacitor 8 SPM bridge discovers the plugin
+//    (replaces the old CAP_PLUGIN ObjC macro approach that required the now-deleted .m file)
 if (fs.existsSync(swiftFile)) {
   let src = fs.readFileSync(swiftFile, 'utf8');
-  const patched = src
+  let patched = src
+    // Fix JSObject redeclaration conflict with Capacitor 8
     .replace(/\s*typealias JSObject = \[String:Any\]\n?/g, '\n')
-    .replace(/var obj = JSObject\(\)/g, 'var obj = [String:Any]()');
+    .replace(/var obj = JSObject\(\)/g, 'var obj = [String:Any]()')
+    // Add CAPBridgedPlugin conformance if not already present
+    .replace(
+      /public class NativeBiometric: CAPPlugin \{/,
+      `public class NativeBiometric: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "NativeBiometric"
+    public let jsName = "NativeBiometric"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "isAvailable", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "verifyIdentity", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getCredentials", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setCredentials", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "deleteCredentials", returnType: CAPPluginReturnPromise),
+    ]`
+    );
   if (patched !== src) {
     fs.writeFileSync(swiftFile, patched, 'utf8');
-    console.log('[fix-biometric-spm] Patched JSObject conflict in NativeBiometricPlugin.swift');
+    console.log('[fix-biometric-spm] Patched NativeBiometricPlugin.swift for Capacitor 8 SPM');
   }
 }
 
