@@ -37,6 +37,7 @@
 	"packageClassList": [
 		"AppPlugin",
 		"CAPCameraPlugin",
+		"HapticsPlugin",
 		"PreferencesPlugin",
 		"PushNotificationsPlugin",
 		"SplashScreenPlugin",
