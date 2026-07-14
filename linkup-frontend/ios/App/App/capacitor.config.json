@@ -3,9 +3,7 @@
 	"appName": "LinkUp Athletics",
 	"webDir": "build",
 	"server": {
-		"androidScheme": "https",
-		"url": "https://linkup-swpu.onrender.com",
-		"cleartext": false
+		"androidScheme": "https"
 	},
 	"plugins": {
 		"SplashScreen": {

@@ -6,8 +6,6 @@ const config: CapacitorConfig = {
   webDir: 'build',
   server: {
     androidScheme: 'https',
-    url: 'https://linkup-swpu.onrender.com',
-    cleartext: false,
   },
   plugins: {
     SplashScreen: {
