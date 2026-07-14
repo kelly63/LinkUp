@@ -122,6 +122,62 @@ export function MobileFrame() {
   usePushNotifications(token);
   useNativePush(token); // auto-registers APNs device token if permission already granted
 
+  // Must be declared before handleNotification (which uses it in its dep array)
+  const handleNotificationNavigate = useCallback((type: string, data: any) => {
+    setPanelOpen(false);
+    setLiveQueue([]);
+    switch (type) {
+      case 'roster_request':
+        setPendingNav({
+          view: 'userProfile',
+          data: { _id: data.from?._id, name: data.from?.name, avatar: data.from?.avatar, isRosterRequest: true },
+        });
+        break;
+      case 'roster_accepted':
+        setPendingNav({
+          view: 'userProfile',
+          data: { _id: data.by?._id, name: data.by?.name, avatar: data.by?.avatar },
+        });
+        break;
+      case 'session_accepted':
+        setPendingNav({ view: 'mySessions', data: null });
+        break;
+      case 'message_new':
+        setActiveTab('chat');
+        setPendingNav({
+          view: 'openChat',
+          data: { id: data.senderId, name: data.senderName || 'Unknown', avatar: data.senderAvatar || '', sport: '', position: '', level: '' },
+        });
+        break;
+      case 'message_request':
+        setActiveTab('chat');
+        setPendingNav({
+          view: 'openChat',
+          data: { id: data.from?._id, name: data.from?.name || 'Unknown', avatar: data.from?.avatar || '', sport: '', position: '', level: '' },
+        });
+        break;
+      case 'rating_new':
+        setPendingNav({ view: 'receivedRatings', data: null });
+        break;
+      case 'session_updated':
+      case 'session_cancelled':
+      case 'change_proposed':
+      case 'change_approved':
+      case 'change_declined':
+      case 'session_inquiry':
+      case 'partner_approved':
+      case 'partner_declined':
+        setPendingNav({ view: 'mySessions', data: null });
+        break;
+      case 'session_nearby':
+        setActiveTab('post');
+        break;
+      case 'rating_reminder':
+        setPendingNav({ view: 'receivedRatings', data: null });
+        break;
+    }
+  }, []);
+
   const handleNotification = useCallback((notification: Notification) => {
     setUnreadCount((c) => c + 1);
 
@@ -243,61 +299,6 @@ export function MobileFrame() {
   const handleTabChange = useCallback((tab: string) => {
     setActiveTab(tab);
     if (tab === 'chat') setChatUnread(0);
-  }, []);
-
-  const handleNotificationNavigate = useCallback((type: string, data: any) => {
-    setPanelOpen(false);
-    setLiveQueue([]);
-    switch (type) {
-      case 'roster_request':
-        setPendingNav({
-          view: 'userProfile',
-          data: { _id: data.from?._id, name: data.from?.name, avatar: data.from?.avatar, isRosterRequest: true },
-        });
-        break;
-      case 'roster_accepted':
-        setPendingNav({
-          view: 'userProfile',
-          data: { _id: data.by?._id, name: data.by?.name, avatar: data.by?.avatar },
-        });
-        break;
-      case 'session_accepted':
-        setPendingNav({ view: 'mySessions', data: null });
-        break;
-      case 'message_new':
-        setActiveTab('chat');
-        setPendingNav({
-          view: 'openChat',
-          data: { id: data.senderId, name: data.senderName || 'Unknown', avatar: data.senderAvatar || '', sport: '', position: '', level: '' },
-        });
-        break;
-      case 'message_request':
-        setActiveTab('chat');
-        setPendingNav({
-          view: 'openChat',
-          data: { id: data.from?._id, name: data.from?.name || 'Unknown', avatar: data.from?.avatar || '', sport: '', position: '', level: '' },
-        });
-        break;
-      case 'rating_new':
-        setPendingNav({ view: 'receivedRatings', data: null });
-        break;
-      case 'session_updated':
-      case 'session_cancelled':
-      case 'change_proposed':
-      case 'change_approved':
-      case 'change_declined':
-      case 'session_inquiry':
-      case 'partner_approved':
-      case 'partner_declined':
-        setPendingNav({ view: 'mySessions', data: null });
-        break;
-      case 'session_nearby':
-        setActiveTab('post');
-        break;
-      case 'rating_reminder':
-        setPendingNav({ view: 'receivedRatings', data: null });
-        break;
-    }
   }, []);
 
   const isNative = Capacitor.isNativePlatform();
