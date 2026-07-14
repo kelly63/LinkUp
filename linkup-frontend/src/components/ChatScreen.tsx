@@ -1,6 +1,6 @@
 import {
   ArrowLeft, Send, MapPin, CheckCircle, Edit3,
-  MessageCircle, UserCheck, X, ChevronRight, Heart, Dumbbell, ChevronDown, Clock,
+  MessageCircle, UserCheck, X, ChevronRight, Heart, Dumbbell, ChevronDown, Clock, Calendar,
 } from 'lucide-react';
 import { avatarThumb } from '../lib/api';
 import { useState, useRef, useEffect } from 'react';
