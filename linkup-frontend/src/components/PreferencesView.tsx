@@ -73,7 +73,7 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
           >
             <ArrowLeft className="w-5 h-5 text-slate-700" />
           </button>
-          <h2 className="text-slate-900">Privacy & Visibility</h2>
+          <h2 className="text-slate-900">Visibility Preferences</h2>
         </div>
       </div>
 
