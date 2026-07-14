@@ -75,6 +75,14 @@ interface ChatViewProps {
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+const CHAT_CACHE_KEY = 'linkup_chat_cache';
+const readChatCache = (): { conversations: Conversation[]; rosterAthletes: RosterAthlete[] } | null => {
+  try { const r = localStorage.getItem(CHAT_CACHE_KEY); return r ? JSON.parse(r) : null; } catch { return null; }
+};
+const writeChatCache = (conversations: Conversation[], rosterAthletes: RosterAthlete[]) => {
+  try { localStorage.setItem(CHAT_CACHE_KEY, JSON.stringify({ conversations, rosterAthletes })); } catch {}
+};
+
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -110,9 +118,9 @@ export function ChatView({
   onBack,
   apiUrl = API_URL,
 }: ChatViewProps) {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [rosterAthletes, setRosterAthletes] = useState<RosterAthlete[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [conversations, setConversations] = useState<Conversation[]>(() => readChatCache()?.conversations ?? []);
+  const [rosterAthletes, setRosterAthletes] = useState<RosterAthlete[]>(() => readChatCache()?.rosterAthletes ?? []);
+  const [loading, setLoading] = useState(() => !readChatCache());
   const [selectedChat, setSelectedChat] = useState<ActiveChat | null>(null);
   const [showRosterModal, setShowRosterModal] = useState(false);
 
@@ -161,6 +169,13 @@ export function ChatView({
     fetchInbox();
     fetchRoster();
   }, [fetchInbox, fetchRoster]);
+
+  // Persist to cache whenever data updates so next mount is instant
+  useEffect(() => {
+    if (conversations.length > 0 || rosterAthletes.length > 0) {
+      writeChatCache(conversations, rosterAthletes);
+    }
+  }, [conversations, rosterAthletes]);
 
   // ── Subscribe to real-time inbox updates ───────────────────────────────────
   useEffect(() => {

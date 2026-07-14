@@ -24,6 +24,17 @@ import { toast } from 'sonner';
 
 type Filter = 'all' | 'session_completion' | 'thought' | 'article';
 
+type FeedCache = {
+  posts: Post[]; likedMap: Record<string, boolean>; likeCounts: Record<string, number>;
+  commentCounts: Record<string, number>; postComments: Record<string, Post['comments']>; pages: number;
+};
+const readFeedCache = (filter: Filter): FeedCache | null => {
+  try { const r = localStorage.getItem(`linkup_feed_${filter}`); return r ? JSON.parse(r) : null; } catch { return null; }
+};
+const writeFeedCache = (filter: Filter, data: FeedCache) => {
+  try { localStorage.setItem(`linkup_feed_${filter}`, JSON.stringify(data)); } catch {}
+};
+
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -320,8 +331,8 @@ function PostCard({
 
 export function LockerRoomView({ onBack, initialOpenCommentPostId, onNavigate }: { onBack?: () => void; initialOpenCommentPostId?: string | null; onNavigate?: (view: string, data?: any) => void }) {
   const { token, user } = useAuth();
-  const [feedPosts, setFeedPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [feedPosts, setFeedPosts] = useState<Post[]>(() => readFeedCache('all')?.posts ?? []);
+  const [loading, setLoading] = useState(() => !readFeedCache('all'));
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -359,9 +370,9 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId, onNavigate }:
     }, 150);
   }, [loading, initialOpenCommentPostId]);
 
-  const fetchPage = useCallback(async (p: number, replace: boolean) => {
+  const fetchPage = useCallback(async (p: number, replace: boolean, silent = false) => {
     if (!token) return;
-    replace ? setLoading(true) : setLoadingMore(true);
+    if (!silent) replace ? setLoading(true) : setLoadingMore(true);
     try {
       const params: Parameters<typeof postsApi.getFeed>[1] = { page: p };
       if (activeFilter !== 'all') params.type = activeFilter;
@@ -387,6 +398,7 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId, onNavigate }:
         setLikeCounts(newLikeCounts);
         setCommentCounts(newCommentCounts);
         setPostComments(newPostComments);
+        writeFeedCache(activeFilter, { posts: fetched, likedMap: newLikedMap, likeCounts: newLikeCounts, commentCounts: newCommentCounts, postComments: newPostComments, pages: pages ?? 1 });
       } else {
         setFeedPosts((prev) => [...prev, ...fetched]);
         setLikedMap((prev) => ({ ...prev, ...newLikedMap }));
@@ -395,13 +407,28 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId, onNavigate }:
         setPostComments((prev) => ({ ...prev, ...newPostComments }));
       }
     } catch (err: any) {
-      toast.error(err?.message || 'Could not load feed');
+      if (!silent) toast.error(err?.message || 'Could not load feed');
     } finally {
       replace ? setLoading(false) : setLoadingMore(false);
     }
   }, [token, user?._id, activeFilter]);
 
-  useEffect(() => { fetchPage(1, true); }, [activeFilter, token]);
+  useEffect(() => {
+    const cache = readFeedCache(activeFilter);
+    if (cache) {
+      setFeedPosts(cache.posts);
+      setLikedMap(cache.likedMap);
+      setLikeCounts(cache.likeCounts);
+      setCommentCounts(cache.commentCounts);
+      setPostComments(cache.postComments);
+      setTotalPages(cache.pages);
+      setPage(1);
+      setLoading(false);
+      fetchPage(1, true, true); // refresh silently in background
+    } else {
+      fetchPage(1, true); // no cache — show spinner
+    }
+  }, [activeFilter, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleLike = useCallback(async (postId: string) => {
     if (!token) return;
