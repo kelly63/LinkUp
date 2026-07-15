@@ -95,12 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback((token: string, user: User) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, user }));
     getSocket(token);
-    // Start locked; unlock immediately if biometric is not enabled.
-    // This ensures Face ID is required even after a fresh sign-in.
-    setState({ token, user, isAuthenticated: true, isLocked: true });
-    getBiometricEnabled().then((enabled) => {
-      if (!enabled) setState((prev) => ({ ...prev, isLocked: false }));
-    });
+    // Password login already proves identity — unlock immediately.
+    // Face ID is used on subsequent cold launches and background re-locks.
+    setState({ token, user, isAuthenticated: true, isLocked: false });
   }, []);
 
   const logout = useCallback(() => {
@@ -110,9 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     disconnectSocket();
     localStorage.removeItem(STORAGE_KEY);
-    // Clear biometric preference so the next user on this device
-    // doesn't inherit the previous user's Face ID setting.
-    setBiometricEnabled(false).catch(() => {});
   }, []);
 
   const updateUser = useCallback((user: User) => {
