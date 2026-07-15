@@ -14,6 +14,9 @@ import { Capacitor } from '@capacitor/core';
 import { App as CapApp } from '@capacitor/app';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { toast } from 'sonner';
+import { isBiometricAvailable, getBiometricEnabled } from '../lib/biometric';
+
+const BIOMETRIC_ASKED_KEY = 'linkup_biometric_asked';
 
 type PendingNav = { view: string; data?: any } | null;
 
@@ -117,7 +120,9 @@ export function MobileFrame() {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   // Auth state comes directly from context — survives page refresh automatically
-  const { token, isAuthenticated } = useAuth();
+  const { token, isAuthenticated, enableBiometric } = useAuth();
+  const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
+  const [biometricPrompting, setBiometricPrompting] = useState(false);
 
   usePushNotifications(token);
   useNativePush(token); // auto-registers APNs device token if permission already granted
@@ -301,6 +306,35 @@ export function MobileFrame() {
     if (tab === 'chat') setChatUnread(0);
   }, []);
 
+  // Show Face ID prompt once after login on native if not yet asked and not already enabled
+  useEffect(() => {
+    if (!isAuthenticated || !Capacitor.isNativePlatform()) return;
+    if (localStorage.getItem(BIOMETRIC_ASKED_KEY)) return;
+    Promise.all([isBiometricAvailable(), getBiometricEnabled()]).then(([{ available }, enabled]) => {
+      if (available && !enabled) setShowBiometricPrompt(true);
+    });
+  }, [isAuthenticated]);
+
+  const handleEnableBiometric = async () => {
+    setBiometricPrompting(true);
+    try {
+      await enableBiometric();
+      localStorage.setItem(BIOMETRIC_ASKED_KEY, 'true');
+      setShowBiometricPrompt(false);
+      toast.success('Face ID enabled');
+    } catch (err: any) {
+      const msg = (err?.message || '').toLowerCase();
+      if (!msg.includes('cancel')) toast.error('Face ID verification failed. You can enable it later in Settings.');
+    } finally {
+      setBiometricPrompting(false);
+    }
+  };
+
+  const handleDismissBiometric = () => {
+    localStorage.setItem(BIOMETRIC_ASKED_KEY, 'true');
+    setShowBiometricPrompt(false);
+  };
+
   const isNative = Capacitor.isNativePlatform();
 
   const inner = (
@@ -345,6 +379,35 @@ export function MobileFrame() {
           onTabChange={handleTabChange}
           badges={{ chat: chatUnread }}
         />
+      )}
+
+      {showBiometricPrompt && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={handleDismissBiometric} />
+          <div className="relative w-full bg-white rounded-t-3xl px-6 pt-6 pb-10 shadow-xl">
+            <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-6" />
+            <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 11c0-2.761 2.239-5 5-5s5 2.239 5 5M3.5 11c0-4.694 3.806-8.5 8.5-8.5S20.5 6.306 20.5 11M9 11c0-1.657 1.343-3 3-3s3 1.343 3 3M12 17v-2m0 0c-1.105 0-2-.895-2-2v-1a2 2 0 014 0v1c0 1.105-.895 2-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-slate-900 text-center mb-2">Enable Face ID</h3>
+            <p className="text-slate-500 text-center text-sm mb-6">Use Face ID to quickly and securely unlock LinkUp each time you open the app.</p>
+            <button
+              onClick={handleEnableBiometric}
+              disabled={biometricPrompting}
+              className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-semibold text-base mb-3 disabled:opacity-60"
+            >
+              {biometricPrompting ? 'Verifying…' : 'Enable Face ID'}
+            </button>
+            <button
+              onClick={handleDismissBiometric}
+              className="w-full text-slate-500 py-3 text-sm font-medium"
+            >
+              Not Now
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
