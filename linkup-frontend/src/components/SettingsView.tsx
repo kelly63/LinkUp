@@ -65,34 +65,24 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
   };
 
   // Biometric / Face ID
-  // Seed from localStorage so the toggle doesn't flicker/disappear on re-mount
-  // after a transient iOS canEvaluatePolicy failure (e.g. right after a cancel).
-  const [biometricAvailable, setBiometricAvailable] = useState(() => {
-    try { return localStorage.getItem('linkup_biometric_available') === 'true'; } catch { return false; }
-  });
-  const [biometricType, setBiometricType] = useState<BiometryType>(() => {
-    try { return (Number(localStorage.getItem('linkup_biometric_type')) || BiometryType.NONE) as BiometryType; } catch { return BiometryType.NONE; }
-  });
+  // Always visible on native — show on iOS regardless of the async availability check.
+  // Errors are surfaced at tap time rather than hiding the setting entirely.
+  const isNative = Capacitor.isNativePlatform();
+  const [biometricType, setBiometricType] = useState<BiometryType>(BiometryType.NONE);
   const [biometricEnabled, setBiometricEnabledState] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
 
   useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-    isBiometricAvailable().then(({ available, type }) => {
-      // Only clear the cached "available" if the device explicitly says not enrolled/not set up.
-      // Transient post-cancel failures (biometryLockout temporarily) should not hide the toggle.
-      if (available) {
-        setBiometricAvailable(true);
-        setBiometricType(type);
-        try { localStorage.setItem('linkup_biometric_available', 'true'); localStorage.setItem('linkup_biometric_type', String(type)); } catch {}
-      } else if (!localStorage.getItem('linkup_biometric_available')) {
-        setBiometricAvailable(false);
-      }
+    if (!isNative) return;
+    isBiometricAvailable().then(({ type }) => {
+      if (type !== BiometryType.NONE) setBiometricType(type);
     });
     getBiometricEnabled().then(setBiometricEnabledState);
   }, []);
 
-  const biometricLabel = biometricType === BiometryType.FACE_ID ? 'Face ID' : 'Biometric Login';
+  const biometricLabel = biometricType === BiometryType.FACE_ID ? 'Face ID'
+    : biometricType === BiometryType.TOUCH_ID ? 'Touch ID'
+    : 'Face ID';
 
   const handleToggleBiometric = async () => {
     setBiometricLoading(true);
@@ -107,9 +97,11 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
         toast.success(`${biometricLabel} enabled`);
       }
     } catch (err: any) {
-      const msg = err?.message || '';
-      if (!msg.includes('cancel') && !msg.includes('Cancel')) {
-        toast.error('Biometric verification failed');
+      const msg = (err?.message || err?.errorMessage || '').toLowerCase();
+      if (msg.includes('not available') || msg.includes('not enrolled') || msg.includes('no identities')) {
+        toast.error('Face ID is not set up on this device. Enable it in iOS Settings → Face ID & Passcode.');
+      } else if (!msg.includes('cancel')) {
+        toast.error('Face ID verification failed. Try again.');
       }
     } finally {
       setBiometricLoading(false);
@@ -151,8 +143,8 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
           </button>
         </div>
 
-        {/* Face ID / Biometric — standalone row (native only, when available) */}
-        {biometricAvailable && (
+        {/* Face ID / Biometric — always shown on native iOS */}
+        {isNative && (
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div className="px-5 py-4 flex items-center gap-4">
               <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
