@@ -17,6 +17,7 @@ export async function isBiometricAvailable(): Promise<{ available: boolean; type
 }
 
 export async function verifyBiometric(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) throw new Error('Biometrics not available on web');
   await NativeBiometric.verifyIdentity({
     reason: 'Unlock LinkUp',
     title: 'LinkUp',

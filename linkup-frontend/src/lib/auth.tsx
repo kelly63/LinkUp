@@ -2,6 +2,11 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { User, auth as authApi } from './api';
 import { getSocket, disconnectSocket } from './socket';
 import { getBiometricEnabled, setBiometricEnabled, isBiometricAvailable, verifyBiometric } from './biometric';
+import { App as CapApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+
+// Re-lock after this many ms in background (0 = every foreground, 60000 = 1 min)
+const RELOCK_AFTER_MS = 60_000;
 
 interface AuthState {
   token: string | null;
@@ -55,6 +60,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Re-lock when app returns to foreground after >RELOCK_AFTER_MS in background
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    let backgroundedAt: number | null = null;
+    const sub = CapApp.addListener('appStateChange', ({ isActive }) => {
+      if (!isActive) {
+        backgroundedAt = Date.now();
+        return;
+      }
+      const elapsed = backgroundedAt ? Date.now() - backgroundedAt : 0;
+      backgroundedAt = null;
+      if (elapsed < RELOCK_AFTER_MS) return;
+      getBiometricEnabled().then((enabled) => {
+        if (enabled) setState((prev) => prev.isAuthenticated ? { ...prev, isLocked: true } : prev);
+      });
+    });
+    return () => { sub.then((h) => h.remove()); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // After unlock: reconnect socket and refresh user data
   useEffect(() => {
     if (state.token && !state.isLocked) {
@@ -86,6 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     disconnectSocket();
     localStorage.removeItem(STORAGE_KEY);
+    // Clear biometric preference so the next user on this device
+    // doesn't inherit the previous user's Face ID setting.
+    setBiometricEnabled(false).catch(() => {});
   }, []);
 
   const updateUser = useCallback((user: User) => {

@@ -120,7 +120,7 @@ export function MobileFrame() {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   // Auth state comes directly from context — survives page refresh automatically
-  const { token, isAuthenticated, enableBiometric } = useAuth();
+  const { token, isAuthenticated, isLocked, enableBiometric } = useAuth();
   const [showBiometricPrompt, setShowBiometricPrompt] = useState(false);
   const [biometricPrompting, setBiometricPrompting] = useState(false);
 
@@ -306,14 +306,15 @@ export function MobileFrame() {
     if (tab === 'chat') setChatUnread(0);
   }, []);
 
-  // Show Face ID prompt once after login on native if not yet asked and not already enabled
+  // Show Face ID prompt once after unlock on native if not yet asked and not already enabled.
+  // Depends on isLocked (not just isAuthenticated) to avoid racing with the lock screen.
   useEffect(() => {
-    if (!isAuthenticated || !Capacitor.isNativePlatform()) return;
+    if (!isAuthenticated || isLocked || !Capacitor.isNativePlatform()) return;
     if (localStorage.getItem(BIOMETRIC_ASKED_KEY)) return;
     Promise.all([isBiometricAvailable(), getBiometricEnabled()]).then(([{ available }, enabled]) => {
       if (available && !enabled) setShowBiometricPrompt(true);
     });
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isLocked]);
 
   const handleEnableBiometric = async () => {
     setBiometricPrompting(true);
