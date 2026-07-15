@@ -93,7 +93,7 @@ const updateProfile = async (req, res) => {
     const allowedFields = [
       'name', 'bio', 'location', 'phone',
       // Athlete fields
-      'sport', 'position', 'skillLevel', 'customSportRequest',
+      'sport', 'position', 'skillLevel', 'customSportRequest', 'teamType', 'school', 'year',
       // Coach fields
       'sportsCoached', 'yearsExperience', 'certifications', 'coachingPhilosophy', 'hourlyRate',
       // Privacy
