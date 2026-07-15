@@ -71,7 +71,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback((token: string, user: User) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, user }));
     getSocket(token);
-    setState({ token, user, isAuthenticated: true, isLocked: false });
+    // Start locked; unlock immediately if biometric is not enabled.
+    // This ensures Face ID is required even after a fresh sign-in.
+    setState({ token, user, isAuthenticated: true, isLocked: true });
+    getBiometricEnabled().then((enabled) => {
+      if (!enabled) setState((prev) => ({ ...prev, isLocked: false }));
+    });
   }, []);
 
   const logout = useCallback(() => {

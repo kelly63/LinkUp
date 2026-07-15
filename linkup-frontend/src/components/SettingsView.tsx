@@ -157,14 +157,18 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
               <button
                 onClick={handleToggleBiometric}
                 disabled={biometricLoading}
-                className={`relative w-14 h-7 rounded-full overflow-hidden transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+                className={`relative rounded-full overflow-hidden transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
                   biometricEnabled ? 'bg-emerald-500' : 'bg-slate-200'
                 }`}
+                style={{ width: 52, height: 32 }}
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform duration-200 ${
-                    biometricEnabled ? 'translate-x-7' : 'translate-x-0'
-                  }`}
+                  className="absolute bg-white rounded-full shadow transition-transform duration-200"
+                  style={{
+                    width: 26, height: 26,
+                    top: 3, left: 3,
+                    transform: biometricEnabled ? 'translateX(20px)' : 'translateX(0)',
+                  }}
                 />
               </button>
             </div>
