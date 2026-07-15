@@ -65,16 +65,29 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
   };
 
   // Biometric / Face ID
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
-  const [biometricType, setBiometricType] = useState<BiometryType>(BiometryType.NONE);
+  // Seed from localStorage so the toggle doesn't flicker/disappear on re-mount
+  // after a transient iOS canEvaluatePolicy failure (e.g. right after a cancel).
+  const [biometricAvailable, setBiometricAvailable] = useState(() => {
+    try { return localStorage.getItem('linkup_biometric_available') === 'true'; } catch { return false; }
+  });
+  const [biometricType, setBiometricType] = useState<BiometryType>(() => {
+    try { return (Number(localStorage.getItem('linkup_biometric_type')) || BiometryType.NONE) as BiometryType; } catch { return BiometryType.NONE; }
+  });
   const [biometricEnabled, setBiometricEnabledState] = useState(false);
   const [biometricLoading, setBiometricLoading] = useState(false);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     isBiometricAvailable().then(({ available, type }) => {
-      setBiometricAvailable(available);
-      setBiometricType(type);
+      // Only clear the cached "available" if the device explicitly says not enrolled/not set up.
+      // Transient post-cancel failures (biometryLockout temporarily) should not hide the toggle.
+      if (available) {
+        setBiometricAvailable(true);
+        setBiometricType(type);
+        try { localStorage.setItem('linkup_biometric_available', 'true'); localStorage.setItem('linkup_biometric_type', String(type)); } catch {}
+      } else if (!localStorage.getItem('linkup_biometric_available')) {
+        setBiometricAvailable(false);
+      }
     });
     getBiometricEnabled().then(setBiometricEnabledState);
   }, []);
@@ -152,13 +165,13 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
               <button
                 onClick={handleToggleBiometric}
                 disabled={biometricLoading}
-                className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+                className={`relative w-14 h-7 rounded-full overflow-hidden transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
                   biometricEnabled ? 'bg-emerald-500' : 'bg-slate-200'
                 }`}
               >
                 <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
-                    biometricEnabled ? 'translate-x-6' : 'translate-x-0'
+                  className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform duration-200 ${
+                    biometricEnabled ? 'translate-x-7' : 'translate-x-0'
                   }`}
                 />
               </button>
