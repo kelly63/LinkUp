@@ -75,7 +75,7 @@
     "postinstall": "node scripts/fix-biometric-spm.js",
     "dev": "vite",
     "build": "vite build",
-    "build:ios": "npm install && vite build && npx cap sync ios",
+    "build:ios": "npm install && vite build && npx cap sync ios && node scripts/patch-native-biometric.js",
     "build:android": "vite build && npx cap sync android",
     "cap:sync": "npx cap sync",
     "cap:open:ios": "npx cap open ios",

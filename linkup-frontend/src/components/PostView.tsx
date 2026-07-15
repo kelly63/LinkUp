@@ -189,7 +189,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
   const [selectedPartnerRoles, setSelectedPartnerRoles] = useState<string[]>([]);
   const [posterRole, setPosterRole] = useState('');
   const [selectedTeamType, setSelectedTeamType] = useState<string>(user?.teamType || '');
-  useEffect(() => { const t = user?.teamType; if (t) setSelectedTeamType(prev => prev || t); }, [user?.teamType]);
+  useEffect(() => { const t = user?.teamType; if (t) setSelectedTeamType(t); }, [user?.teamType]);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('Flexible');
   const [allLevels, setAllLevels] = useState(true);
@@ -420,7 +420,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
       const prefs = JSON.parse(saved);
       if (prefs.sport && userSports.includes(prefs.sport)) setSelectedSport(prefs.sport);
       if (prefs.location) setLocationValue(prefs.location);
-      if (prefs.teamType) setSelectedTeamType(prefs.teamType);
+      if (prefs.teamType && !user?.teamType) setSelectedTeamType(prefs.teamType);
       if (prefs.duration) setDuration(prefs.duration);
       if (prefs.posterRole) setPosterRole(prefs.posterRole);
     } catch {}

@@ -43,6 +43,7 @@
 		"SplashScreenPlugin",
 		"StatusBarPlugin",
 		"SocialLoginPlugin",
-		"SentryCapacitorPlugin"
+		"SentryCapacitorPlugin",
+		"NativeBiometric"
 	]
 }
