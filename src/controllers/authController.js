@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
-const { sendVerificationEmail, sendPasswordResetEmail, addToResendAudience } = require('../utils/email');
+const { sendVerificationEmail, sendPasswordResetEmail, addToResendAudience, sendWelcomeEmail } = require('../utils/email');
 
 // ── Apple Sign-In helpers ─────────────────────────────────────────────────────
 let _appleKeys = null;
@@ -146,6 +146,9 @@ const register = async (req, res) => {
     addToResendAudience({ email: user.email, name: user.name }).catch(err =>
       console.error('[resend audience]', err.message)
     );
+    sendWelcomeEmail({ user }).catch(err =>
+      console.error('[welcome email]', err.message)
+    );
     const token = generateToken(user._id);
 
     if (incomingRole === 'athlete') {
@@ -257,6 +260,9 @@ const googleAuth = async (req, res) => {
       isNewUser = true;
       addToResendAudience({ email: user.email, name: user.name }).catch(err =>
         console.error('[resend audience]', err.message)
+      );
+      sendWelcomeEmail({ user }).catch(err =>
+        console.error('[welcome email google]', err.message)
       );
     }
 
@@ -412,6 +418,9 @@ const appleAuth = async (req, res) => {
       isNewUser = true;
       addToResendAudience({ email: user.email, name: user.name }).catch((err) =>
         console.error('[resend audience]', err.message)
+      );
+      sendWelcomeEmail({ user }).catch(err =>
+        console.error('[welcome email apple]', err.message)
       );
       if (user.role === 'athlete') {
         const userIdStr = user._id.toString();

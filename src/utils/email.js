@@ -357,6 +357,155 @@ async function sendInviteEmail({ toEmail, fromName, inviteUrl }) {
   if (error) throw new Error(error.message);
 }
 
+// ── User-facing transactional emails ─────────────────────────────────────────
+
+const APP_STORE_URL = 'https://apps.apple.com/app/linkup-athletics/id6748965199';
+
+function baseTemplate(headerHtml, bodyHtml) {
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+    <div style="background:linear-gradient(135deg,#052e16,#16a34a);padding:28px 32px;text-align:center">
+      ${headerHtml}
+    </div>
+    <div style="padding:28px 32px">
+      ${bodyHtml}
+    </div>
+    <div style="background:#f9fafb;padding:16px 32px;border-top:1px solid #e5e7eb">
+      <p style="color:#9ca3af;font-size:12px;margin:0;text-align:center">
+        LinkUp Athletics &nbsp;·&nbsp;
+        <a href="https://linkupathletics.com/privacy" style="color:#9ca3af">Privacy</a> &nbsp;·&nbsp;
+        <a href="mailto:support@linkupathletics.com" style="color:#9ca3af">Support</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+function ctaButton(label, url) {
+  return `<a href="${url}" style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px">${label}</a>`;
+}
+
+async function sendWelcomeEmail({ user }) {
+  const sport = user.sport ? ` — ${user.sport}` : '';
+  const html = baseTemplate(
+    `<h1 style="color:#fff;margin:0;font-size:22px">Welcome to LinkUp Athletics</h1>
+     <p style="color:#86efac;margin:6px 0 0;font-size:14px">The training network built for college and pro athletes</p>`,
+    `<p style="color:#374151;font-size:16px;margin-bottom:16px">Hi ${user.name}${sport},</p>
+     <p style="color:#374151;margin-bottom:20px">You're in. LinkUp connects athletes for training sessions, practice reps, and workouts — wherever you are in the off-season.</p>
+     <div style="background:#f0fdf4;border-radius:12px;padding:20px;margin-bottom:24px">
+       <p style="color:#166534;font-weight:700;margin:0 0 10px;font-size:15px">Here's what to do first:</p>
+       <p style="color:#166534;margin:0 0 6px;font-size:14px">📋 &nbsp;Complete your profile with sport, position, and skill level</p>
+       <p style="color:#166534;margin:0 0 6px;font-size:14px">🔍 &nbsp;Search for athletes near you</p>
+       <p style="color:#166534;margin:0;font-size:14px">📅 &nbsp;Post a session or request to join one</p>
+     </div>
+     <div style="text-align:center;margin-bottom:24px">${ctaButton('Open LinkUp', APP_STORE_URL)}</div>
+     <p style="color:#6b7280;font-size:13px">Questions? Reply to this email or reach us at support@linkupathletics.com.</p>`
+  );
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: user.email,
+    subject: `Welcome to LinkUp, ${user.name.split(' ')[0]} 🏆`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+}
+
+async function sendSessionConfirmedEmail({ toEmail, toName, partnerName, sessionTitle, sport, date, time, location }) {
+  const dateLine = date && date !== 'Flexible' ? date : 'Flexible date';
+  const timeLine = time && time !== 'Flexible' ? ` at ${time}` : '';
+  const locationLine = location || 'TBD';
+
+  const html = baseTemplate(
+    `<h1 style="color:#fff;margin:0;font-size:22px">Session Confirmed ✓</h1>
+     <p style="color:#86efac;margin:6px 0 0;font-size:14px">${sessionTitle || sport}</p>`,
+    `<p style="color:#374151;font-size:16px;margin-bottom:20px">Hi ${toName},</p>
+     <p style="color:#374151;margin-bottom:20px"><strong>${partnerName}</strong> confirmed you for the session. You're locked in.</p>
+     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;margin-bottom:24px">
+       <table style="border-collapse:collapse;width:100%">
+         <tr><td style="padding:5px 12px 5px 0;color:#6b7280;font-size:14px;width:80px">Session</td><td style="color:#111827;font-weight:600;font-size:14px">${sessionTitle || sport}</td></tr>
+         <tr><td style="padding:5px 12px 5px 0;color:#6b7280;font-size:14px">Date</td><td style="color:#111827;font-size:14px">${dateLine}${timeLine}</td></tr>
+         <tr><td style="padding:5px 12px 5px 0;color:#6b7280;font-size:14px">Location</td><td style="color:#111827;font-size:14px">${locationLine}</td></tr>
+         <tr><td style="padding:5px 12px 5px 0;color:#6b7280;font-size:14px">Partner</td><td style="color:#111827;font-size:14px">${partnerName}</td></tr>
+       </table>
+     </div>
+     <div style="text-align:center;margin-bottom:24px">${ctaButton('View Session', APP_STORE_URL)}</div>
+     <p style="color:#6b7280;font-size:13px">After the session, you'll be able to rate your training partner.</p>`
+  );
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: toEmail,
+    subject: `You're confirmed for "${sessionTitle || sport}" with ${partnerName}`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+}
+
+async function sendSessionCancelledEmail({ toEmail, toName, cancelledByName, sessionTitle, sport, date }) {
+  const dateLabel = date && date !== 'Flexible' ? ` on ${date}` : '';
+  const html = baseTemplate(
+    `<h1 style="color:#fff;margin:0;font-size:22px">Session Cancelled</h1>
+     <p style="color:#86efac;margin:6px 0 0;font-size:14px">${sessionTitle || sport}</p>`,
+    `<p style="color:#374151;font-size:16px;margin-bottom:16px">Hi ${toName},</p>
+     <p style="color:#374151;margin-bottom:24px"><strong>${cancelledByName}</strong> cancelled the <strong>"${sessionTitle || sport}"</strong> session${dateLabel}.</p>
+     <p style="color:#374151;margin-bottom:24px">Head back to LinkUp to find another training partner near you.</p>
+     <div style="text-align:center;margin-bottom:24px">${ctaButton('Find a New Session', APP_STORE_URL)}</div>`
+  );
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: toEmail,
+    subject: `Session cancelled by ${cancelledByName}`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+}
+
+async function sendRateYourPartnerEmail({ toEmail, toName, partnerName, sessionTitle, sport }) {
+  const html = baseTemplate(
+    `<h1 style="color:#fff;margin:0;font-size:22px">How was your session?</h1>
+     <p style="color:#86efac;margin:6px 0 0;font-size:14px">${sessionTitle || sport}</p>`,
+    `<p style="color:#374151;font-size:16px;margin-bottom:16px">Hi ${toName},</p>
+     <p style="color:#374151;margin-bottom:20px">Your <strong>${sport}</strong> session with <strong>${partnerName}</strong> is done. Take 30 seconds to rate them — it helps build a trustworthy community for every athlete on the platform.</p>
+     <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:16px 20px;margin-bottom:24px">
+       <p style="color:#92400e;font-size:14px;margin:0">Ratings are reviewed before posting. Only honest, fair reviews make it through.</p>
+     </div>
+     <div style="text-align:center;margin-bottom:24px">${ctaButton('Rate ' + partnerName, APP_STORE_URL)}</div>`
+  );
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: toEmail,
+    subject: `Rate your session with ${partnerName}`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+}
+
+async function sendRosterRequestEmail({ toEmail, toName, fromName, fromSport, fromPosition, fromLevel }) {
+  const details = [fromSport, fromPosition, fromLevel].filter(Boolean).join(' · ');
+  const html = baseTemplate(
+    `<h1 style="color:#fff;margin:0;font-size:22px">New Roster Request</h1>
+     <p style="color:#86efac;margin:6px 0 0;font-size:14px">Someone wants to train with you</p>`,
+    `<p style="color:#374151;font-size:16px;margin-bottom:16px">Hi ${toName},</p>
+     <p style="color:#374151;margin-bottom:20px"><strong>${fromName}</strong> wants to add you to their roster on LinkUp Athletics.</p>
+     ${details ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px;margin-bottom:24px">
+       <p style="color:#166534;font-weight:700;margin:0 0 4px">${fromName}</p>
+       <p style="color:#166534;font-size:14px;margin:0">${details}</p>
+     </div>` : ''}
+     <div style="text-align:center;margin-bottom:24px">${ctaButton('View Request', APP_STORE_URL)}</div>
+     <p style="color:#6b7280;font-size:13px">Open the app to accept or decline the request.</p>`
+  );
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: toEmail,
+    subject: `${fromName} wants to add you to their roster`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+}
+
 async function addToResendAudience({ email, name }) {
   const audienceId = process.env.RESEND_AUDIENCE_ID;
   if (!audienceId) return;
@@ -373,4 +522,17 @@ async function addToResendAudience({ email, name }) {
   if (error) throw new Error(error.message);
 }
 
-module.exports = { sendAdminRatingReviewEmail, sendVerificationEmail, sendPasswordResetEmail, sendClarificationEmail, sendVerifiedEmail, sendInviteEmail, addToResendAudience };
+module.exports = {
+  sendAdminRatingReviewEmail,
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  sendClarificationEmail,
+  sendVerifiedEmail,
+  sendInviteEmail,
+  addToResendAudience,
+  sendWelcomeEmail,
+  sendSessionConfirmedEmail,
+  sendSessionCancelledEmail,
+  sendRateYourPartnerEmail,
+  sendRosterRequestEmail,
+};

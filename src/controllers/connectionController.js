@@ -1,5 +1,6 @@
 const Connection = require('../models/Connection');
 const User = require('../models/User');
+const { sendRosterRequestEmail } = require('../utils/email');
 
 // Fields to populate for roster display
 const USER_PUBLIC_FIELDS = 'name avatar role sport position skillLevel sportsCoached averageRating ratingCount location isOnline lastSeen';
@@ -46,6 +47,18 @@ const sendRequest = async (req, res) => {
           skillLevel: req.user.skillLevel,
         },
       });
+    }
+
+    // Email the recipient about the roster request
+    if (recipient.email) {
+      sendRosterRequestEmail({
+        toEmail: recipient.email,
+        toName: recipient.name,
+        fromName: req.user.name,
+        fromSport: req.user.sport,
+        fromPosition: req.user.position,
+        fromLevel: req.user.skillLevel,
+      }).catch(err => console.error('[roster request email]', err.message));
     }
 
     res.status(201).json({ connection });

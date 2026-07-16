@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Message = require('../models/Message');
 const MessageRequest = require('../models/MessageRequest');
 const Connection = require('../models/Connection');
+const { sendSessionConfirmedEmail, sendSessionCancelledEmail, sendRateYourPartnerEmail } = require('../utils/email');
 
 // Send a system message in the thread between two users.
 // Auto-creates/upgrades the MessageRequest so the thread is accessible.
@@ -639,6 +640,21 @@ const cancelSession = async (req, res) => {
       );
     }
 
+    // Email the partner about cancellation
+    if (partnerId) {
+      const partnerUser = await User.findById(partnerId).select('email name').lean();
+      if (partnerUser?.email) {
+        sendSessionCancelledEmail({
+          toEmail: partnerUser.email,
+          toName: partnerUser.name,
+          cancelledByName: req.user.name,
+          sessionTitle,
+          sport: session.sport,
+          date: sessionDate,
+        }).catch(err => console.error('[session cancelled email]', err.message));
+      }
+    }
+
     res.json({ message: 'Session cancelled', session });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -768,6 +784,21 @@ const approvePartner = async (req, res) => {
       session._id
     );
 
+    // Email the approved partner
+    const approvedUser = await User.findById(partnerId).select('email name').lean();
+    if (approvedUser?.email) {
+      sendSessionConfirmedEmail({
+        toEmail: approvedUser.email,
+        toName: approvedUser.name,
+        partnerName: req.user.name,
+        sessionTitle: sessionLabel,
+        sport: session.sport,
+        date: session.date,
+        time: session.time,
+        location: session.location,
+      }).catch(err => console.error('[session confirmed email]', err.message));
+    }
+
     // Notify declined partners
     for (const declinedId of declinedIds) {
       if (io) {
@@ -890,6 +921,25 @@ const completeSession = async (req, res) => {
     await session.save();
 
     res.json({ message: 'Session marked as completed', session });
+
+    // Fire-and-forget: email both participants to rate each other
+    setImmediate(async () => {
+      try {
+        const [poster, partner] = await Promise.all([
+          User.findById(session.postedBy).select('email name').lean(),
+          session.partner ? User.findById(session.partner).select('email name').lean() : null,
+        ]);
+        const sessionLabel = session.title || session.sport;
+        if (poster && partner) {
+          sendRateYourPartnerEmail({ toEmail: poster.email, toName: poster.name, partnerName: partner.name, sessionTitle: sessionLabel, sport: session.sport })
+            .catch(err => console.error('[rate email poster]', err.message));
+          sendRateYourPartnerEmail({ toEmail: partner.email, toName: partner.name, partnerName: poster.name, sessionTitle: sessionLabel, sport: session.sport })
+            .catch(err => console.error('[rate email partner]', err.message));
+        }
+      } catch (err) {
+        console.error('[rate emails]', err.message);
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
