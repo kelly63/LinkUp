@@ -1,8 +1,10 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Session = require('../models/Session');
 const { approveRating, rejectRating, getAdminDashboard } = require('../controllers/ratingController');
-const { sendVerifiedEmail } = require('../utils/email');
+const { sendVerifiedEmail, sendActivationDay3Email } = require('../utils/email');
+const { runActivationDrip } = require('../jobs/activationDrip');
 
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'linkup-admin-secret';
 const APP_URL = process.env.APP_URL || 'https://linkup-swpu.onrender.com';
@@ -591,6 +593,54 @@ router.get('/clear-tokens', async (req, res) => {
   await user.save();
   console.log(`[apn] cleared ${prev} token(s) for ${email}`);
   res.json({ message: `Cleared ${prev} token(s) for ${email}` });
+});
+
+// GET /api/admin/broadcast/activation?token=<ADMIN_SECRET>&dry=1
+// Sends the Day-3 activation email to ALL existing users who have never posted a session.
+// Add &dry=1 to preview the count without sending.
+router.get('/broadcast/activation', async (req, res) => {
+  const { token, dry } = req.query;
+  if (!token || token !== ADMIN_SECRET) return res.status(401).json({ message: 'Unauthorized' });
+
+  try {
+    const allUsers = await User.find({ role: { $in: ['athlete', 'coach'] } })
+      .select('_id email name').lean();
+
+    const ids = allUsers.map((u) => u._id);
+    const postedIds = await Session.distinct('postedBy', { postedBy: { $in: ids } });
+    const postedSet = new Set(postedIds.map(String));
+    const targets = allUsers.filter((u) => !postedSet.has(String(u._id)) && u.email);
+
+    if (dry === '1') {
+      return res.json({ message: 'Dry run — no emails sent', count: targets.length, users: targets.map(u => u.email) });
+    }
+
+    let sent = 0;
+    let failed = 0;
+    for (const user of targets) {
+      try {
+        await sendActivationDay3Email({ user });
+        sent++;
+      } catch (err) {
+        console.error(`[broadcast activation] ${user.email}:`, err.message);
+        failed++;
+      }
+    }
+
+    console.log(`[broadcast activation] sent=${sent} failed=${failed}`);
+    res.json({ message: 'Broadcast complete', sent, failed });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// GET /api/admin/broadcast/drip?token=<ADMIN_SECRET>
+// Manually trigger the day-3 / day-7 drip check right now (same logic as the daily cron)
+router.get('/broadcast/drip', async (req, res) => {
+  const { token } = req.query;
+  if (!token || token !== ADMIN_SECRET) return res.status(401).json({ message: 'Unauthorized' });
+  res.json({ message: 'Drip running in background' });
+  runActivationDrip();
 });
 
 module.exports = router;

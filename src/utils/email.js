@@ -506,6 +506,54 @@ async function sendRosterRequestEmail({ toEmail, toName, fromName, fromSport, fr
   if (error) throw new Error(error.message);
 }
 
+async function sendActivationDay3Email({ user }) {
+  const firstName = user.name.split(' ')[0];
+  const html = baseTemplate(
+    `<h1 style="color:#fff;margin:0;font-size:22px">Your first session is waiting</h1>
+     <p style="color:#86efac;margin:6px 0 0;font-size:14px">LinkUp Athletics</p>`,
+    `<p style="color:#374151;font-size:16px;margin-bottom:16px">Hey ${firstName},</p>
+     <p style="color:#374151;margin-bottom:20px">You signed up a few days ago but haven't posted a session yet. Athletes near you are actively looking for training partners right now.</p>
+     <div style="background:#f0fdf4;border-radius:12px;padding:20px;margin-bottom:24px">
+       <p style="color:#166534;font-weight:700;margin:0 0 12px;font-size:15px">It takes under 2 minutes:</p>
+       <p style="color:#166534;margin:0 0 8px;font-size:14px"><strong>1.</strong> &nbsp;Pick your sport and position</p>
+       <p style="color:#166534;margin:0 0 8px;font-size:14px"><strong>2.</strong> &nbsp;Set a date or mark it flexible</p>
+       <p style="color:#166534;margin:0;font-size:14px"><strong>3.</strong> &nbsp;Athletes will request to join — you pick who shows up</p>
+     </div>
+     <div style="text-align:center;margin-bottom:24px">${ctaButton('Post My First Session', APP_STORE_URL)}</div>
+     <p style="color:#6b7280;font-size:13px">Rather browse what's out there first? Open the app and tap <strong>Find Sessions</strong> to see what athletes near you have posted.</p>`
+  );
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: user.email,
+    subject: `${firstName}, athletes near you are looking for a training partner`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+}
+
+async function sendActivationDay7Email({ user }) {
+  const firstName = user.name.split(' ')[0];
+  const html = baseTemplate(
+    `<h1 style="color:#fff;margin:0;font-size:22px">The off-season doesn't wait</h1>
+     <p style="color:#86efac;margin:6px 0 0;font-size:14px">LinkUp Athletics</p>`,
+    `<p style="color:#374151;font-size:16px;margin-bottom:16px">Hey ${firstName},</p>
+     <p style="color:#374151;margin-bottom:20px">A week in and you still haven't taken a rep on LinkUp. Every athlete on the platform who trains this off-season comes back sharper — and with a network that gets bigger every session.</p>
+     <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:18px 20px;margin-bottom:24px">
+       <p style="color:#92400e;font-weight:700;margin:0 0 6px;font-size:15px">Don't fall behind.</p>
+       <p style="color:#92400e;font-size:14px;margin:0">The athletes who use the off-season to build reps and relationships are the ones who come out ahead. All it takes is one session to get started.</p>
+     </div>
+     <div style="text-align:center;margin-bottom:16px">${ctaButton('Find Sessions Near Me', APP_STORE_URL)}</div>
+     <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0">Or post your own and let athletes come to you.</p>`
+  );
+  const { error } = await getResend().emails.send({
+    from: FROM,
+    to: user.email,
+    subject: `One week in — ready to get your first rep in, ${firstName}?`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+}
+
 async function addToResendAudience({ email, name }) {
   const audienceId = process.env.RESEND_AUDIENCE_ID;
   if (!audienceId) return;
@@ -535,4 +583,6 @@ module.exports = {
   sendSessionCancelledEmail,
   sendRateYourPartnerEmail,
   sendRosterRequestEmail,
+  sendActivationDay3Email,
+  sendActivationDay7Email,
 };

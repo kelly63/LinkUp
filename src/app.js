@@ -27,7 +27,11 @@ const nextgenRoutes = require('./routes/nextgen');
 const uploadRoutes = require('./routes/uploads');
 const reportRoutes = require('./routes/reports');
 
-if (process.env.NODE_ENV !== 'test') connectDB();
+if (process.env.NODE_ENV !== 'test') {
+  connectDB();
+  const { startActivationDrip } = require('./jobs/activationDrip');
+  startActivationDrip();
+}
 
 const app = express();
 const httpServer = http.createServer(app);
