@@ -259,6 +259,18 @@ export const users = {
       body: JSON.stringify(body),
     }, token),
 
+  blockUser: (token: string, userId: string) =>
+    request<{ message: string }>(`/api/users/${userId}/block`, { method: 'POST' }, token),
+
+  unblockUser: (token: string, userId: string) =>
+    request<{ message: string }>(`/api/users/${userId}/block`, { method: 'DELETE' }, token),
+
+  reportUser: (token: string, userId: string, reason?: string) =>
+    request<{ message: string }>(`/api/users/${userId}/report`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }, token),
+
   uploadAvatar: async (token: string, file: File): Promise<{ user: User }> => {
     const form = new FormData();
     form.append('avatar', file);

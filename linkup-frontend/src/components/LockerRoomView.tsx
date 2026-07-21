@@ -13,13 +13,14 @@ import {
   Send,
   Trash2,
   Flag,
+  Ban,
   ArrowLeft,
   BadgeCheck,
 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
 import { useAuth } from '../lib/auth';
-import { posts as postsApi, auth as authApi, Post, avatarThumb } from '../lib/api';
+import { posts as postsApi, auth as authApi, users as usersApi, Post, avatarThumb } from '../lib/api';
 import { toast } from 'sonner';
 import { hapticLight } from '../lib/haptics';
 
@@ -136,6 +137,7 @@ interface PostCardProps {
   onSubmitComment: () => void;
   onDelete: () => void;
   onReport: () => void;
+  onBlock: () => void;
   onMenuToggle: () => void;
   onDraftChange: (value: string) => void;
   onAuthorClick: (userId: string) => void;
@@ -144,7 +146,7 @@ interface PostCardProps {
 function PostCard({
   post, isLiked, likeCount, commentCount, comments, isCommentsOpen,
   draft, isSubmitting, isMenuOpen, isOwner, userInitials, userAvatar,
-  menuRef, onLike, onToggleComments, onSubmitComment, onDelete, onReport,
+  menuRef, onLike, onToggleComments, onSubmitComment, onDelete, onReport, onBlock,
   onMenuToggle, onDraftChange, onAuthorClick,
 }: PostCardProps) {
   const author = post.author;
@@ -209,6 +211,15 @@ function PostCard({
                   <Flag className="w-4 h-4" />
                   Report post
                 </button>
+                {!isOwner && (
+                  <button
+                    onClick={onBlock}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <Ban className="w-4 h-4" />
+                    Block user
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -512,6 +523,20 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId, onNavigate }:
     }
   }, [token]);
 
+  const handleBlockUser = useCallback(async (authorId: string) => {
+    setOpenMenuPostId(null);
+    if (!token || !authorId) return;
+    try {
+      await usersApi.blockUser(token, authorId);
+      setFeedPosts((prev) => prev.filter((p) =>
+        !(typeof p.author === 'object' && p.author?._id === authorId)
+      ));
+      toast.success("User blocked. You won't see their posts anymore.");
+    } catch {
+      toast.error('Could not block user. Please try again.');
+    }
+  }, [token]);
+
   const handleAuthorClick = useCallback((userId: string) => {
     onNavigate?.('userProfile', { _id: userId });
   }, [onNavigate]);
@@ -612,6 +637,7 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId, onNavigate }:
             onSubmitComment={() => handleSubmitComment(post._id, commentDrafts[post._id] ?? '')}
             onDelete={() => handleDeletePost(post._id)}
             onReport={() => handleReportPost(post._id)}
+            onBlock={() => handleBlockUser(typeof post.author === 'object' ? (post.author?._id ?? '') : '')}
             onMenuToggle={() => setOpenMenuPostId(openMenuPostId === post._id ? null : post._id)}
             onDraftChange={(val) => setCommentDrafts((prev) => ({ ...prev, [post._id]: val }))}
             onAuthorClick={handleAuthorClick}

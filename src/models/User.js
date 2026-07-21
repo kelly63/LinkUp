@@ -257,6 +257,12 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Blocked users
+    blockedUsers: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+      default: [],
+    },
+
     // Status
     isOnline: {
       type: Boolean,

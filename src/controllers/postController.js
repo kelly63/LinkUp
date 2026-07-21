@@ -1,5 +1,7 @@
 const Post = require('../models/Post');
 const Connection = require('../models/Connection');
+const ContentReport = require('../models/ContentReport');
+const { sendContentReportEmail } = require('../utils/email');
 
 const USER_FIELDS = 'name avatar role sport position skillLevel averageRating ratingCount verificationStatus';
 
@@ -7,6 +9,7 @@ const USER_FIELDS = 'name avatar role sport position skillLevel averageRating ra
 const getFeed = async (req, res) => {
   try {
     const { sport, type, page = 1, limit = 20 } = req.query;
+    const blockedIds = req.user.blockedUsers || [];
 
     // Get roster connection IDs
     const connections = await Connection.find({
@@ -14,11 +17,11 @@ const getFeed = async (req, res) => {
       status: 'accepted',
     });
 
-    const rosterIds = connections.map((c) =>
-      c.requester.toString() === req.user._id.toString() ? c.recipient : c.requester
-    );
+    const rosterIds = connections
+      .map((c) => c.requester.toString() === req.user._id.toString() ? c.recipient : c.requester)
+      .filter((id) => !blockedIds.some((b) => b.toString() === id.toString()));
 
-    // Show posts from self + roster
+    // Show posts from self + roster (excluding blocked users)
     const query = { author: { $in: [req.user._id, ...rosterIds] } };
     if (sport) query.sport = sport;
     if (type) query.type = type;
@@ -144,8 +147,23 @@ const reportPost = async (req, res) => {
     if (!post) return res.status(404).json({ message: 'Post not found' });
 
     const { reason } = req.body;
-    // Log the report server-side so the admin can review
-    console.log(`[REPORT] Post ${post._id} reported by user ${req.user._id} (${req.user.email}). Reason: ${reason || 'none given'}`);
+
+    await ContentReport.create({
+      reportedBy: req.user._id,
+      type: 'post',
+      post: post._id,
+      reportedUser: post.author,
+      reason: reason || '',
+    });
+
+    sendContentReportEmail({
+      type: 'post',
+      reporterName: req.user.name,
+      reporterEmail: req.user.email,
+      targetName: null,
+      content: post.content || `[${post.type} post]`,
+      reason: reason || 'No reason given',
+    }).catch((err) => console.error('[report email]', err.message));
 
     res.json({ message: 'Report submitted' });
   } catch (error) {

@@ -556,6 +556,43 @@ async function sendActivationDay7Email({ user }) {
   if (error) throw new Error(error.message);
 }
 
+async function sendContentReportEmail({ type, reporterName, reporterEmail, targetName, content, reason }) {
+  const subject = type === 'post'
+    ? `[Report] Post flagged by ${reporterName}`
+    : `[Report] User ${type === 'block' ? 'blocked' : 'reported'}: ${targetName}`;
+
+  const contentSafe = (content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').slice(0, 500);
+  const reasonSafe = (reason || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+<body style="font-family:Arial,sans-serif;background:#f4f6f9;margin:0;padding:20px">
+<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+  <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);padding:24px 32px">
+    <h1 style="color:#fff;margin:0;font-size:20px">⚠️ ${type === 'post' ? 'Post Flagged' : 'User ' + (type === 'block' ? 'Blocked' : 'Reported')}</h1>
+    <p style="color:rgba(255,255,255,.8);margin:6px 0 0;font-size:14px">LinkUp Athletics — Action required within 24 hours</p>
+  </div>
+  <div style="padding:28px 32px">
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+      <tr><td style="padding:6px 12px 6px 0;color:#666;width:130px">Reported by</td><td><strong>${reporterName}</strong> (${reporterEmail})</td></tr>
+      ${targetName ? `<tr><td style="padding:6px 12px 6px 0;color:#666">${type === 'post' ? 'Post author' : 'Reported user'}</td><td><strong>${targetName}</strong></td></tr>` : ''}
+      <tr><td style="padding:6px 12px 6px 0;color:#666">Type</td><td>${type === 'post' ? 'Post content' : 'User profile'}</td></tr>
+    </table>
+    ${contentSafe ? `<div style="background:#fef2f2;border-left:3px solid #dc2626;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:16px">
+      <p style="margin:0 0 4px;font-size:12px;color:#dc2626;text-transform:uppercase;letter-spacing:.5px">Content</p>
+      <p style="margin:0;color:#1e293b;line-height:1.5">${contentSafe}</p>
+    </div>` : ''}
+    ${reasonSafe ? `<div style="background:#f8fafc;border-left:3px solid #64748b;border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:16px">
+      <p style="margin:0 0 4px;font-size:12px;color:#666;text-transform:uppercase;letter-spacing:.5px">Reason</p>
+      <p style="margin:0;color:#1e293b">${reasonSafe}</p>
+    </div>` : ''}
+    <p style="margin-top:20px;color:#6b7280;font-size:13px">Per App Store guidelines, review and remove objectionable content within 24 hours if warranted.</p>
+  </div>
+</div>
+</body></html>`;
+
+  await getResend().emails.send({ from: FROM, to: ADMIN_TO, subject, html });
+}
+
 async function addToResendAudience({ email, name }) {
   const audienceId = process.env.RESEND_AUDIENCE_ID;
   if (!audienceId) return;
@@ -573,6 +610,7 @@ async function addToResendAudience({ email, name }) {
 }
 
 module.exports = {
+  sendContentReportEmail,
   sendAdminRatingReviewEmail,
   sendVerificationEmail,
   sendPasswordResetEmail,
