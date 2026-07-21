@@ -245,15 +245,26 @@ export function MobileFrame() {
     };
   }, []);
 
-  // Handle deep links — e.g. linkupathletics://profile/<userId> from QR code scans
+  // Handle deep links — custom scheme (QR codes) and Universal Links (emails)
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     const listener = CapApp.addListener('appUrlOpen', (event) => {
-      const match = event.url.match(/linkupathletics:\/\/profile\/([^/?]+)/);
-      if (match) {
+      // Custom scheme: linkupathletics://profile/<userId> from QR codes
+      const qrMatch = event.url.match(/linkupathletics:\/\/profile\/([^/?]+)/);
+      if (qrMatch) {
         setActiveTab('dashboard');
-        setPendingNav({ view: 'userProfile', data: { _id: match[1] } });
+        setPendingNav({ view: 'userProfile', data: { _id: qrMatch[1] } });
+        return;
       }
+      // Universal Links from emails
+      try {
+        const { pathname } = new URL(event.url);
+        if (pathname === '/go/post-session') {
+          setActiveTab('post');
+        } else if (pathname === '/go/find-sessions') {
+          setActiveTab('post');
+        }
+      } catch {}
     });
     return () => { listener.then((l) => l.remove()); };
   }, []);

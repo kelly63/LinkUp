@@ -105,6 +105,50 @@ app.use('/profile', profileRoutes);
 // Health check
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
+// Apple Universal Links — AASA file (must be served before the catch-all)
+app.get('/.well-known/apple-app-site-association', (req, res) => {
+  const teamId = process.env.APPLE_TEAM_ID;
+  if (!teamId) console.warn('[AASA] APPLE_TEAM_ID env var not set — Universal Links will not work');
+  res.setHeader('Content-Type', 'application/json');
+  res.json({
+    applinks: {
+      apps: [],
+      details: [
+        {
+          appID: `${teamId || 'TEAM_ID'}.com.linkupathletics.app`,
+          paths: ['/go/*'],
+        },
+      ],
+    },
+  });
+});
+
+// Universal Link landing pages — iOS opens the app directly via AASA;
+// these pages are the fallback for users who don't have the app installed.
+function deepLinkFallback(title, subtitle) {
+  return `<!DOCTYPE html><html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title} — LinkUp Athletics</title>
+<style>body{font-family:-apple-system,sans-serif;background:#0b1623;color:#f0f4f8;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;box-sizing:border-box}
+.card{text-align:center;max-width:360px}.logo{font-size:28px;font-weight:800;color:#22c55e;margin-bottom:8px}
+h1{font-size:22px;margin:0 0 10px}p{color:#6b8199;font-size:15px;margin:0 0 28px}
+a{display:inline-block;background:#22c55e;color:#fff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:16px}</style>
+</head>
+<body><div class="card">
+<div class="logo">LinkUp</div>
+<h1>${title}</h1><p>${subtitle}</p>
+<a href="https://apps.apple.com/app/linkup-athletics/id6748965199">Download LinkUp Athletics</a>
+</div></body></html>`;
+}
+
+app.get('/go/post-session', (req, res) => {
+  res.send(deepLinkFallback('Post a Training Session', 'Download LinkUp Athletics to find and connect with training partners near you.'));
+});
+
+app.get('/go/find-sessions', (req, res) => {
+  res.send(deepLinkFallback('Find Sessions Near You', 'Download LinkUp Athletics to browse open training sessions posted by athletes near you.'));
+});
+
 // Serve React app for any non-API GET request (supports client-side routing)
 app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));

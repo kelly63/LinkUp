@@ -360,6 +360,8 @@ async function sendInviteEmail({ toEmail, fromName, inviteUrl }) {
 // ── User-facing transactional emails ─────────────────────────────────────────
 
 const APP_STORE_URL = 'https://apps.apple.com/app/linkup-athletics/id6748965199';
+const DEEP_LINK_POST = 'https://linkup-swpu.onrender.com/go/post-session';
+const DEEP_LINK_FIND = 'https://linkup-swpu.onrender.com/go/find-sessions';
 
 function baseTemplate(headerHtml, bodyHtml) {
   return `<!DOCTYPE html>
@@ -519,8 +521,8 @@ async function sendActivationDay3Email({ user }) {
        <p style="color:#166534;margin:0 0 8px;font-size:14px"><strong>2.</strong> &nbsp;Set a date or mark it flexible</p>
        <p style="color:#166534;margin:0;font-size:14px"><strong>3.</strong> &nbsp;Athletes will request to join — you pick who shows up</p>
      </div>
-     <div style="text-align:center;margin-bottom:24px">${ctaButton('Post My First Session', APP_STORE_URL)}</div>
-     <p style="color:#6b7280;font-size:13px">Rather browse what's out there first? Open the app and tap <strong>Find Sessions</strong> to see what athletes near you have posted.</p>`
+     <div style="text-align:center;margin-bottom:24px">${ctaButton('Post My First Session', DEEP_LINK_POST)}</div>
+     <p style="color:#6b7280;font-size:13px">Rather browse what's out there first? <a href="${DEEP_LINK_FIND}" style="color:#16a34a;font-weight:600">Find sessions near you →</a></p>`
   );
   const { error } = await getResend().emails.send({
     from: FROM,
@@ -542,8 +544,8 @@ async function sendActivationDay7Email({ user }) {
        <p style="color:#92400e;font-weight:700;margin:0 0 6px;font-size:15px">Don't fall behind.</p>
        <p style="color:#92400e;font-size:14px;margin:0">The athletes who use the off-season to build reps and relationships are the ones who come out ahead. All it takes is one session to get started.</p>
      </div>
-     <div style="text-align:center;margin-bottom:16px">${ctaButton('Find Sessions Near Me', APP_STORE_URL)}</div>
-     <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0">Or post your own and let athletes come to you.</p>`
+     <div style="text-align:center;margin-bottom:16px">${ctaButton('Find Sessions Near Me', DEEP_LINK_FIND)}</div>
+     <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0">Or <a href="${DEEP_LINK_POST}" style="color:#16a34a">post your own session</a> and let athletes come to you.</p>`
   );
   const { error } = await getResend().emails.send({
     from: FROM,
