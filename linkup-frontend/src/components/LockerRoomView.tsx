@@ -324,6 +324,7 @@ function PostCard({
               />
               <button
                 onClick={onSubmitComment}
+                onMouseDown={(e) => e.preventDefault()}
                 disabled={!draft.trim() || isSubmitting}
                 className="text-emerald-600 disabled:text-slate-300 transition-colors"
               >

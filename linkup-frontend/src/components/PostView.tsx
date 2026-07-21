@@ -35,13 +35,16 @@ interface PostViewProps {
   }) => void;
 }
 
-// Generate date dropdown options: Flexible + today through 30 days out
+// Generate date dropdown options: 2-Week Window + today through 30 days out
 function buildDateOptions() {
-  const opts: { val: string; label: string }[] = [
-    { val: 'Flexible', label: 'Flexible — open to discuss' },
-  ];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const windowEnd = new Date(today);
+  windowEnd.setDate(today.getDate() + 14);
+  const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const opts: { val: string; label: string }[] = [
+    { val: 'Flexible', label: `2-Week Window (${fmt(today)} – ${fmt(windowEnd)})` },
+  ];
   for (let i = 0; i <= 30; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
@@ -603,7 +606,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                       : 'bg-slate-100 text-slate-500 hover:bg-emerald-50 hover:text-emerald-600'
                   }`}
                 >
-                  Flexible (2 weeks)
+                  2-Week Window
                 </button>
               </div>
               <div className="relative">
