@@ -3,7 +3,7 @@ const Connection = require('../models/Connection');
 const ContentReport = require('../models/ContentReport');
 const { sendContentReportEmail } = require('../utils/email');
 
-const USER_FIELDS = 'name avatar role sport position skillLevel averageRating ratingCount verificationStatus';
+const USER_FIELDS = 'name avatar role sport position skillLevel averageRating ratingCount verificationStatus invitesSent';
 
 // GET /api/posts — feed (posts from roster + self)
 const getFeed = async (req, res) => {

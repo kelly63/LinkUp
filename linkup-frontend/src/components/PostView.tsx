@@ -1,4 +1,4 @@
-import { Award, MapPin, Clock, ArrowLeft, Users, Search, Filter, Plane, ChevronDown } from 'lucide-react';
+import { Award, MapPin, Clock, ArrowLeft, Users, Search, Filter, Plane, ChevronDown, Share2 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { NeedCard } from './NeedCard';
 import { AvailableSessionView } from './AvailableSessionView';
@@ -295,6 +295,28 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
     setFilterDistance('10');
     setIsFindTraveling(false);
     setFindTravelLocation('');
+  };
+
+  const handleInviteShare = async () => {
+    const appStoreUrl = 'https://apps.apple.com/app/linkup-athletics/id6748965199';
+    const shareText = 'Train smarter, find better training partners. I use LinkUp Athletics to find athletes in my area — you should too!';
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'LinkUp Athletics', text: shareText, url: appStoreUrl });
+      } else {
+        await navigator.clipboard.writeText(`${shareText}\n${appStoreUrl}`);
+        toast.success('Link copied! Share it with your teammates.');
+      }
+    } catch (err: any) {
+      if (err?.name !== 'AbortError') {
+        try {
+          await navigator.clipboard.writeText(appStoreUrl);
+          toast.success('Link copied to clipboard!');
+        } catch {
+          toast.error('Could not share. Visit the App Store to copy the link.');
+        }
+      }
+    }
   };
 
   const activeFilterCount = filterSport.length + filterPositions.length + filterSkillLevels.length + (filterDistance !== '10' ? 1 : 0) + (isFindTraveling && findTravelLocation.trim() ? 1 : 0);
@@ -1044,30 +1066,43 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 </div>
               )}
               {!loadingFind && filteredNeeds.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                  <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
+                <div className="flex flex-col items-center py-10 px-4 text-center space-y-5">
+                  <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center">
                     <MapPin className="w-10 h-10 text-emerald-300" />
                   </div>
-                  <h3 className="text-slate-800 font-semibold text-lg mb-2">No sessions nearby</h3>
-                  <p className="text-slate-500 text-sm max-w-xs mb-6">
-                    {activeFilterCount > 0
-                      ? 'No sessions match your current filters. Try clearing them or post your own.'
-                      : 'No open sessions in your area yet. Be the first to post one!'}
-                  </p>
-                  <button
-                    onClick={() => setViewMode('post')}
-                    className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-medium transition-colors shadow-sm"
-                  >
-                    Post a Session
-                  </button>
-                  {activeFilterCount > 0 && (
+                  <div>
+                    <h3 className="text-slate-800 font-semibold text-lg mb-2">
+                      {activeFilterCount > 0 ? 'No sessions match your filters' : 'No sessions nearby yet'}
+                    </h3>
+                    <p className="text-slate-500 text-sm max-w-xs">
+                      {activeFilterCount > 0
+                        ? 'Try clearing your filters — or invite teammates to grow the community!'
+                        : 'Your area is just getting started. Be the first to post or invite athletes you know!'}
+                    </p>
+                  </div>
+                  <div className="w-full space-y-2.5">
                     <button
-                      onClick={() => { clearFilters(); setShowFilters(false); }}
-                      className="mt-3 text-sm text-emerald-600 underline underline-offset-2"
+                      onClick={handleInviteShare}
+                      className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-colors shadow-sm shadow-emerald-500/20"
                     >
-                      Clear filters
+                      <Share2 className="w-4 h-4" />
+                      Invite Athletes to LinkUp
                     </button>
-                  )}
+                    <button
+                      onClick={() => setViewMode('post')}
+                      className="w-full bg-white border-2 border-slate-200 hover:border-emerald-400 text-slate-700 font-medium py-3 rounded-xl transition-colors"
+                    >
+                      Post My Own Session
+                    </button>
+                    {activeFilterCount > 0 && (
+                      <button
+                        onClick={() => { clearFilters(); setShowFilters(false); }}
+                        className="w-full text-sm text-emerald-600 underline underline-offset-2 py-1"
+                      >
+                        Clear filters to see all sessions
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
               {!loadingFind && filteredNeeds.map((need) => (
@@ -1085,6 +1120,25 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                 />
               ))}
             </div>
+
+            {/* Spread the word — shown when 1 or 2 sessions visible */}
+            {!loadingFind && filteredNeeds.length >= 1 && filteredNeeds.length <= 2 && (
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg shadow-emerald-500/20 mt-1">
+                <p className="font-semibold text-sm mb-1">
+                  Only {filteredNeeds.length} session{filteredNeeds.length !== 1 ? 's' : ''} in your area right now
+                </p>
+                <p className="text-emerald-100 text-sm mb-4">
+                  Help grow your local training community — invite teammates to download LinkUp!
+                </p>
+                <button
+                  onClick={handleInviteShare}
+                  className="w-full bg-white text-emerald-700 font-semibold py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 hover:bg-emerald-50 active:bg-emerald-100 transition-colors"
+                >
+                  <Share2 className="w-4 h-4" />
+                  Invite Athletes
+                </button>
+              </div>
+            )}
 
             {/* Load more */}
             {!loadingFind && findPage < findTotalPages && (

@@ -257,6 +257,12 @@ const userSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Growth / referral
+    invitesSent: {
+      type: Number,
+      default: 0,
+    },
+
     // Blocked users
     blockedUsers: {
       type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

@@ -42,6 +42,7 @@ export interface User {
   allowedSports: string[];
   searchRadius: number;
   verificationStatus?: 'pending' | 'approved' | 'rejected';
+  invitesSent?: number;
 }
 
 export interface Session {

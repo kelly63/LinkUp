@@ -16,6 +16,7 @@ import {
   Ban,
   ArrowLeft,
   BadgeCheck,
+  UserPlus,
 } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CreatePostDialog } from './CreatePostDialog';
@@ -174,6 +175,11 @@ function PostCard({
               >
                 <h4 className="text-slate-900 text-sm font-medium hover:text-emerald-600 transition-colors">{author?.name}</h4>
                 {isVerified && <BadgeCheck className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />}
+                {(author as any)?.invitesSent >= 1 && (
+                  <span title={`Community Builder — invited ${(author as any).invitesSent} athlete${(author as any).invitesSent !== 1 ? 's' : ''} to LinkUp`}>
+                    <UserPlus className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                  </span>
+                )}
               </button>
               <div className="flex items-center gap-1.5 text-xs text-slate-500">
                 {author?.position && <span>{author.position}</span>}
@@ -294,6 +300,7 @@ function PostCard({
                       >
                         <span className="text-xs font-medium text-slate-900 hover:text-emerald-600 transition-colors">{c.author?.name}</span>
                         {commentVerified && <BadgeCheck className="w-3 h-3 text-blue-500 flex-shrink-0" />}
+                        {(c.author as any)?.invitesSent >= 1 && <UserPlus className="w-3 h-3 text-emerald-500 flex-shrink-0" />}
                       </button>
                       <span className="text-xs text-slate-700 ml-1">{c.text}</span>
                       <p className="text-xs text-slate-400 mt-0.5">{timeAgo(c.createdAt)}</p>
