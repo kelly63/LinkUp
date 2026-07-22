@@ -104,7 +104,8 @@ router.post('/invite', protect, async (req, res) => {
     }
     const inviteUrl = process.env.APP_STORE_URL || 'https://linkup-swpu.onrender.com/invite';
     await sendInviteEmail({ toEmail: email.trim(), fromName: req.user.name, inviteUrl });
-    await User.findByIdAndUpdate(req.user._id, { $inc: { invitesSent: 1 } });
+    // Fire-and-forget — don't fail the response if the counter update fails
+    User.findByIdAndUpdate(req.user._id, { $inc: { invitesSent: 1 } }).catch((err) => console.error('[invitesSent]', err.message));
     res.json({ message: 'Invite sent!' });
   } catch (err) {
     console.error('[invite]', err);

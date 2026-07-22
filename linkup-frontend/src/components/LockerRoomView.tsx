@@ -210,6 +210,7 @@ function PostCard({
                     Delete post
                   </button>
                 )}
+                {!isOwner && (
                 <button
                   onClick={onReport}
                   className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
@@ -217,6 +218,7 @@ function PostCard({
                   <Flag className="w-4 h-4" />
                   Report post
                 </button>
+                )}
                 {!isOwner && (
                   <button
                     onClick={onBlock}
@@ -536,9 +538,13 @@ export function LockerRoomView({ onBack, initialOpenCommentPostId, onNavigate }:
     if (!token || !authorId) return;
     try {
       await usersApi.blockUser(token, authorId);
-      setFeedPosts((prev) => prev.filter((p) =>
-        !(typeof p.author === 'object' && p.author?._id === authorId)
-      ));
+      const isBlocked = (p: Post) => typeof p.author === 'object' && p.author?._id === authorId;
+      setFeedPosts((prev) => prev.filter((p) => !isBlocked(p)));
+      // Purge the blocked user's posts from all filter caches so they don't reappear on tab switch
+      (['all', 'session_completion', 'thought', 'article'] as Filter[]).forEach((f) => {
+        const cache = readFeedCache(f);
+        if (cache) writeFeedCache(f, { ...cache, posts: cache.posts.filter((p) => !isBlocked(p)) });
+      });
       toast.success("User blocked. You won't see their posts anymore.");
     } catch {
       toast.error('Could not block user. Please try again.');

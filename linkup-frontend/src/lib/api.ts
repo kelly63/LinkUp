@@ -499,7 +499,7 @@ export const posts = {
   },
 
   toggleLike: (token: string, postId: string) =>
-    request<{ liked: boolean; likeCount: number }>(`/api/posts/${postId}/like`, {
+    request<{ liked: boolean; likes: number }>(`/api/posts/${postId}/like`, {
       method: 'POST',
     }, token),
 

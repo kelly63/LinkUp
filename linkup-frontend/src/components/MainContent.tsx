@@ -54,6 +54,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserType, setSelectedUserType] = useState<'athlete' | 'coach'>('athlete');
   const [dashboardScrollTarget, setDashboardScrollTarget] = useState<string | null>(null);
+  const [postViewRequestedMode, setPostViewRequestedMode] = useState<'post' | 'find' | undefined>(undefined);
   const [ratingSessionData, setRatingSessionData] = useState<any>(null);
   const [sessionDetailsData, setSessionDetailsData] = useState<any>(null);
   const [userProfileData, setUserProfileData] = useState<any>(null);
@@ -163,6 +164,10 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
       handleNavigate('mySessions');
     } else if (view === 'receivedRatings') {
       handleNavigate('receivedRatings');
+    } else if (view === 'postSession') {
+      setPostViewRequestedMode('post');
+    } else if (view === 'findSessions') {
+      setPostViewRequestedMode('find');
     }
     onExternalNavProcessed?.();
   }, [externalNav]);
@@ -361,6 +366,8 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
             onTabChange('dashboard');
           }}
           onOpenChat={handleOpenChat}
+          requestedViewMode={postViewRequestedMode}
+          onViewModeApplied={() => setPostViewRequestedMode(undefined)}
         />
       )}
       {activeTab === 'chat' && (

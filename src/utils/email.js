@@ -590,7 +590,8 @@ async function sendContentReportEmail({ type, reporterName, reporterEmail, targe
 </div>
 </body></html>`;
 
-  await getResend().emails.send({ from: FROM, to: ADMIN_TO, subject, html });
+  const { error } = await getResend().emails.send({ from: FROM, to: ADMIN_TO, subject, html });
+  if (error) throw new Error(error.message);
 }
 
 async function addToResendAudience({ email, name }) {

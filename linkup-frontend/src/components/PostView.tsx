@@ -1,5 +1,5 @@
 import { Award, MapPin, Clock, ArrowLeft, Users, Search, Filter, Plane, ChevronDown, Share2 } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { NeedCard } from './NeedCard';
 import { AvailableSessionView } from './AvailableSessionView';
 import { UserProfileView } from './UserProfileView';
@@ -19,6 +19,8 @@ function firstLastInitial(fullName: string): string {
 interface PostViewProps {
   onNavigateToDashboard?: (target: string) => void;
   userSports?: string[];
+  requestedViewMode?: 'post' | 'find';
+  onViewModeApplied?: () => void;
   onOpenChat?: (athlete: {
     id: string;
     name: string;
@@ -71,7 +73,6 @@ function buildTimeOptions() {
   return opts;
 }
 
-const DATE_OPTIONS = buildDateOptions();
 const TIME_OPTIONS = buildTimeOptions();
 
 function SelectField({ label, icon, value, onChange, children }: {
@@ -183,9 +184,17 @@ function _MonthCalendarUnused({
   );
 }
 
-export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }: PostViewProps) {
+export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat, requestedViewMode, onViewModeApplied }: PostViewProps) {
   const { token, user } = useAuth();
+  const DATE_OPTIONS = useMemo(() => buildDateOptions(), []);
   const [viewMode, setViewMode] = useState<'post' | 'find'>('find');
+
+  useEffect(() => {
+    if (requestedViewMode) {
+      setViewMode(requestedViewMode);
+      onViewModeApplied?.();
+    }
+  }, [requestedViewMode]); // eslint-disable-line react-hooks/exhaustive-deps
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSkillLevels, setSelectedSkillLevels] = useState<string[]>([]);
   const [selectedSport, setSelectedSport] = useState(userSports.length > 0 ? userSports[0] : 'Baseball');
@@ -1072,35 +1081,48 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
                   </div>
                   <div>
                     <h3 className="text-slate-800 font-semibold text-lg mb-2">
-                      {activeFilterCount > 0 ? 'No sessions match your filters' : 'No sessions nearby yet'}
+                      {searchQuery ? 'No sessions match your search' : activeFilterCount > 0 ? 'No sessions match your filters' : 'No sessions nearby yet'}
                     </h3>
                     <p className="text-slate-500 text-sm max-w-xs">
-                      {activeFilterCount > 0
+                      {searchQuery
+                        ? 'Try a different keyword, or clear your search to browse all sessions.'
+                        : activeFilterCount > 0
                         ? 'Try clearing your filters — or invite teammates to grow the community!'
                         : 'Your area is just getting started. Be the first to post or invite athletes you know!'}
                     </p>
                   </div>
                   <div className="w-full space-y-2.5">
-                    <button
-                      onClick={handleInviteShare}
-                      className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-colors shadow-sm shadow-emerald-500/20"
-                    >
-                      <Share2 className="w-4 h-4" />
-                      Invite Athletes to LinkUp
-                    </button>
-                    <button
-                      onClick={() => setViewMode('post')}
-                      className="w-full bg-white border-2 border-slate-200 hover:border-emerald-400 text-slate-700 font-medium py-3 rounded-xl transition-colors"
-                    >
-                      Post My Own Session
-                    </button>
-                    {activeFilterCount > 0 && (
+                    {searchQuery ? (
                       <button
-                        onClick={() => { clearFilters(); setShowFilters(false); }}
-                        className="w-full text-sm text-emerald-600 underline underline-offset-2 py-1"
+                        onClick={() => setSearchQuery('')}
+                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-xl transition-colors"
                       >
-                        Clear filters to see all sessions
+                        Clear Search
                       </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={handleInviteShare}
+                          className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition-colors shadow-sm shadow-emerald-500/20"
+                        >
+                          <Share2 className="w-4 h-4" />
+                          Invite Athletes to LinkUp
+                        </button>
+                        <button
+                          onClick={() => setViewMode('post')}
+                          className="w-full bg-white border-2 border-slate-200 hover:border-emerald-400 text-slate-700 font-medium py-3 rounded-xl transition-colors"
+                        >
+                          Post My Own Session
+                        </button>
+                        {activeFilterCount > 0 && (
+                          <button
+                            onClick={() => { clearFilters(); setShowFilters(false); }}
+                            className="w-full text-sm text-emerald-600 underline underline-offset-2 py-1"
+                          >
+                            Clear filters to see all sessions
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -1121,8 +1143,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat }:
               ))}
             </div>
 
-            {/* Spread the word — shown when 1 or 2 sessions visible */}
-            {!loadingFind && filteredNeeds.length >= 1 && filteredNeeds.length <= 2 && (
+            {/* Spread the word — shown when 1 or 2 sessions visible and not a search-filtered result */}
+            {!loadingFind && !searchQuery && filteredNeeds.length >= 1 && filteredNeeds.length <= 2 && (
               <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg shadow-emerald-500/20 mt-1">
                 <p className="font-semibold text-sm mb-1">
                   Only {filteredNeeds.length} session{filteredNeeds.length !== 1 ? 's' : ''} in your area right now

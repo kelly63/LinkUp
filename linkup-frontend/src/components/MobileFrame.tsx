@@ -261,8 +261,10 @@ export function MobileFrame() {
         const { pathname } = new URL(event.url);
         if (pathname === '/go/post-session') {
           setActiveTab('post');
+          setPendingNav({ view: 'postSession' });
         } else if (pathname === '/go/find-sessions') {
           setActiveTab('post');
+          setPendingNav({ view: 'findSessions' });
         }
       } catch {}
     });
