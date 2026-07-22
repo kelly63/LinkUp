@@ -7,9 +7,16 @@ import { toast } from 'sonner';
 function isSessionPast(session: Session): boolean {
   if (!session.date || session.date === 'Flexible') return false;
   if (session.status === 'completed' || session.status === 'cancelled') return false;
-  const dateTime = session.time && session.time !== 'Flexible'
-    ? new Date(`${session.date} ${session.time}`)
-    : (() => { const d = new Date(session.date!); d.setHours(23, 59, 59, 999); return d; })();
+  // Parse YYYY-MM-DD in local time (not UTC) to avoid off-by-one on iOS/WebKit
+  const [y, m, d] = session.date.split('-').map(Number);
+  if (!y || !m || !d) return false;
+  let dateTime: Date;
+  if (session.time && session.time !== 'Flexible') {
+    const [h, min] = session.time.split(':').map(Number);
+    dateTime = new Date(y, m - 1, d, h || 0, min || 0);
+  } else {
+    dateTime = new Date(y, m - 1, d, 23, 59, 59, 999);
+  }
   return !isNaN(dateTime.getTime()) && dateTime < new Date();
 }
 
@@ -95,7 +102,7 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
       completed: { label: 'Completed', cls: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
       cancelled: { label: 'Cancelled', cls: 'bg-red-100 text-red-600 border-red-200' },
     };
-    const effectiveStatus = session.status === 'open' && session.pendingPartner ? 'pending' : session.status;
+    const effectiveStatus = session.status === 'open' && session.pendingPartners?.length ? 'pending' : session.status;
     const cfg = map[effectiveStatus] ?? map.open;
     return (
       <span className={`px-2 py-0.5 rounded-full text-xs border ${cfg.cls}`}>{cfg.label}</span>
@@ -147,14 +154,15 @@ export function MySessionsView({ onBack, onNavigate }: MySessionsViewProps) {
           <>
             <div className="space-y-3">
               {items.map((session) => {
+                const firstPending = session.pendingPartners?.[0];
                 const isPendingRequester =
-                  session.pendingPartner &&
-                  typeof session.pendingPartner === 'object' &&
-                  (session.pendingPartner as any)._id === user?._id;
+                  !!firstPending &&
+                  typeof firstPending === 'object' &&
+                  (firstPending as any)._id === user?._id;
                 const hasPendingRequester =
-                  session.pendingPartner &&
-                  typeof session.pendingPartner === 'object' &&
-                  (session.pendingPartner as any)._id !== user?._id;
+                  !!firstPending &&
+                  typeof firstPending === 'object' &&
+                  (firstPending as any)._id !== user?._id;
                 const hasPendingChange =
                   !!session.pendingChange &&
                   String(session.pendingChange.proposedBy) !== String(user?._id);

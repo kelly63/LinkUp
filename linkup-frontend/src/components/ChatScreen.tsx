@@ -22,6 +22,7 @@ interface Chat {
   avatar: string;
   role?: string;
   sessionDetails?: {
+    sessionId?: string;
     date: string;
     time: string;
     location: string;
@@ -149,6 +150,13 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isPartnerTyping]);
 
+  // Clean up typing timer on unmount to prevent post-unmount socket events
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    };
+  }, []);
+
   const handleSend = async () => {
     const text = inputText.trim();
     if (!text) return;
@@ -169,15 +177,28 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
     if (e.key === 'Enter') handleSend();
   };
 
-  const handleConfirmSession = () => {
+  const handleConfirmSession = async () => {
     setIsSessionConfirmed(true);
     setShowConfirmModal(false);
+    const d = chat.sessionDetails;
+    await sendMessage(`✅ Session confirmed! See you on ${d?.date ?? 'the agreed date'} at ${d?.time ?? 'the agreed time'}, ${d?.location ?? 'at the agreed location'}.`);
   };
 
-  const handleApplyChanges = () => {
-    if (proposedDate && proposedTime && proposedLocation) {
-      setShowProposeChanges(false);
+  const handleApplyChanges = async () => {
+    if (!proposedDate && !proposedTime && !proposedLocation) return;
+    const sessionId = chat.sessionDetails?.sessionId;
+    if (sessionId && token && proposedDate) {
+      try {
+        await sessionsApi.suggestTime(token, sessionId, { date: proposedDate, time: proposedTime || undefined });
+      } catch { /* fall through to message */ }
     }
+    const parts = [
+      proposedDate && `Date: ${proposedDate}`,
+      proposedTime && `Time: ${proposedTime}`,
+      proposedLocation && `Location: ${proposedLocation}`,
+    ].filter(Boolean).join(' · ');
+    await sendMessage(`📅 Proposed change — ${parts}. Let me know if that works!`);
+    setShowProposeChanges(false);
   };
 
   const formatTime = (iso: string) =>

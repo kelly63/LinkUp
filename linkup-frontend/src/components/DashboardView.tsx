@@ -360,7 +360,9 @@ export function DashboardView({ onTabChange, onNavigate, scrollTarget }: Dashboa
                   <span className="text-slate-700">
                     {(() => {
                       if (!session.date || session.date === 'Flexible') return session.date || 'TBD';
-                      const d = new Date(session.date);
+                      // Parse as local date (not UTC) to avoid showing the previous day on iOS/US timezones
+                      const [y, mo, dy] = session.date.split('-').map(Number);
+                      const d = y && mo && dy ? new Date(y, mo - 1, dy) : new Date(session.date);
                       return isNaN(d.getTime()) ? session.date : d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
                     })()}
                     {session.time && session.time !== 'Flexible' ? ` at ${session.time}` : session.time === 'Flexible' ? ' · Flexible time' : ''}

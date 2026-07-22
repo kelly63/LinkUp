@@ -606,6 +606,13 @@ const cancelSession = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to cancel this session' });
     }
 
+    if (session.status === 'completed') {
+      return res.status(400).json({ message: 'Cannot cancel a session that has already been completed' });
+    }
+    if (session.status === 'cancelled') {
+      return res.status(400).json({ message: 'Session is already cancelled' });
+    }
+
     // Capture partner before cancelling (populate if stored as ObjectId)
     const partnerId = session.partner ? session.partner.toString() : null;
     const sessionTitle = session.title || session.sport;

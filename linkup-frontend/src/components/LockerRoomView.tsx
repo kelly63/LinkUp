@@ -108,7 +108,7 @@ function ArticleContent({ post }: { post: Post }) {
             </h4>
             <div className="flex items-center gap-2 text-xs text-emerald-600">
               <ExternalLink className="w-3.5 h-3.5" />
-              <span className="truncate">{new URL(post.sharedUrl).hostname}</span>
+              <span className="truncate">{(() => { try { return new URL(post.sharedUrl).hostname; } catch { return post.sharedUrl; } })()}</span>
             </div>
           </div>
         </a>

@@ -75,7 +75,7 @@ export function RosterListView({ onBack, onNavigate, onOpenChat }: RosterListVie
   const handleViewProfile = (connection: any) => {
     if (onNavigate) {
       onNavigate('userProfile', {
-        id: connection.user._id,
+        _id: connection.user._id,
         type: connection.user.role,
         name: connection.user.name,
         avatar: connection.user.avatar || getInitials(connection.user.name),
@@ -149,7 +149,7 @@ export function RosterListView({ onBack, onNavigate, onOpenChat }: RosterListVie
                 return (
                   <div
                     key={req._id}
-                    onClick={() => onNavigate?.('userProfile', { id: u._id, name: u.name, avatar: u.avatar, sport, position, level: u.skillLevel, type: u.role })}
+                    onClick={() => onNavigate?.('userProfile', { _id: u._id, name: u.name, avatar: u.avatar, sport, position, level: u.skillLevel, type: u.role })}
                     className="px-5 py-4 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors"
                   >
                     <div className="w-11 h-11 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0 overflow-hidden">

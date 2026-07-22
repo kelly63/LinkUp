@@ -79,7 +79,13 @@ const getUsers = async (req, res) => {
 // GET /api/users/:id
 const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findById(req.params.id).select(
+      'name avatar role sport position skillLevel bio location school year teamType ' +
+      'sportsCoached yearsExperience certifications coachingPhilosophy hourlyRate ' +
+      'hudlUrl instagramUrl twitterUrl linkedinUrl rosterUrl ' +
+      'averageRating ratingCount verified verificationStatus invitesSent ' +
+      'isOnline lastSeen customSportRequest'
+    );
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json({ user });
   } catch (error) {
@@ -133,6 +139,9 @@ const changePassword = async (req, res) => {
     }
 
     const user = await User.findById(req.user._id).select('+password');
+    if (!user.password) {
+      return res.status(400).json({ message: 'This account uses Google or Apple sign-in and does not have a password. Use "Forgot password" to set one.' });
+    }
     if (!(await user.comparePassword(currentPassword))) {
       return res.status(401).json({ message: 'Current password is incorrect' });
     }

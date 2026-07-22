@@ -141,6 +141,7 @@ export function ChatView({
       const res = await fetch(`${apiUrl}/api/messages`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) throw new Error(`Failed to load messages (${res.status})`);
       const data = await res.json();
       setConversations(data.conversations || []);
     } catch (err: any) {
@@ -156,6 +157,7 @@ export function ChatView({
       const res = await fetch(`${apiUrl}/api/connections`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) throw new Error(`Failed to load roster (${res.status})`);
       const data = await res.json();
       setRosterAthletes(
         (data.connections || []).map((c: any) => c.user).filter(Boolean)
@@ -183,12 +185,12 @@ export function ChatView({
     if (!socket) return;
 
     const handleNewMessage = (msg: any) => {
+      const partnerId = msg.sender === currentUserId ? msg.recipient : msg.sender;
+      let needsRefetch = false;
       setConversations((prev) => {
-        const partnerId = msg.sender === currentUserId ? msg.recipient : msg.sender;
         const idx = prev.findIndex((c) => c.partner._id === partnerId);
         if (idx === -1) {
-          // New conversation — refetch
-          fetchInbox();
+          needsRefetch = true;
           return prev;
         }
         const updated = [...prev];
@@ -200,6 +202,7 @@ export function ChatView({
         // Move to top
         return [updated[idx], ...updated.filter((_, i) => i !== idx)];
       });
+      if (needsRefetch) fetchInbox();
     };
 
     const handlePresence = ({ userId, isOnline }: { userId: string; isOnline: boolean }) => {

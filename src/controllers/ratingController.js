@@ -27,6 +27,11 @@ const submitRating = async (req, res) => {
       return res.status(400).json({ message: 'rateeId and overallRating are required' });
     }
 
+    const rating_num = Number(overallRating);
+    if (!Number.isInteger(rating_num) || rating_num < 1 || rating_num > 5) {
+      return res.status(400).json({ message: 'overallRating must be an integer between 1 and 5' });
+    }
+
     if (rateeId === req.user._id.toString()) {
       return res.status(400).json({ message: 'Cannot rate yourself' });
     }
@@ -34,9 +39,12 @@ const submitRating = async (req, res) => {
     const ratee = await User.findById(rateeId);
     if (!ratee) return res.status(404).json({ message: 'User not found' });
 
-    const dupQuery = { rater: req.user._id, ratee: rateeId };
-    if (sessionId) dupQuery.session = sessionId;
-    const existing = await Rating.findOne(dupQuery);
+    // Require sessionId so the duplicate check is always session-scoped.
+    // Without it, the first rating would permanently block all future ratings of the same person.
+    if (!sessionId) {
+      return res.status(400).json({ message: 'sessionId is required to submit a rating' });
+    }
+    const existing = await Rating.findOne({ rater: req.user._id, ratee: rateeId, session: sessionId });
     if (existing) {
       return res.status(409).json({ message: 'You have already rated this person for this session' });
     }
@@ -92,7 +100,9 @@ const getReceivedRatings = async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
     const query = { ratee: req.user._id };
-    if (status) query.status = status;
+    // Default to approved-only so users never see pending/rejected reviews
+    const validStatuses = ['pending', 'approved', 'rejected'];
+    query.status = validStatuses.includes(status) ? status : 'approved';
 
     const skip = (Number(page) - 1) * Number(limit);
     const ratings = await Rating.find(query)
@@ -178,7 +188,12 @@ const approveRating = async (req, res) => {
     await rating.save();
     await refreshRatingStats(rating.ratee._id);
 
-    if (req.query.back) return res.redirect(req.query.back);
+    if (req.query.back) {
+      try {
+        const backUrl = new URL(req.query.back);
+        if (backUrl.origin === new URL(APP_URL).origin) return res.redirect(req.query.back);
+      } catch {}
+    }
     return res.send(adminPage(`Rating by ${rating.rater.name} approved and now visible publicly.`, true));
   } catch (error) {
     console.error('[admin] approveRating error:', error);
@@ -211,7 +226,12 @@ const rejectRating = async (req, res) => {
     await rating.save();
     await refreshRatingStats(rating.ratee._id);
 
-    if (req.query.back) return res.redirect(req.query.back);
+    if (req.query.back) {
+      try {
+        const backUrl = new URL(req.query.back);
+        if (backUrl.origin === new URL(APP_URL).origin) return res.redirect(req.query.back);
+      } catch {}
+    }
     return res.send(adminPage(`Rating by ${rating.rater.name} has been rejected and will not appear publicly.`, true));
   } catch (error) {
     console.error('[admin] rejectRating error:', error);
@@ -277,9 +297,11 @@ const getAdminDashboard = async (req, res) => {
           <p style="font-size:16px;margin:0">No ${safeStatus === 'all' ? '' : safeStatus + ' '}ratings</p>
          </div>`
       : ratings.map((r) => {
-          const raterName = r.rater?.name || 'Unknown';
-          const rateeName = r.ratee?.name || 'Unknown';
-          const stars = '★'.repeat(r.overallRating) + '☆'.repeat(5 - r.overallRating);
+          const esc = (s) => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+          const raterName = esc(r.rater?.name || 'Unknown');
+          const rateeName = esc(r.ratee?.name || 'Unknown');
+          const rating_val = Math.min(5, Math.max(0, Math.round(r.overallRating || 0)));
+          const stars = '★'.repeat(rating_val) + '☆'.repeat(5 - rating_val);
           const date = new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
           const cats = r.categories || {};
           const catItems = Object.entries({ 'Skill': cats.skillLevel, 'Punctuality': cats.punctuality, 'Communication': cats.communication, 'Attitude': cats.attitude })
@@ -312,7 +334,7 @@ const getAdminDashboard = async (req, res) => {
                   ${r.sport ? `<span style="color:#94a3b8;margin-left:6px">• ${r.sport}</span>` : ''}
                 </div>
                 <div style="font-size:20px;color:#f59e0b;letter-spacing:1px">${stars}
-                  <span style="font-size:14px;color:#64748b;font-weight:600;margin-left:4px">${r.overallRating}/5</span>
+                  <span style="font-size:14px;color:#64748b;font-weight:600;margin-left:4px">${rating_val}/5</span>
                 </div>
               </div>
               <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">

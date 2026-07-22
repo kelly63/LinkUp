@@ -101,10 +101,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
-    setState((prev) => {
-      if (prev.token) authApi.logout(prev.token).catch(() => {});
-      return { token: null, user: null, isAuthenticated: false, isLocked: false };
-    });
+    // Read token from localStorage before clearing state so we can fire the logout API
+    // call as a plain statement rather than inside a setState updater (which must be pure)
+    const stored = readStorage();
+    if (stored?.token) authApi.logout(stored.token).catch(() => {});
+    setState({ token: null, user: null, isAuthenticated: false, isLocked: false });
     disconnectSocket();
     localStorage.removeItem(STORAGE_KEY);
   }, []);

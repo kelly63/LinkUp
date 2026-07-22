@@ -96,6 +96,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   }, [isNative, token]);
 
   const togglePush = async () => {
+    if (!isNative) return;
     if (pushEnabled) {
       toast.info('To disable, go to iPhone Settings → Notifications → LinkUp');
       return;
