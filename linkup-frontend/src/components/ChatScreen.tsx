@@ -1,11 +1,11 @@
 import {
   ArrowLeft, Send, MapPin, CheckCircle, Edit3,
-  MessageCircle, UserCheck, X, ChevronRight, Heart, Dumbbell, ChevronDown, Clock, Calendar,
+  MessageCircle, UserCheck, X, ChevronRight, Heart, Dumbbell, ChevronDown, Clock, Calendar, MoreVertical, Ban,
 } from 'lucide-react';
 import { avatarThumb } from '../lib/api';
 import { useState, useRef, useEffect } from 'react';
 import { useMessages } from '../hooks/useMessages';
-import { messages as messagesApi, sessions as sessionsApi } from '../lib/api';
+import { messages as messagesApi, sessions as sessionsApi, users as usersApi } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { toast } from 'sonner';
 import { hapticLight } from '../lib/haptics';
@@ -62,6 +62,9 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
   const [workoutDuration, setWorkoutDuration] = useState('1 hr');
   const [workoutNotes, setWorkoutNotes] = useState('');
   const [workoutSubmitting, setWorkoutSubmitting] = useState(false);
+
+  const [showOptions, setShowOptions] = useState(false);
+  const [blocking, setBlocking] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -201,6 +204,20 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
     setShowProposeChanges(false);
   };
 
+  const handleBlockUser = async () => {
+    setShowOptions(false);
+    setBlocking(true);
+    try {
+      await usersApi.blockUser(token, chat.id);
+      toast.success(`${chat.name} has been blocked`);
+      onBack();
+    } catch (err: any) {
+      toast.error(err?.message || 'Could not block user');
+    } finally {
+      setBlocking(false);
+    }
+  };
+
   const formatTime = (iso: string) =>
     new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
@@ -231,6 +248,13 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                 <p className="text-xs text-slate-500 capitalize">{chat.role}</p>
               )}
             </div>
+          </button>
+
+          <button
+            onClick={() => setShowOptions(true)}
+            className="p-2 hover:bg-slate-100 rounded-full transition-colors flex-shrink-0"
+          >
+            <MoreVertical className="w-5 h-5 text-slate-500" />
           </button>
         </div>
 
@@ -738,6 +762,39 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Options Sheet */}
+      {showOptions && (
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-end justify-center z-50" onClick={() => setShowOptions(false)}>
+          <div className="bg-white rounded-t-3xl w-full max-w-md shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mt-3 mb-4" />
+            <div className="px-5 pb-2">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Options</p>
+            </div>
+            <button
+              onClick={handleBlockUser}
+              disabled={blocking}
+              className="w-full flex items-center gap-4 px-5 py-4 hover:bg-red-50 transition-colors text-left disabled:opacity-50"
+            >
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Ban className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-red-600">Block {chat.name}</p>
+                <p className="text-xs text-slate-500">They won't be able to message you</p>
+              </div>
+            </button>
+            <div className="h-px bg-slate-100 mx-5 my-1" />
+            <button
+              onClick={() => setShowOptions(false)}
+              className="w-full py-4 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <div className="h-safe-area-bottom" />
           </div>
         </div>
       )}

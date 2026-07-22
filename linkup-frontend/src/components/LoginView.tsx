@@ -164,7 +164,10 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
       }
     } catch (err: any) {
       const msg = err?.message || '';
-      if (!msg.toLowerCase().includes('cancel') && !msg.toLowerCase().includes('dismiss')) {
+      const isCancel = msg.toLowerCase().includes('cancel') ||
+        msg.toLowerCase().includes('dismiss') ||
+        msg.includes('1001');  // ASAuthorizationError.canceled = 1001
+      if (!isCancel) {
         setError(msg || 'Apple sign-in failed. Please try again.');
       }
     } finally {
@@ -304,7 +307,8 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
               <button
                 onClick={handleAppleSignIn}
                 disabled={googleLoading || appleLoading}
-                className="w-full bg-black hover:bg-slate-900 disabled:opacity-60 text-white py-4 rounded-xl transition-all shadow-md active:scale-[0.98] font-[Magra] flex items-center justify-center gap-3"
+                className="w-full disabled:opacity-60 py-4 rounded-xl transition-all active:scale-[0.98] font-[Magra] flex items-center justify-center gap-3"
+                style={{ backgroundColor: '#000000', color: '#ffffff' }}
               >
                 {appleLoading ? (
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
