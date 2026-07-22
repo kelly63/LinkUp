@@ -1,4 +1,4 @@
-import { ArrowLeft, Shield, KeyRound, LogOut, Eye, EyeOff, Trash2, Mail } from 'lucide-react';
+import { ArrowLeft, Shield, KeyRound, LogOut, Eye, EyeOff, Trash2, Mail, Ban, FileText, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../lib/auth';
 import { auth as authApi } from '../lib/api';
@@ -67,6 +67,9 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
   // Biometric / Face ID
   // Always visible on native — show on iOS regardless of the async availability check.
   // Errors are surfaced at tap time rather than hiding the setting entirely.
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+
   const isNative = Capacitor.isNativePlatform();
   const [biometricType, setBiometricType] = useState<BiometryType>(BiometryType.NONE);
   const [biometricEnabled, setBiometricEnabledState] = useState(false);
@@ -175,6 +178,56 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
           </div>
         )}
 
+        {/* Blocked Users */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <button
+            onClick={() => onNavigate('blockedUsers')}
+            className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors"
+          >
+            <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Ban className="w-5 h-5 text-red-500" />
+            </div>
+            <div className="flex-1 text-left">
+              <h4 className="text-slate-900">Blocked Users</h4>
+              <p className="text-sm text-slate-500">Manage who you've blocked</p>
+            </div>
+            <ArrowLeft className="w-5 h-5 text-slate-400 rotate-180" />
+          </button>
+        </div>
+
+        {/* Legal */}
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-slate-100">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Legal</p>
+          </div>
+          <button
+            onClick={() => setShowTerms(true)}
+            className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors border-b border-slate-100"
+          >
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <FileText className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <h4 className="text-slate-900">Terms of Service</h4>
+              <p className="text-sm text-slate-500">Read our terms</p>
+            </div>
+            <ArrowLeft className="w-5 h-5 text-slate-400 rotate-180" />
+          </button>
+          <button
+            onClick={() => setShowPrivacy(true)}
+            className="w-full px-5 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors"
+          >
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <Shield className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="flex-1 text-left">
+              <h4 className="text-slate-900">Privacy Policy</h4>
+              <p className="text-sm text-slate-500">How we handle your data</p>
+            </div>
+            <ArrowLeft className="w-5 h-5 text-slate-400 rotate-180" />
+          </button>
+        </div>
+
         {/* Support */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <a
@@ -257,6 +310,58 @@ export function SettingsView({ onBack, onNavigate, onLogout }: SettingsViewProps
               >
                 {deleting ? 'Deleting…' : 'Permanently Delete My Account'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Terms of Service Modal */}
+      {showTerms && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+              <h3 className="font-semibold text-slate-900">Terms of Service</h3>
+              <button onClick={() => setShowTerms(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-6 space-y-4 text-sm text-slate-700 leading-relaxed">
+              <div><h4 className="font-semibold text-slate-900 mb-1">1. Acceptance</h4><p>By creating an account, you agree to these Terms. If you do not agree, do not use LinkUp Athletics.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">2. Eligibility</h4><p>You must be at least 18 years old to use this platform.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">3. Our Role</h4><p>LinkUp Athletics is a connection platform. Our sole purpose is to help athletes find each other for training. We do not organize, supervise, or participate in any in-person sessions.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">4. Accurate Information</h4><p>You agree to provide truthful, accurate information about yourself. Misrepresentation may result in immediate account termination.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">5. Content Standards</h4><p>All content must be respectful and sports-related. No explicit content, harassment, threats, or spam.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">6. Prohibited Conduct</h4><ul className="list-disc list-inside space-y-1 ml-2 text-slate-600"><li>No harassment, threats, or bullying</li><li>No impersonation or false profiles</li><li>No solicitation or scams</li><li>No sharing others' personal information without consent</li></ul></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">7. In-Person Meetings — Your Risk</h4><p>Any in-person meeting arranged through LinkUp Athletics is entirely at your own risk. We do not verify identities, conduct background checks, or supervise sessions. Always meet in public places and tell someone where you're going.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">8. No Background Checks</h4><p>LinkUp Athletics does not perform criminal background checks. You accept full responsibility for exercising personal judgment when interacting with other users.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">9. Limitation of Liability</h4><p>LinkUp Athletics is not liable for any injuries, losses, or harm resulting from use of the platform or from meetings arranged through it.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">10. Termination</h4><p>We reserve the right to suspend or terminate any account that violates these Terms, at our sole discretion.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">11. Governing Law</h4><p>These Terms are governed by the laws of the State of New York.</p></div>
+              <p className="text-xs text-slate-400 pt-2">Questions? Email support@linkupathletics.com</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Privacy Policy Modal */}
+      {showPrivacy && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+              <h3 className="font-semibold text-slate-900">Privacy Policy</h3>
+              <button onClick={() => setShowPrivacy(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-y-auto p-6 space-y-4 text-sm text-slate-700 leading-relaxed">
+              <div><h4 className="font-semibold text-slate-900 mb-1">Information We Collect</h4><p>We collect information you provide: name, email, location, profile photo, athletic background, and messages sent through the platform.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">How We Use Your Information</h4><ul className="list-disc list-inside space-y-1 ml-2 text-slate-600"><li>To display your profile to other users</li><li>To facilitate connections and messaging</li><li>To send notifications about account activity</li><li>To improve the platform</li></ul></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">What We Do NOT Do</h4><ul className="list-disc list-inside space-y-1 ml-2 text-slate-600"><li>We do not sell your personal information</li><li>We do not share your contact information without consent</li><li>We do not use your data for advertising</li></ul></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">Profile Visibility</h4><p>Your profile information is visible to other users according to your privacy settings, which you can update at any time.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">Messages</h4><p>Messages are stored on our servers. We may review them if needed to investigate reports of abuse.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">Data Retention</h4><p>Your data is retained as long as your account is active. Upon deletion, your personal data will be removed within 30 days.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">Security</h4><p>We use industry-standard security practices including encrypted passwords and secure connections.</p></div>
+              <div><h4 className="font-semibold text-slate-900 mb-1">Contact</h4><p>Questions about your privacy? Email support@linkupathletics.com.</p></div>
             </div>
           </div>
         </div>

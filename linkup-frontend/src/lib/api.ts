@@ -260,6 +260,9 @@ export const users = {
       body: JSON.stringify(body),
     }, token),
 
+  getBlockedUsers: (token: string) =>
+    request<{ blockedUsers: { _id: string; name: string; avatar?: string }[] }>('/api/users/blocked', {}, token),
+
   blockUser: (token: string, userId: string) =>
     request<{ message: string }>(`/api/users/${userId}/block`, { method: 'POST' }, token),
 

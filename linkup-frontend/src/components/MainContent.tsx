@@ -20,6 +20,7 @@ import { SessionDetailsView } from './SessionDetailsView';
 import { RosterListView } from './RosterListView';
 import { EditSessionView } from './EditSessionView';
 import { MySessionsView } from './MySessionsView';
+import { BlockedUsersView } from './BlockedUsersView';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../lib/auth';
 import { sessions as sessionsApi, ratings as ratingsApi } from '../lib/api';
@@ -225,6 +226,7 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
 
   if (currentView === 'preferences') return wrap(<PreferencesView onBack={handleBack} />);
   if (currentView === 'settings') return wrap(<SettingsView onBack={handleBack} onNavigate={handleNavigate} onLogout={handleLogout} />);
+  if (currentView === 'blockedUsers') return wrap(<BlockedUsersView onBack={handleBack} />);
 
   if (currentView === 'roster') {
     return wrap(<RosterListView onBack={handleBack} onNavigate={handleNavigate} onOpenChat={handleOpenChat} />);

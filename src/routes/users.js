@@ -30,6 +30,20 @@ const upload = multer({
 });
 
 router.get('/', protect, getUsers);
+
+router.get('/blocked', protect, async (req, res) => {
+  try {
+    const me = await User.findById(req.user._id).select('blockedUsers').lean();
+    if (!me || !me.blockedUsers?.length) return res.json({ blockedUsers: [] });
+    const users = await User.find({ _id: { $in: me.blockedUsers } })
+      .select('name avatar')
+      .lean();
+    res.json({ blockedUsers: users });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 router.get('/:id', protect, getUserById);
 router.put('/profile', protect, upload.single('avatar'), updateProfile);
 router.put('/password', protect, changePassword);
