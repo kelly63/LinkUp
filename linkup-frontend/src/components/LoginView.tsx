@@ -81,7 +81,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
   const [gtAgreedTerms, setGtAgreedTerms] = useState(false);
   const [gtAgreedPrivacy, setGtAgreedPrivacy] = useState(false);
   const [gtAgeVerified, setGtAgeVerified] = useState(false);
-  const [gtSignature, setGtSignature] = useState('');
+  const [gtElectronicConsent, setGtElectronicConsent] = useState(false);
   const [gtSaving, setGtSaving] = useState(false);
 
   const [appleLoading, setAppleLoading] = useState(false);
@@ -183,7 +183,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
         agreedToTerms: true,
         agreedToPrivacyPolicy: true,
         ageVerified: true,
-        signature: gtSignature,
+        signature: googlePendingUser?.name || 'Electronic consent',
       } as any);
       onLogin(googlePendingToken, updated);
     } catch (err: any) {
@@ -435,24 +435,18 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
               <p className="text-sm text-slate-700 font-medium">I confirm I am 18 years of age or older</p>
             </label>
 
-            <div>
-              <p className="text-xs text-slate-500 mb-2">Type your full legal name as your electronic signature</p>
-              <input
-                type="text"
-                value={gtSignature}
-                onChange={(e) => setGtSignature(e.target.value)}
-                placeholder="Your full legal name"
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none font-serif text-lg"
-              />
-            </div>
+            <label className="flex items-start gap-3 cursor-pointer bg-slate-50 rounded-xl p-3">
+              <input type="checkbox" checked={gtElectronicConsent} onChange={(e) => setGtElectronicConsent(e.target.checked)} className="w-5 h-5 mt-0.5 flex-shrink-0 accent-emerald-600" />
+              <p className="text-sm text-slate-700 font-medium">I provide my electronic consent to all agreements above</p>
+            </label>
 
             {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-center">{error}</p>}
 
             <button
               onClick={handleGoogleTermsSubmit}
-              disabled={!gtAgreedTerms || !gtAgreedPrivacy || !gtAgeVerified || !gtSignature.trim() || gtSaving}
+              disabled={!gtAgreedTerms || !gtAgreedPrivacy || !gtAgeVerified || !gtElectronicConsent || gtSaving}
               className={`w-full py-4 rounded-xl font-semibold transition-all ${
-                gtAgreedTerms && gtAgreedPrivacy && gtAgeVerified && gtSignature.trim()
+                gtAgreedTerms && gtAgreedPrivacy && gtAgeVerified && gtElectronicConsent
                   ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
                   : 'bg-slate-300 text-slate-500 cursor-not-allowed'
               }`}
@@ -460,7 +454,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
               {gtSaving ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" /> : 'Continue to LinkUp Athletics'}
             </button>
 
-            <button onClick={() => { setGooglePendingToken(null); setGooglePendingUser(null); }} className="w-full py-3 text-sm text-slate-500">
+            <button onClick={() => { setGooglePendingToken(null); setGooglePendingUser(null); setGtAgreedTerms(false); setGtAgreedPrivacy(false); setGtAgeVerified(false); setGtElectronicConsent(false); }} className="w-full py-3 text-sm text-slate-500">
               Cancel
             </button>
           </div>

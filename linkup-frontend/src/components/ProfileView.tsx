@@ -1293,53 +1293,6 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
               </button>
             </div>
 
-            {/* Divider */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-slate-200" />
-              <span className="text-xs text-slate-400">or send via email</span>
-              <div className="flex-1 h-px bg-slate-200" />
-            </div>
-
-            {/* Email invite */}
-            <div className="flex gap-2">
-              <input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="friend@email.com"
-                className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-emerald-500 focus:outline-none text-sm text-slate-900 placeholder-slate-400"
-              />
-              <button
-                disabled={!inviteEmail.trim() || inviteSending}
-                onClick={async () => {
-                  if (!token) return;
-                  setInviteSending(true);
-                  try {
-                    const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/users/invite`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                      body: JSON.stringify({ email: inviteEmail.trim() }),
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                      toast.success('Invite sent!');
-                      setInviteEmail('');
-                      setShowInviteModal(false);
-                    } else {
-                      toast.error(data.message || 'Could not send invite');
-                    }
-                  } catch {
-                    toast.error('Could not send invite');
-                  } finally {
-                    setInviteSending(false);
-                  }
-                }}
-                className="px-4 py-3 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-xl transition-colors flex items-center gap-1.5 text-sm font-semibold"
-              >
-                {inviteSending ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Mail className="w-4 h-4" />}
-                Send
-              </button>
-            </div>
           </div>
         </div>
       )}
