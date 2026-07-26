@@ -643,4 +643,40 @@ router.get('/broadcast/drip', async (req, res) => {
   runActivationDrip();
 });
 
+// DELETE /api/admin/sessions/orphaned?token=<ADMIN_SECRET>
+// Removes sessions whose postedBy or partner user no longer exists
+router.delete('/sessions/orphaned', async (req, res) => {
+  const { token } = req.query;
+  if (!token || token !== ADMIN_SECRET) return res.status(401).json({ message: 'Unauthorized' });
+  try {
+    const allSessions = await Session.find({}).select('postedBy partner').lean();
+    const userIds = [...new Set([
+      ...allSessions.map(s => s.postedBy?.toString()).filter(Boolean),
+      ...allSessions.map(s => s.partner?.toString()).filter(Boolean),
+    ])];
+    const existingUsers = await User.find({ _id: { $in: userIds } }).select('_id').lean();
+    const existingSet = new Set(existingUsers.map(u => u._id.toString()));
+    const orphanedIds = allSessions
+      .filter(s => !existingSet.has(s.postedBy?.toString()))
+      .map(s => s._id);
+    const result = await Session.deleteMany({ _id: { $in: orphanedIds } });
+    res.json({ message: `Deleted ${result.deletedCount} orphaned sessions` });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// DELETE /api/admin/sessions/all?token=<ADMIN_SECRET>
+// Deletes ALL sessions (use for test data cleanup only)
+router.delete('/sessions/all', async (req, res) => {
+  const { token } = req.query;
+  if (!token || token !== ADMIN_SECRET) return res.status(401).json({ message: 'Unauthorized' });
+  try {
+    const result = await Session.deleteMany({});
+    res.json({ message: `Deleted ${result.deletedCount} sessions` });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 module.exports = router;

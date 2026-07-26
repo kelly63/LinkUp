@@ -458,7 +458,7 @@ const deleteAccount = async (req, res) => {
     await Promise.all([
       Connection.deleteMany({ $or: [{ requester: userId }, { recipient: userId }] }),
       Post.deleteMany({ author: userId }),
-      Session.deleteMany({ postedBy: userId }),
+      Session.deleteMany({ $or: [{ postedBy: userId }, { partner: userId }] }),
       Message.deleteMany({ $or: [{ sender: userId }, { recipient: userId }] }),
       Notification.deleteMany({ recipient: userId }),
       Rating.deleteMany({ $or: [{ rater: userId }, { ratee: userId }] }),
