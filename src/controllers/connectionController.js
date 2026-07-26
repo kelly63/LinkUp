@@ -150,13 +150,15 @@ const getConnections = async (req, res) => {
       .populate('recipient', USER_PUBLIC_FIELDS)
       .sort({ updatedAt: -1 });
 
-    const roster = connections.map((conn) => {
-      const other =
-        conn.requester._id.toString() === req.user._id.toString()
-          ? conn.recipient
-          : conn.requester;
-      return { connectionId: conn._id, user: other, connectedAt: conn.updatedAt };
-    });
+    const roster = connections
+      .filter((conn) => conn.requester && conn.recipient) // skip connections with deleted users
+      .map((conn) => {
+        const other =
+          conn.requester._id.toString() === req.user._id.toString()
+            ? conn.recipient
+            : conn.requester;
+        return { connectionId: conn._id, user: other, connectedAt: conn.updatedAt };
+      });
 
     res.json({ connections: roster });
   } catch (error) {

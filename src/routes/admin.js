@@ -643,6 +643,30 @@ router.get('/broadcast/drip', async (req, res) => {
   runActivationDrip();
 });
 
+// DELETE /api/admin/connections/orphaned?token=<ADMIN_SECRET>
+// Removes connections where either user no longer exists
+router.delete('/connections/orphaned', async (req, res) => {
+  const { token } = req.query;
+  if (!token || token !== ADMIN_SECRET) return res.status(401).json({ message: 'Unauthorized' });
+  try {
+    const Connection = require('../models/Connection');
+    const allConns = await Connection.find({}).select('requester recipient').lean();
+    const userIds = [...new Set([
+      ...allConns.map(c => c.requester?.toString()).filter(Boolean),
+      ...allConns.map(c => c.recipient?.toString()).filter(Boolean),
+    ])];
+    const existing = await User.find({ _id: { $in: userIds } }).select('_id').lean();
+    const existingSet = new Set(existing.map(u => u._id.toString()));
+    const orphanedIds = allConns
+      .filter(c => !existingSet.has(c.requester?.toString()) || !existingSet.has(c.recipient?.toString()))
+      .map(c => c._id);
+    const result = await Connection.deleteMany({ _id: { $in: orphanedIds } });
+    res.json({ message: `Deleted ${result.deletedCount} orphaned connections` });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 // DELETE /api/admin/sessions/orphaned?token=<ADMIN_SECRET>
 // Removes sessions whose postedBy or partner user no longer exists
 router.delete('/sessions/orphaned', async (req, res) => {
