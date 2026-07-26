@@ -61,8 +61,9 @@ app.use('/api', rateLimit({
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
-  'capacitor://localhost',  // iOS Capacitor
-  'http://localhost',       // Android Capacitor
+  'https://linkup-swpu.onrender.com',  // production web
+  'capacitor://localhost',              // iOS Capacitor
+  'http://localhost',                   // Android Capacitor
   'http://localhost:3000',
   'http://localhost:5173',
 ].filter(Boolean);
