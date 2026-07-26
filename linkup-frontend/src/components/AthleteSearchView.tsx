@@ -65,8 +65,13 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
       connectionsApi.getPending(token),
     ]).then(([{ connections: accepted }, { requests: pending }]) => {
       const map: Record<string, 'accepted' | 'pending'> = {};
-      accepted.forEach((c) => { map[c.user._id] = 'accepted'; });
-      pending.forEach((c) => { map[c.user._id] = 'pending'; });
+      // accepted connections: shape is { user: { _id, ... } }
+      accepted.forEach((c) => { if (c.user?._id) map[c.user._id.toString()] = 'accepted'; });
+      // pending requests: shape is { requester: { _id, ... } } (incoming) or { user: { _id } }
+      pending.forEach((c) => {
+        const uid = (c as any).requester?._id || c.user?._id;
+        if (uid) map[uid.toString()] = 'pending';
+      });
       setRosterStatus(map);
     }).catch(() => {});
   }, [token]);
