@@ -144,8 +144,12 @@ export function ChatView({
       if (!res.ok) throw new Error(`Failed to load messages (${res.status})`);
       const data = await res.json();
       setConversations(data.conversations || []);
-    } catch (err: any) {
-      toast.error(err?.message || 'Could not load messages');
+    } catch {
+      // Only show error if no cached conversations to fall back on
+      setConversations((prev) => {
+        if (prev.length === 0) toast.error('Could not load messages');
+        return prev;
+      });
     } finally {
       setLoading(false);
     }
@@ -162,8 +166,12 @@ export function ChatView({
       setRosterAthletes(
         (data.connections || []).map((c: any) => c.user).filter(Boolean)
       );
-    } catch (err: any) {
-      toast.error(err?.message || 'Could not load roster');
+    } catch {
+      // Only surface an error if there's no cached roster to fall back on
+      setRosterAthletes((prev) => {
+        if (prev.length === 0) toast.error('Could not load roster');
+        return prev;
+      });
     }
   }, [token, apiUrl]);
 
