@@ -4,9 +4,10 @@ interface Props {
   imageUrl: string;
   onConfirm: (file: File) => void;
   onCancel: () => void;
+  onChooseDifferent?: () => void;
 }
 
-export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
+export function ImageCropModal({ imageUrl, onConfirm, onCancel, onChooseDifferent }: Props) {
   const [dims, setDims] = useState({ w: 0, h: 0 });
   const containerSizeRef = useRef({ w: 0, h: 0 });
   const [containerSize, setContainerSize] = useState({ w: 0, h: 0 });
@@ -39,7 +40,7 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
     () => (dims.w > 0 ? (cropRadius * 2) / Math.min(dims.w, dims.h) : 1),
     [dims, cropRadius]
   );
-  const maxScale = minScale * 5;
+  const maxScale = minScale * 10;
 
   const clamp = useCallback(
     (ox: number, oy: number, s: number) => {
@@ -247,22 +248,32 @@ export function ImageCropModal({ imageUrl, onConfirm, onCancel }: Props) {
 
       {/* Header */}
       <div
-        className="flex items-center justify-between px-5 flex-shrink-0"
+        className="flex-shrink-0 px-5"
         style={{ paddingTop: 'max(16px, env(safe-area-inset-top))', paddingBottom: 12 }}
       >
-        <button
-          onClick={onCancel}
-          className="text-white/60 hover:text-white text-sm font-medium py-1 px-1"
-        >
-          Cancel
-        </button>
-        <p className="text-white text-sm font-semibold tracking-wide">Move and Scale</p>
-        <button
-          onClick={handleConfirm}
-          className="bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white text-sm font-semibold px-4 py-1.5 rounded-full transition-colors"
-        >
-          Choose
-        </button>
+        <div className="flex items-center justify-between mb-2">
+          <button
+            onClick={onCancel}
+            className="text-white/60 hover:text-white text-sm font-medium py-1 px-1"
+          >
+            Cancel
+          </button>
+          <p className="text-white text-sm font-semibold tracking-wide">Move and Scale</p>
+          <button
+            onClick={handleConfirm}
+            className="bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white text-sm font-semibold px-4 py-1.5 rounded-full transition-colors"
+          >
+            Use Photo
+          </button>
+        </div>
+        {onChooseDifferent && (
+          <button
+            onClick={onChooseDifferent}
+            className="w-full text-center text-white/50 hover:text-white/80 text-xs py-1 transition-colors"
+          >
+            Choose a different photo
+          </button>
+        )}
       </div>
 
       {/* Crop stage */}

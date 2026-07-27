@@ -1348,6 +1348,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
           imageUrl={cropImageUrl}
           onConfirm={handleCropConfirm}
           onCancel={() => setCropImageUrl(null)}
+          onChooseDifferent={() => { setCropImageUrl(null); handleCameraButtonClick(); }}
         />
       )}
     </div>

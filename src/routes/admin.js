@@ -97,16 +97,26 @@ router.get('/verify-dashboard', async (req, res) => {
               </div>`;
           }
 
+          const avatarHtml = u.avatar
+            ? `<img src="${u.avatar}" alt="profile" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid #e2e8f0;flex-shrink:0">`
+            : `<div style="width:72px;height:72px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:28px">👤</div>`;
+
           return `
           <div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:20px;margin-bottom:14px">
-            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-              <div>
-                <div style="font-size:17px;font-weight:700;color:#1e293b;margin-bottom:2px">${u.name}</div>
-                <div style="font-size:13px;color:#64748b">${u.email}</div>
-              </div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-                ${statusBadge(u.verificationStatus)}
-                <span style="font-size:12px;color:#94a3b8">Joined ${joined}</span>
+            <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+              ${avatarHtml}
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap">
+                  <div>
+                    <div style="font-size:17px;font-weight:700;color:#1e293b;margin-bottom:2px">${u.name}</div>
+                    <div style="font-size:13px;color:#64748b">${u.email}</div>
+                    ${u.bio ? `<div style="font-size:12px;color:#475569;margin-top:4px;font-style:italic">"${u.bio.replace(/</g,'&lt;').replace(/>/g,'&gt;').slice(0, 120)}${u.bio.length > 120 ? '…' : ''}"</div>` : ''}
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+                    ${statusBadge(u.verificationStatus)}
+                    <span style="font-size:12px;color:#94a3b8">Joined ${joined}</span>
+                  </div>
+                </div>
               </div>
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:8px">
