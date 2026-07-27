@@ -83,8 +83,18 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
   const [gtAgeVerified, setGtAgeVerified] = useState(false);
   const [gtElectronicConsent, setGtElectronicConsent] = useState(false);
   const [gtSaving, setGtSaving] = useState(false);
+  const [gtName, setGtName] = useState('');
 
   const [appleLoading, setAppleLoading] = useState(false);
+
+  // Returns true when the name Apple/Google provided looks like a real person's name.
+  // Falls back to asking when it's blank, an email prefix, or has no space (single token).
+  const nameNeedsCollection = (name?: string) => {
+    if (!name) return true;
+    if (name.includes('@')) return true;           // email address used as name
+    if (!name.includes(' ')) return true;          // single token — no first+last
+    return false;
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -127,6 +137,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
       } else {
         setGooglePendingToken(token);
         setGooglePendingUser(user);
+        setGtName(nameNeedsCollection(user.name) ? '' : user.name);
       }
     } catch (err: any) {
       const msg = err?.message || '';
@@ -161,6 +172,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
       } else {
         setGooglePendingToken(token);
         setGooglePendingUser(user);
+        setGtName(nameNeedsCollection(user.name) ? '' : user.name);
       }
     } catch (err: any) {
       const msg = err?.message || '';
@@ -179,12 +191,14 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
     if (!googlePendingToken) return;
     setGtSaving(true);
     try {
-      const { user: updated } = await usersApi.updateProfile(googlePendingToken, {
+      const payload: Record<string, unknown> = {
         agreedToTerms: true,
         agreedToPrivacyPolicy: true,
         ageVerified: true,
-        signature: googlePendingUser?.name || 'Electronic consent',
-      } as any);
+        signature: gtName.trim() || googlePendingUser?.name || 'Electronic consent',
+      };
+      if (gtName.trim()) payload.name = gtName.trim();
+      const { user: updated } = await usersApi.updateProfile(googlePendingToken, payload as any);
       onLogin(googlePendingToken, updated);
     } catch (err: any) {
       setError(err.message || 'Could not save agreement');
@@ -417,8 +431,27 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
                 </svg>
               </div>
               <h3 className="text-lg font-bold text-slate-900">One last step</h3>
-              <p className="text-sm text-slate-500 mt-1">Welcome, {googlePendingUser?.name}! Please agree to our terms to continue.</p>
+              <p className="text-sm text-slate-500 mt-1">
+                {nameNeedsCollection(googlePendingUser?.name)
+                  ? 'Almost there! Tell us your name and agree to our terms to continue.'
+                  : `Welcome, ${googlePendingUser?.name}! Please agree to our terms to continue.`}
+              </p>
             </div>
+
+            {nameNeedsCollection(googlePendingUser?.name) && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">Your full name <span className="text-red-500">*</span></label>
+                <input
+                  type="text"
+                  value={gtName}
+                  onChange={(e) => setGtName(e.target.value)}
+                  placeholder="First and last name"
+                  autoFocus
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+                <p className="text-xs text-slate-400">This is how other athletes will see you on LinkUp.</p>
+              </div>
+            )}
 
             <label className="flex items-start gap-3 cursor-pointer bg-slate-50 rounded-xl p-3">
               <input type="checkbox" checked={gtAgreedTerms} onChange={(e) => setGtAgreedTerms(e.target.checked)} className="w-5 h-5 mt-0.5 flex-shrink-0 accent-blue-600" />
@@ -444,9 +477,13 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
 
             <button
               onClick={handleGoogleTermsSubmit}
-              disabled={!gtAgreedTerms || !gtAgreedPrivacy || !gtAgeVerified || !gtElectronicConsent || gtSaving}
+              disabled={
+                !gtAgreedTerms || !gtAgreedPrivacy || !gtAgeVerified || !gtElectronicConsent || gtSaving ||
+                (nameNeedsCollection(googlePendingUser?.name) && !gtName.trim())
+              }
               className={`w-full py-4 rounded-xl font-semibold transition-all ${
-                gtAgreedTerms && gtAgreedPrivacy && gtAgeVerified && gtElectronicConsent
+                gtAgreedTerms && gtAgreedPrivacy && gtAgeVerified && gtElectronicConsent &&
+                (!nameNeedsCollection(googlePendingUser?.name) || gtName.trim())
                   ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
                   : 'bg-slate-300 text-slate-500 cursor-not-allowed'
               }`}
@@ -454,7 +491,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
               {gtSaving ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" /> : 'Continue to LinkUp Athletics'}
             </button>
 
-            <button onClick={() => { setGooglePendingToken(null); setGooglePendingUser(null); setGtAgreedTerms(false); setGtAgreedPrivacy(false); setGtAgeVerified(false); setGtElectronicConsent(false); }} className="w-full py-3 text-sm text-slate-500">
+            <button onClick={() => { setGooglePendingToken(null); setGooglePendingUser(null); setGtAgreedTerms(false); setGtAgreedPrivacy(false); setGtAgeVerified(false); setGtElectronicConsent(false); setGtName(''); }} className="w-full py-3 text-sm text-slate-500">
               Cancel
             </button>
           </div>
