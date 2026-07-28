@@ -58,6 +58,12 @@ const sessionSchema = new mongoose.Schema(
       default: '',
     },
 
+    // Type of workout (for chat-initiated session requests)
+    workoutType: {
+      type: String,
+      default: '',
+    },
+
     // Goals and notes
     goals: {
       type: String,

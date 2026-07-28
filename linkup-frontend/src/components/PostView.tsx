@@ -1,4 +1,5 @@
 import { Award, MapPin, Clock, ArrowLeft, Users, Search, Filter, Plane, ChevronDown, Share2 } from 'lucide-react';
+import { SPORTS } from '../lib/sports';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { NeedCard } from './NeedCard';
 import { AvailableSessionView } from './AvailableSessionView';
@@ -953,7 +954,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat, r
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {['Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis'].map((sport) => (
+                    {SPORTS.map((sport) => (
                       <button
                         key={sport}
                         onClick={() => toggleFilterSport(sport)}

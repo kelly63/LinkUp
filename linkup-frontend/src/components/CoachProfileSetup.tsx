@@ -1,4 +1,5 @@
 import { ArrowLeft, DollarSign, Award, Users, X } from 'lucide-react';
+import { SPORTS } from '../lib/sports';
 import { useState } from 'react';
 
 interface CoachProfileSetupProps {
@@ -12,19 +13,7 @@ export function CoachProfileSetup({ onBack }: CoachProfileSetupProps) {
   const [certifications, setCertifications] = useState('');
   const [yearsExperience, setYearsExperience] = useState('');
 
-  const availableSports = [
-    'Baseball',
-    'Softball',
-    'Soccer',
-    'Basketball',
-    'Volleyball',
-    'Football',
-    'Lacrosse',
-    'Field Hockey',
-    'Track and Field',
-    'Golf',
-    'Tennis'
-  ];
+  const availableSports = SPORTS;
 
   const toggleSport = (sport: string) => {
     if (selectedSports.includes(sport)) {

@@ -3,6 +3,7 @@ import {
   MessageCircle, UserCheck, X, ChevronRight, Heart, Dumbbell, ChevronDown, Clock, Calendar, MoreVertical, Ban,
 } from 'lucide-react';
 import { avatarThumb } from '../lib/api';
+import { WORKOUT_TYPES, type WorkoutType } from '../lib/sports';
 import { useState, useRef, useEffect } from 'react';
 import { useMessages } from '../hooks/useMessages';
 import { messages as messagesApi, sessions as sessionsApi, users as usersApi } from '../lib/api';
@@ -55,6 +56,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
   // Workout request modal
   const [showWorkoutRequest, setShowWorkoutRequest] = useState(false);
   const [workoutStep, setWorkoutStep] = useState<1 | 2>(1);
+  const [workoutType, setWorkoutType] = useState<WorkoutType>('Sport Practice / Drills');
   const [workoutMessage, setWorkoutMessage] = useState('');
   const [workoutDate, setWorkoutDate] = useState('');
   const [workoutTime, setWorkoutTime] = useState('Flexible');
@@ -119,6 +121,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
       const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
       const { session } = await sessionsApi.create(token, {
         sport: user?.sport || 'Other',
+        workoutType,
         date: isFlexibleDate ? 'Flexible' : workoutDate,
         ...(isFlexibleDate && {
           dateWindowStart: now.toISOString(),
@@ -135,6 +138,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
       toast.success('Workout request sent!');
       setShowWorkoutRequest(false);
       setWorkoutStep(1);
+      setWorkoutType('Sport Practice / Drills');
       setWorkoutMessage('');
       setWorkoutDate('');
       setWorkoutTime('Flexible');
@@ -618,7 +622,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                   <p className="text-xs text-slate-500">with {chat.name}</p>
                 </div>
               </div>
-              <button onClick={() => setShowWorkoutRequest(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+              <button onClick={() => { setShowWorkoutRequest(false); setWorkoutStep(1); setWorkoutType('Sport Practice / Drills'); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                 <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
@@ -626,6 +630,34 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
             <div className="p-5 space-y-4">
               {workoutStep === 1 ? (
                 <>
+                  {/* Workout type picker */}
+                  <div>
+                    <label className="text-sm font-semibold text-slate-700 mb-2 block">Workout type</label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {WORKOUT_TYPES.map((type) => {
+                        const icons: Record<string, string> = {
+                          'Sport Practice / Drills': '🏅',
+                          'Lifting / Strength': '🏋️',
+                          'Conditioning / Cardio': '🏃',
+                        };
+                        return (
+                          <button
+                            key={type}
+                            onClick={() => setWorkoutType(type)}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all text-left ${
+                              workoutType === type
+                                ? 'border-emerald-400 bg-emerald-50 text-emerald-800'
+                                : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                            }`}
+                          >
+                            <span className="text-lg">{icons[type]}</span>
+                            {type}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div>
                     <label className="text-sm font-semibold text-slate-700 mb-2 block">Send a message</label>
                     <p className="text-xs text-slate-500 mb-3">Give {chat.name} a heads up about what you're thinking</p>
@@ -633,7 +665,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                       value={workoutMessage}
                       onChange={(e) => setWorkoutMessage(e.target.value)}
                       placeholder={`e.g. "Can you workout next week? Morristown area?"`}
-                      rows={4}
+                      rows={3}
                       className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:border-emerald-400 focus:outline-none transition-colors resize-none text-sm"
                     />
                   </div>
@@ -649,6 +681,10 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                 </>
               ) : (
                 <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">Type</span>
+                    <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">{workoutType}</span>
+                  </div>
                   <p className="text-sm text-slate-600">Finalize the workout details so {chat.name} knows exactly what you have in mind.</p>
 
                   {/* Date */}

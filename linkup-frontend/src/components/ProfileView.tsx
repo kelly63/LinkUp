@@ -1,4 +1,5 @@
 import { Settings, Star, Award, Shield, ChevronRight, Link, Instagram, ExternalLink, Users2, FileText, Camera, KeyRound, Eye, EyeOff, Bell, Mail, MessageSquare, Copy, X, UserPlus } from 'lucide-react';
+import { SPORTS } from '../lib/sports';
 import { useState, useEffect, useRef, type ReactNode } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { QrCode } from 'lucide-react';
@@ -220,7 +221,7 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [tempAboutMe, setTempAboutMe] = useState('');
   const [tempPhilosophy, setTempPhilosophy] = useState('');
   
-  const sports = ['Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Wrestling', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis', 'Swimming'];
+  const sports = SPORTS;
   const levels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro'];
   
   const sportPositions: Record<string, string[]> = {

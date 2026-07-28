@@ -1,4 +1,5 @@
 import { Search, Filter, MapPin, Star, Award, Users, Calendar, ArrowLeft, ChevronDown, ChevronUp, X, Shield, UserPlus, UserCheck, Clock } from 'lucide-react';
+import { SPORTS } from '../lib/sports';
 import { useState, useEffect, useCallback } from 'react';
 import { QrCode, Camera } from 'lucide-react';
 import { useAuth } from '../lib/auth';
@@ -91,7 +92,7 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
   };
 
 
-  const sports = ['All Sports', 'Baseball', 'Softball', 'Soccer', 'Basketball', 'Volleyball', 'Football', 'Lacrosse', 'Wrestling', 'Field Hockey', 'Track and Field', 'Golf', 'Tennis', 'Swimming'];
+  const sports = ['All Sports', ...SPORTS];
   const levels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro'];
 
   const toggleLevel = (level: string) => {

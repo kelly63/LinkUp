@@ -1,4 +1,5 @@
 import { ArrowLeft, Eye, Shield, Users, Map } from 'lucide-react';
+import { SPORTS } from '../lib/sports';
 import { useState } from 'react';
 import { useAuth } from '../lib/auth';
 import { users as usersApi, User } from '../lib/api';
@@ -24,11 +25,7 @@ export function PreferencesView({ onBack }: PreferencesViewProps) {
 
   const skillLevels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro'];
 
-  const sports = [
-    'Baseball', 'Softball', 'Basketball', 'Volleyball',
-    'Football', 'Soccer', 'Lacrosse', 'Wrestling',
-    'Field Hockey', 'Track and Field', 'Golf', 'Tennis', 'Swimming',
-  ];
+  const sports = SPORTS;
 
   const toggleLevel = (level: string) => {
     setAllowedLevels((prev) =>

@@ -1,4 +1,5 @@
 import { ArrowLeft, Mail, Lock, User, Phone, MapPin, Award, Users, Check, Upload, Shield, FileCheck, Camera, Plus, X, Info, Bell } from 'lucide-react';
+import { SPORTS } from '../lib/sports';
 import { useState, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
@@ -76,21 +77,7 @@ export function SignUpView({ onComplete, onBackToLogin }: SignUpViewProps) {
     searchNorthAmerica: true,
   });
 
-  const availableSports = [
-    'Baseball',
-    'Softball',
-    'Soccer',
-    'Basketball',
-    'Volleyball',
-    'Football',
-    'Lacrosse',
-    'Wrestling',
-    'Field Hockey',
-    'Track and Field',
-    'Golf',
-    'Tennis',
-    'Swimming',
-  ];
+  const availableSports = SPORTS;
 
   const skillLevels = ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro', 'Athlete - Other'];
 
