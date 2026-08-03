@@ -23,12 +23,24 @@ async function getUsersWithNoSessions(daysAgo) {
   return candidates.filter((u) => !postedSet.has(String(u._id)));
 }
 
+// Returns all users who signed up ~N days ago (regardless of session activity)
+async function getUsersAtDaysOld(daysAgo) {
+  const now = new Date();
+  const windowEnd = new Date(now - daysAgo * 24 * 60 * 60 * 1000);
+  const windowStart = new Date(windowEnd - 24 * 60 * 60 * 1000);
+
+  return User.find({
+    createdAt: { $gte: windowStart, $lt: windowEnd },
+    role: { $in: ['athlete', 'coach'] },
+  }).select('_id email name').lean();
+}
+
 async function runActivationDrip() {
   console.log('[activation drip] running');
   try {
     const [day3Users, day7Users] = await Promise.all([
       getUsersWithNoSessions(3),
-      getUsersWithNoSessions(7),
+      getUsersAtDaysOld(7),  // referral email goes to everyone at 7 days
     ]);
 
     console.log(`[activation drip] day3=${day3Users.length} day7=${day7Users.length}`);

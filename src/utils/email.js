@@ -536,21 +536,22 @@ async function sendActivationDay3Email({ user }) {
 async function sendActivationDay7Email({ user }) {
   const firstName = user.name.split(' ')[0];
   const html = baseTemplate(
-    `<h1 style="color:#fff;margin:0;font-size:22px">The off-season doesn't wait</h1>
+    `<h1 style="color:#fff;margin:0;font-size:22px">Your best training partners are already in your phone</h1>
      <p style="color:#86efac;margin:6px 0 0;font-size:14px">LinkUp Athletics</p>`,
     `<p style="color:#374151;font-size:16px;margin-bottom:16px">Hey ${firstName},</p>
-     <p style="color:#374151;margin-bottom:20px">A week in and you still haven't taken a rep on LinkUp. Every athlete on the platform who trains this off-season comes back sharper — and with a network that gets bigger every session.</p>
-     <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:18px 20px;margin-bottom:24px">
-       <p style="color:#92400e;font-weight:700;margin:0 0 6px;font-size:15px">Don't fall behind.</p>
-       <p style="color:#92400e;font-size:14px;margin:0">The athletes who use the off-season to build reps and relationships are the ones who come out ahead. All it takes is one session to get started.</p>
+     <p style="color:#374151;margin-bottom:20px">The more teammates and training partners you have on LinkUp, the better your options get. And the best ones? They're probably people you already know.</p>
+     <div style="background:#f0fdf4;border-radius:12px;padding:20px;margin-bottom:24px">
+       <p style="color:#166534;font-weight:700;margin:0 0 12px;font-size:15px">Two quick wins this week:</p>
+       <p style="color:#166534;margin:0 0 10px;font-size:14px">🏆 &nbsp;<strong>Add your college roster</strong> — search your teammates by name and add them to your LinkUp roster so you can request workouts directly.</p>
+       <p style="color:#166534;margin:0;font-size:14px">📲 &nbsp;<strong>Invite a training partner</strong> — send them a link and they're up in 60 seconds.</p>
      </div>
-     <div style="text-align:center;margin-bottom:16px">${ctaButton('Find Sessions Near Me', DEEP_LINK_FIND)}</div>
-     <p style="color:#9ca3af;font-size:12px;text-align:center;margin:0">Or <a href="${DEEP_LINK_POST}" style="color:#16a34a">post your own session</a> and let athletes come to you.</p>`
+     <div style="text-align:center;margin-bottom:16px">${ctaButton('Open LinkUp Athletics', APP_STORE_URL)}</div>
+     <p style="color:#6b7280;font-size:13px;text-align:center">The bigger your network, the more sessions you get. Bring one person in and your whole roster benefits.</p>`
   );
   const { error } = await getResend().emails.send({
     from: FROM,
     to: user.email,
-    subject: `One week in — ready to get your first rep in, ${firstName}?`,
+    subject: `${firstName}, your teammates should be on LinkUp too`,
     html,
   });
   if (error) throw new Error(error.message);
