@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { User, auth as authApi } from './api';
+import { User, auth as authApi, UNAUTHORIZED_EVENT } from './api';
 import { getSocket, disconnectSocket } from './socket';
 import { getBiometricEnabled, setBiometricEnabled, isBiometricAvailable, verifyBiometric } from './biometric';
 import { App as CapApp } from '@capacitor/app';
@@ -77,6 +77,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     });
     return () => { sub.then((h) => h.remove()); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-logout when any API call gets a 401 (expired/invalid token)
+  useEffect(() => {
+    const handle = () => {
+      localStorage.removeItem(STORAGE_KEY);
+      disconnectSocket();
+      setState({ token: null, user: null, isAuthenticated: false, isLocked: false });
+    };
+    window.addEventListener(UNAUTHORIZED_EVENT, handle);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, handle);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // After unlock: reconnect socket and refresh user data

@@ -35,7 +35,7 @@ const APP_URL = process.env.APP_URL || 'http://localhost:5000';
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    expiresIn: process.env.JWT_EXPIRES_IN || '90d',
   });
 
 function validatePassword(password) {

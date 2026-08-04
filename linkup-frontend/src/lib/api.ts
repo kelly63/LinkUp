@@ -146,6 +146,9 @@ export interface Rating {
 
 // ─── HTTP helper ──────────────────────────────────────────────────────────────
 
+// Emitted whenever any request gets a 401 — AuthProvider listens and logs out
+export const UNAUTHORIZED_EVENT = 'linkup:unauthorized';
+
 async function request<T>(
   path: string,
   options: RequestInit = {},
@@ -158,10 +161,18 @@ async function request<T>(
   };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
+  // 15-second timeout so a cold-starting Render instance fails fast
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15_000);
+
   let res: Response;
   try {
-    res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
-  } catch {
+    res = await fetch(`${BASE_URL}${path}`, { ...options, headers, signal: controller.signal });
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err?.name === 'AbortError') {
+      throw new Error('The server took too long to respond. Please try again.');
+    }
     // Network failure (cold-start, no connection) — retry once after 3 s
     if (_attempt < 2) {
       await new Promise(r => setTimeout(r, 3000));
@@ -169,9 +180,14 @@ async function request<T>(
     }
     throw new Error('Could not reach the server. Please check your connection and try again.');
   }
+  clearTimeout(timeoutId);
 
   const data = await res.json();
   if (!res.ok) {
+    if (res.status === 401) {
+      // Token expired or invalid — tell AuthProvider to log out
+      window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT));
+    }
     throw new Error(data.message || `Request failed: ${res.status}`);
   }
   return data as T;
