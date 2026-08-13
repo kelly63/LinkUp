@@ -3,6 +3,7 @@ export const SPORTS = [
   'Basketball',
   'Cross Country',
   'Field Hockey',
+  'Flag Football',
   'Football',
   'Golf',
   'Hockey (Ice)',
