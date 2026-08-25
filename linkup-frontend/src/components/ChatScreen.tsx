@@ -453,7 +453,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
           />
           <button
             onClick={handleSend}
-            onMouseDown={(e) => e.preventDefault()}
+            onTouchEnd={(e) => { e.preventDefault(); if (inputText.trim()) handleSend(); }}
             disabled={!inputText.trim()}
             className="w-11 h-11 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-300 text-white rounded-full flex items-center justify-center transition-colors flex-shrink-0"
           >
@@ -785,6 +785,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
 
                   <button
                     onClick={handleWorkoutRequestSubmit}
+                    onTouchEnd={(e) => { e.preventDefault(); if (!workoutSubmitting) handleWorkoutRequestSubmit(); }}
                     disabled={workoutSubmitting}
                     className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
                   >

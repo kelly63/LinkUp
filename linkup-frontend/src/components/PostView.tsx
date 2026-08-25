@@ -307,6 +307,63 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat, r
     setFindTravelLocation('');
   };
 
+  const handlePostSession = async () => {
+    if (!token) return;
+    if (!locationValue.trim()) { toast.error('Please enter a location for your session'); return; }
+    if (submitting) return;
+    setSubmitting(true);
+    const resolvedPosterRole = posterRole || user?.position || '';
+    const notes = notesRef.current?.value || '';
+    try {
+      const isFlexible = !selectedDate || selectedDate === 'Flexible';
+      const sessionDate = isFlexible ? 'Flexible' : selectedDate;
+      const now = new Date();
+      const thirtyDaysOut = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+      const skillLevelValue = allLevels ? 'All Levels' : selectedSkillLevels.join(', ');
+
+      await sessionsApi.create(token, {
+        teamType: selectedTeamType,
+        sport: selectedSport,
+        posterRole: resolvedPosterRole,
+        partnerRole: selectedPartnerRoles.join(', '),
+        title: selectedPartnerRoles.length > 0
+          ? `${selectedSport} – ${selectedPartnerRoles.join(' / ')} needed`
+          : `${selectedSport} – Training partner needed`,
+        date: sessionDate,
+        ...(isFlexible && {
+          dateWindowStart: now.toISOString(),
+          dateWindowEnd: thirtyDaysOut.toISOString(),
+        }),
+        time: selectedTime,
+        duration,
+        location: locationValue,
+        skillLevelRequired: skillLevelValue,
+        notes,
+        goals: notes,
+        sessionType: 'need',
+        status: 'open',
+        isTraveler: isPostTraveling,
+      });
+      hapticMedium();
+      toast.success('Session posted! It\'s now visible to other athletes.');
+      setSelectedPartnerRoles([]);
+      setPosterRole('');
+      setSelectedTeamType(user?.teamType || '');
+      setSelectedDate('');
+      setSelectedTime('Flexible');
+      setAllLevels(true);
+      setSelectedSkillLevels([]);
+      setLocationValue('');
+      setIsPostTraveling(false);
+      if (notesRef.current) notesRef.current.value = '';
+      setShowSavePrefsModal(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to post session.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleInviteShare = async () => {
     const appStoreUrl = 'https://apps.apple.com/app/linkup-athletics/id6748965199';
     const shareText = 'Train smarter, find better training partners. I use LinkUp Athletics to find athletes in my area — you should too!';
@@ -807,62 +864,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat, r
             {/* Primary Action Button */}
             <button
               disabled={submitting}
-              onClick={async () => {
-                if (!token) return;
-                if (!locationValue.trim()) { toast.error('Please enter a location for your session'); return; }
-                setSubmitting(true);
-                const resolvedPosterRole = posterRole || user?.position || '';
-                const notes = notesRef.current?.value || '';
-                try {
-                  const isFlexible = !selectedDate || selectedDate === 'Flexible';
-                  const sessionDate = isFlexible ? 'Flexible' : selectedDate;
-                  const now = new Date();
-                  const thirtyDaysOut = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-                  const skillLevelValue = allLevels ? 'All Levels' : selectedSkillLevels.join(', ');
-
-                  await sessionsApi.create(token, {
-                    teamType: selectedTeamType,
-                    sport: selectedSport,
-                    posterRole: resolvedPosterRole,
-                    partnerRole: selectedPartnerRoles.join(', '),
-                    title: selectedPartnerRoles.length > 0
-                      ? `${selectedSport} – ${selectedPartnerRoles.join(' / ')} needed`
-                      : `${selectedSport} – Training partner needed`,
-                    date: sessionDate,
-                    ...(isFlexible && {
-                      dateWindowStart: now.toISOString(),
-                      dateWindowEnd: thirtyDaysOut.toISOString(),
-                    }),
-                    time: selectedTime,
-                    duration,
-                    location: locationValue,
-                    skillLevelRequired: skillLevelValue,
-                    notes,
-                    goals: notes,
-                    sessionType: 'need',
-                    status: 'open',
-                    isTraveler: isPostTraveling,
-                  });
-                  hapticMedium();
-                  toast.success('Session posted! It\'s now visible to other athletes.');
-                  // Reset form
-                  setSelectedPartnerRoles([]);
-                  setPosterRole('');
-                  setSelectedTeamType(user?.teamType || '');
-                  setSelectedDate('');
-                  setSelectedTime('Flexible');
-                  setAllLevels(true);
-                  setSelectedSkillLevels([]);
-                  setLocationValue('');
-                  setIsPostTraveling(false);
-                  if (notesRef.current) notesRef.current.value = '';
-                  setShowSavePrefsModal(true);
-                } catch (err: any) {
-                  toast.error(err.message || 'Failed to post session.');
-                } finally {
-                  setSubmitting(false);
-                }
-              }}
+              onClick={handlePostSession}
+              onTouchEnd={(e) => { e.preventDefault(); handlePostSession(); }}
               className="w-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:opacity-60 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-red-500/20 hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
             >
               {submitting ? (
