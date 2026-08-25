@@ -73,6 +73,7 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
   const equipment: string[] = (session as Session).equipment || [];
   const skillLevel = (session as Session).skillLevelRequired || (session as any).level || '';
   const seeking = (session as Session).partnerRole || (session as any).seeking || '';
+  const workoutType = (session as Session).workoutType || '';
 
   const confirmAccept = async () => {
     if (!token || !sessionId) return;
@@ -248,6 +249,18 @@ export function AvailableSessionView({ session, isOnRoster = false, onBack, onNa
                 <p className="text-slate-900 font-medium">{duration}</p>
               </div>
             </div>
+
+            {workoutType && (
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Trophy className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500 mb-0.5">Workout Type</p>
+                  <p className="text-slate-900 font-medium">{workoutType}</p>
+                </div>
+              </div>
+            )}
 
             {skillLevel && (
               <div className="flex items-start gap-3">

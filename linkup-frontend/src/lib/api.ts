@@ -66,6 +66,7 @@ export interface Session {
   pendingPartners?: User[];
   additionalPartners?: User[];
   sessionType: 'need' | 'clinic';
+  workoutType: string;
   isTraveler: boolean;
   dateWindowStart?: string | null;
   dateWindowEnd?: string | null;

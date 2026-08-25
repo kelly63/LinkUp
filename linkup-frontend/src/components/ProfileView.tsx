@@ -187,8 +187,6 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
   const [showPhilosophyEdit, setShowPhilosophyEdit] = useState(false);
   const [showQRCodeModal, setShowQRCodeModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteSending, setInviteSending] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(user?.avatar || null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
@@ -235,7 +233,13 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
     'Field Hockey': ['Forward', 'Midfielder', 'Defender', 'Goalkeeper'],
     'Track and Field': ['Sprinter', 'Distance Runner', 'Hurdler', 'Long Jumper', 'High Jumper', 'Triple Jumper', 'Pole Vaulter', 'Shot Putter', 'Discus Thrower', 'Javelin Thrower', 'Decathlete/Heptathlete'],
     'Golf': ['Driver', 'Irons', 'Short Game', 'Putting', 'Course Management'],
-    'Tennis': ['Singles', 'Doubles', 'Serve & Volley', 'Baseline', 'Net Play']
+    'Tennis': ['Singles', 'Doubles', 'Serve & Volley', 'Baseline', 'Net Play'],
+    'Cross Country': ['Distance Runner', 'Middle Distance', 'Sprints', 'Steeplechase'],
+    'Hockey (Ice)': ['Center', 'Left Wing', 'Right Wing', 'Defenseman', 'Goalie'],
+    'Rugby': ['Prop', 'Hooker', 'Lock', 'Flanker', 'Number 8', 'Scrum Half', 'Fly Half', 'Centre', 'Wing', 'Fullback'],
+    'Flag Football': ['QB', 'WR', 'Center', 'Rusher', 'DB', 'Safety'],
+    'Swimming': ['Freestyle', 'Backstroke', 'Breaststroke', 'Butterfly', 'Individual Medley', 'Relay'],
+    'Wrestling': ['Freestyle', 'Greco-Roman', 'Folkstyle'],
   };
   
   const handleOpenAthleteEdit = () => {
