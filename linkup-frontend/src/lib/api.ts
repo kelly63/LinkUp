@@ -295,13 +295,27 @@ export const users = {
   uploadAvatar: async (token: string, file: File): Promise<{ user: User }> => {
     const form = new FormData();
     form.append('avatar', file);
-    const res = await fetch(`${BASE_URL}/api/users/profile`, {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${token}` },
-      body: form,
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30_000);
+    let res: Response;
+    try {
+      res = await fetch(`${BASE_URL}/api/users/profile`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+        signal: controller.signal,
+      });
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err?.name === 'AbortError') throw new Error('Upload timed out. Please try again.');
+      throw new Error('Could not reach the server. Please check your connection and try again.');
+    }
+    clearTimeout(timeoutId);
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message || `Upload failed: ${res.status}`);
+    if (!res.ok) {
+      if (res.status === 401) window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT));
+      throw new Error(data.message || `Upload failed: ${res.status}`);
+    }
     return data as { user: User };
   },
 

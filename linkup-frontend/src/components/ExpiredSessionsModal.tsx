@@ -16,13 +16,17 @@ export function ExpiredSessionsModal({ onDismiss }: { onDismiss: () => void }) {
   const { token } = useAuth();
   const [expired, setExpired] = useState<any[]>([]);
   const [acting, setActing] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!token) return;
-    sessionsApi.getExpired(token).then(({ sessions }) => setExpired(sessions)).catch(() => {});
+    sessionsApi.getExpired(token)
+      .then(({ sessions }) => setExpired(sessions))
+      .catch(() => toast.error('Could not load expired sessions'))
+      .finally(() => setLoaded(true));
   }, [token]);
 
-  if (!token || expired.length === 0) return null;
+  if (!token || !loaded || expired.length === 0) return null;
 
   const handleRepost = async (session: any) => {
     if (!token) return;

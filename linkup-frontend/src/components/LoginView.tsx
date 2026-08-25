@@ -199,6 +199,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
       };
       if (gtName.trim()) payload.name = gtName.trim();
       const { user: updated } = await usersApi.updateProfile(googlePendingToken, payload as any);
+      setGtSaving(false);
       onLogin(googlePendingToken, updated);
     } catch (err: any) {
       setError(err.message || 'Could not save agreement');

@@ -74,26 +74,41 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
 
   useEffect(() => {
     if (!isNative) return;
+    let mounted = true;
+    const handlePromises: Promise<{ remove(): void }>[] = [];
+
     PushNotifications.checkPermissions().then(async (s) => {
+      if (!mounted) return;
       if (s.receive === 'granted') {
         setPushEnabled(true);
-        const errListener = await PushNotifications.addListener('registrationError', () => {
-          errListener.remove();
+        const errP = PushNotifications.addListener('registrationError', () => {
+          errP.then(h => h.remove());
         });
-        const listener = await PushNotifications.addListener('registration', async (tokenData) => {
-          listener.remove();
-          errListener.remove();
-          if (token) {
-            await fetch(`${API}/api/notifications/device-token`, {
+        handlePromises.push(errP);
+        const regP = PushNotifications.addListener('registration', async (tokenData) => {
+          regP.then(h => h.remove());
+          errP.then(h => h.remove());
+          if (!mounted || !token) return;
+          try {
+            const res = await fetch(`${API}/api/notifications/device-token`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
               body: JSON.stringify({ token: tokenData.value }),
-            }).catch(() => {});
+            });
+            if (!res.ok) toast.error('Failed to save push token');
+          } catch {
+            toast.error('Failed to save push token');
           }
         });
+        handlePromises.push(regP);
         PushNotifications.register().catch(() => {});
       }
     }).catch(() => {});
+
+    return () => {
+      mounted = false;
+      handlePromises.forEach(p => p.then(h => h.remove()).catch(() => {}));
+    };
   }, [isNative, token]);
 
   const togglePush = async () => {
@@ -1283,8 +1298,12 @@ export function ProfileView({ userRole, onRoleChange, onNavigate, onLogout }: Pr
               <button
                 onClick={async () => {
                   const inviteUrl = `${import.meta.env.VITE_API_URL || 'https://linkup-swpu.onrender.com'}/invite`;
-                  await navigator.clipboard.writeText(inviteUrl).catch(() => {});
-                  toast.success('Link copied! Paste it in Instagram DMs');
+                  try {
+                    await navigator.clipboard.writeText(inviteUrl);
+                    toast.success('Link copied! Paste it in Instagram DMs');
+                  } catch {
+                    toast.error('Could not copy link — try again');
+                  }
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl transition-colors text-left"
               >

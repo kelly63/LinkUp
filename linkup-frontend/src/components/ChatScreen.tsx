@@ -622,7 +622,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                   <p className="text-xs text-slate-500">with {chat.name}</p>
                 </div>
               </div>
-              <button onClick={() => { setShowWorkoutRequest(false); setWorkoutStep(1); setWorkoutType('Sport Practice / Drills'); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+              <button onClick={() => { setShowWorkoutRequest(false); setWorkoutStep(1); setWorkoutType('Sport Practice / Drills'); setWorkoutMessage(''); setWorkoutDate(''); setWorkoutTime('Flexible'); setWorkoutLocation(''); setWorkoutDuration('1 hr'); setWorkoutNotes(''); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
                 <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
@@ -675,7 +675,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                   >
                     Next: Add Details
                   </button>
-                  <button onClick={() => setShowWorkoutRequest(false)} className="w-full py-3 text-sm text-slate-500">
+                  <button onClick={() => { setShowWorkoutRequest(false); setWorkoutStep(1); setWorkoutType('Sport Practice / Drills'); setWorkoutMessage(''); setWorkoutDate(''); setWorkoutTime('Flexible'); setWorkoutLocation(''); setWorkoutDuration('1 hr'); setWorkoutNotes(''); }} className="w-full py-3 text-sm text-slate-500">
                     Cancel
                   </button>
                 </>

@@ -74,7 +74,7 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
         if (uid) map[uid.toString()] = 'pending';
       });
       setRosterStatus(map);
-    }).catch(() => {});
+    }).catch(() => { toast.error('Could not load roster status'); });
   }, [token]);
 
   const handleAddToRoster = async (athleteId: string) => {
