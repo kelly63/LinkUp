@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ChevronRight, ChevronDown } from 'lucide-react';
 import { SPORTS } from '../lib/sports';
 import { useAuth } from '../lib/auth';
@@ -49,6 +49,7 @@ export function NewUserOnboarding({ onComplete }: Props) {
   const [selectedTeamType, setSelectedTeamType] = useState<'mens' | 'womens' | ''>('');
   const [selectedSkillLevel, setSelectedSkillLevel] = useState('');
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef<boolean>(false);
 
   const positions = selectedSport ? (SPORT_POSITIONS[selectedSport] || []) : [];
 
@@ -65,7 +66,8 @@ export function NewUserOnboarding({ onComplete }: Props) {
 
   const handleFinish = async () => {
     if (!token) return;
-    if (saving) return;
+    if (savingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     try {
       const { user: updated } = await usersApi.updateProfile(token, {
@@ -79,6 +81,8 @@ export function NewUserOnboarding({ onComplete }: Props) {
       onComplete();
     } catch (err: any) {
       toast.error(err?.message || 'Could not save profile');
+    } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };

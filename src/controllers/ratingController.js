@@ -50,7 +50,6 @@ const submitRating = async (req, res) => {
       const recent = await Rating.findOne({
         rater: req.user._id,
         ratee: rateeId,
-        session: null,
         createdAt: { $gte: sevenDaysAgo },
       });
       if (recent) {
@@ -155,7 +154,7 @@ const getUserRatings = async (req, res) => {
       .limit(Number(limit));
 
     const total = await Rating.countDocuments({ ratee: req.params.userId, status: 'approved' });
-    const allApproved = await Rating.find({ ratee: req.params.userId, status: 'approved' });
+    const allApproved = await Rating.find({ ratee: req.params.userId, status: 'approved' }).select('overallRating').lean();
     const avg = allApproved.length
       ? allApproved.reduce((sum, r) => sum + r.overallRating, 0) / allApproved.length
       : 0;

@@ -320,7 +320,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat, r
       const isFlexible = !selectedDate || selectedDate === 'Flexible';
       const sessionDate = isFlexible ? 'Flexible' : selectedDate;
       const now = new Date();
-      const thirtyDaysOut = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+      const twoWeeksOut = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
       const skillLevelValue = allLevels ? 'All Levels' : selectedSkillLevels.join(', ');
 
       await sessionsApi.create(token, {
@@ -334,7 +334,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat, r
         date: sessionDate,
         ...(isFlexible && {
           dateWindowStart: now.toISOString(),
-          dateWindowEnd: thirtyDaysOut.toISOString(),
+          dateWindowEnd: twoWeeksOut.toISOString(),
         }),
         time: selectedTime,
         duration,

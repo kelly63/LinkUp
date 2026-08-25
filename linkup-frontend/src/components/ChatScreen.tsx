@@ -180,6 +180,8 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
     setWorkoutLocation('');
     setWorkoutDuration('1 hr');
     setWorkoutNotes('');
+    workoutSubmittingRef.current = false;
+    setWorkoutSubmitting(false);
   };
 
   const handleSend = async () => {
