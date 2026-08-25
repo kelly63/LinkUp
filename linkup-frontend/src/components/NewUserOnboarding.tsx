@@ -272,7 +272,7 @@ export function NewUserOnboarding({ onComplete }: Props) {
               >
                 {saving
                   ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  : 'Let's Go!'}
+                  : "Let's Go!"}
               </button>
             </div>
           </>
