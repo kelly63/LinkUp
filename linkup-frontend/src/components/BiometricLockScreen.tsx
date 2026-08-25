@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../lib/auth';
 import logo from '/logo.png';
 
@@ -6,22 +6,31 @@ export function BiometricLockScreen() {
   const { unlock, logout } = useAuth();
   const [unlocking, setUnlocking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const didAutoPrompt = useRef(false);
 
   const handleUnlock = async () => {
+    if (unlocking) return;
     setUnlocking(true);
     setError(null);
     try {
       await unlock();
     } catch (err: any) {
-      // User cancelled or biometric failed — show gentle message
-      const code = err?.message || '';
-      if (!code.includes('cancel') && !code.includes('Cancel')) {
-        setError('Biometric verification failed. Try again or sign in.');
+      const msg = err?.message || '';
+      const cancelled = msg.toLowerCase().includes('cancel') || msg.toLowerCase().includes('user');
+      if (!cancelled) {
+        setError('Biometric verification failed. Try again or sign in with a different account.');
       }
     } finally {
       setUnlocking(false);
     }
   };
+
+  // Auto-trigger Face ID prompt as soon as the lock screen mounts
+  useEffect(() => {
+    if (didAutoPrompt.current) return;
+    didAutoPrompt.current = true;
+    handleUnlock();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="fixed inset-0 z-50 bg-zinc-950 flex flex-col items-center justify-center gap-8 px-8">
@@ -37,9 +46,10 @@ export function BiometricLockScreen() {
       )}
 
       <button
+        type="button"
         onClick={handleUnlock}
         disabled={unlocking}
-        className="flex flex-col items-center gap-2 disabled:opacity-50"
+        className="flex flex-col items-center gap-2 disabled:opacity-50 text-inherit"
       >
         {/* Face ID icon */}
         <div className="w-16 h-16 bg-emerald-500/20 rounded-2xl flex items-center justify-center border border-emerald-500/30">
@@ -60,8 +70,9 @@ export function BiometricLockScreen() {
       </button>
 
       <button
+        type="button"
         onClick={logout}
-        className="text-zinc-500 text-sm underline underline-offset-2 mt-4"
+        className="text-zinc-400 text-sm underline underline-offset-2 mt-4"
       >
         Sign in with a different account
       </button>

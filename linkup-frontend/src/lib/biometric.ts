@@ -21,7 +21,7 @@ export async function verifyBiometric(): Promise<void> {
   await NativeBiometric.verifyIdentity({
     reason: 'Unlock LinkUp',
     title: 'LinkUp',
-    useFallback: false,
+    useFallback: true,
   });
 }
 
