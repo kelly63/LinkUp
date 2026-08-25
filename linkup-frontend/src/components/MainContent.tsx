@@ -10,6 +10,7 @@ import { AthleteSearchView } from './AthleteSearchView';
 import { ClinicFlyerView } from './ClinicFlyerView';
 import { LoginView } from './LoginView';
 import { SignUpView } from './SignUpView';
+import { NewUserOnboarding } from './NewUserOnboarding';
 import { PreferencesView } from './PreferencesView';
 import { SettingsView } from './SettingsView';
 import { UserProfileView } from './UserProfileView';
@@ -197,6 +198,15 @@ export function MainContent({ activeTab, onTabChange, onAuthChange, onChatOpenCh
       return <SignUpView onComplete={handleSignUpComplete} onBackToLogin={() => setAuthView('login')} />;
     }
     return <LoginView onLogin={handleLogin} onSignUp={() => setAuthView('signup')} />;
+  }
+
+  // ── Onboarding gate ─────────────────────────────────────────────────────────
+  if (isAuthenticated && user && !user.sport) {
+    return (
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <NewUserOnboarding onComplete={() => {}} />
+      </div>
+    );
   }
 
   // ── Sub-views ────────────────────────────────────────────────────────────────
