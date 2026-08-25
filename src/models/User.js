@@ -91,7 +91,7 @@ const userSchema = new mongoose.Schema(
     },
     skillLevel: {
       type: String,
-      enum: ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro', 'Athlete - Other', ''],
+      enum: ['NCAA D1', 'NCAA D2', 'NCAA D3', 'College - Other', 'Pro', 'Athlete - Other', 'Adult Athlete (18-45yo)', 'Adult Athlete (45+yo)', ''],
       default: '',
     },
     customSportRequest: {
