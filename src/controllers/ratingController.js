@@ -39,14 +39,23 @@ const submitRating = async (req, res) => {
     const ratee = await User.findById(rateeId);
     if (!ratee) return res.status(404).json({ message: 'User not found' });
 
-    // Require sessionId so the duplicate check is always session-scoped.
-    // Without it, the first rating would permanently block all future ratings of the same person.
-    if (!sessionId) {
-      return res.status(400).json({ message: 'sessionId is required to submit a rating' });
-    }
-    const existing = await Rating.findOne({ rater: req.user._id, ratee: rateeId, session: sessionId });
-    if (existing) {
-      return res.status(409).json({ message: 'You have already rated this person for this session' });
+    // Duplicate check: session-scoped when sessionId is present; otherwise per-rater+ratee in last 7 days
+    if (sessionId) {
+      const existing = await Rating.findOne({ rater: req.user._id, ratee: rateeId, session: sessionId });
+      if (existing) {
+        return res.status(409).json({ message: 'You have already rated this person for this session' });
+      }
+    } else {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const recent = await Rating.findOne({
+        rater: req.user._id,
+        ratee: rateeId,
+        session: null,
+        createdAt: { $gte: sevenDaysAgo },
+      });
+      if (recent) {
+        return res.status(409).json({ message: 'You have already submitted a rating for this person recently' });
+      }
     }
 
     // Rating starts as 'pending' — admin must approve before it shows publicly
