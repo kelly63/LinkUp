@@ -78,6 +78,7 @@
     "build:ios": "npm install && vite build && npx cap sync ios && node scripts/patch-native-biometric.js",
     "build:android": "vite build && npx cap sync android",
     "cap:sync": "npx cap sync",
+    "sync:ios": "npx cap sync ios && node scripts/patch-native-biometric.js",
     "cap:open:ios": "npx cap open ios",
     "cap:open:android": "npx cap open android",
     "test": "playwright test",

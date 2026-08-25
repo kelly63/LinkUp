@@ -9,7 +9,10 @@ export { BiometryType };
 export async function isBiometricAvailable(): Promise<{ available: boolean; type: BiometryType }> {
   if (!Capacitor.isNativePlatform()) return { available: false, type: BiometryType.NONE };
   try {
-    const result = await NativeBiometric.isAvailable({ useFallback: false });
+    // Check with useFallback: true to mirror verifyIdentity's policy (deviceOwnerAuthentication).
+    // This returns available: true if Face ID OR passcode can be used — preventing a false
+    // "not available" that would leave users stuck when Face ID is locked but passcode works.
+    const result = await NativeBiometric.isAvailable({ useFallback: true });
     return { available: result.isAvailable, type: result.biometryType };
   } catch {
     return { available: false, type: BiometryType.NONE };

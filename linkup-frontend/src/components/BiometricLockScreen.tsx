@@ -16,9 +16,14 @@ export function BiometricLockScreen() {
       await unlock();
     } catch (err: any) {
       const msg = err?.message || '';
+      console.error('[BiometricLockScreen] unlock error:', msg, err);
       const cancelled = msg.toLowerCase().includes('cancel') || msg.toLowerCase().includes('fallback');
       if (!cancelled) {
-        setError('Biometric verification failed. Try again or sign in with a different account.');
+        const unavailable = msg.toLowerCase().includes('not available') || msg.toLowerCase().includes('not enrolled');
+        setError(unavailable
+          ? 'Face ID is not available on this device. Sign in with a different account.'
+          : 'Face ID failed. Try again or sign in with a different account.'
+        );
       }
     } finally {
       setUnlocking(false);

@@ -62,10 +62,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   // On mount: check biometric preference and unlock immediately if not enabled
+  // or if biometry is not currently available on this device (not enrolled,
+  // locked out, or hardware unavailable). Without this check, users get
+  // permanently trapped on the lock screen with no way to authenticate.
   useEffect(() => {
     if (!stored) return;
-    getBiometricEnabled().then((enabled) => {
+    getBiometricEnabled().then(async (enabled) => {
       if (!enabled) {
+        setState((prev) => ({ ...prev, isLocked: false }));
+        return;
+      }
+      const { available } = await isBiometricAvailable();
+      if (!available) {
         setState((prev) => ({ ...prev, isLocked: false }));
       }
       // else stay locked — user must call unlock()
