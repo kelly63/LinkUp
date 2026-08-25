@@ -118,19 +118,21 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
       // Create the session — sport auto-detected from the requester's primary sport
       const isFlexibleDate = !workoutDate || workoutDate === 'Flexible';
       const now = new Date();
-      const thirtyDaysOut = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const twoWeeksOut = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
       const { session } = await sessionsApi.create(token, {
         sport: user?.sport || 'Other',
         workoutType,
+        title: `${workoutType} with ${chat.name}`,
         date: isFlexibleDate ? 'Flexible' : workoutDate,
         ...(isFlexibleDate && {
           dateWindowStart: now.toISOString(),
-          dateWindowEnd: thirtyDaysOut.toISOString(),
+          dateWindowEnd: twoWeeksOut.toISOString(),
         }),
         time: workoutTime,
         location: workoutLocation || 'TBD',
         duration: workoutDuration,
         notes: workoutNotes,
+        sessionType: 'need',
         status: 'open',
       } as any);
       // Post session link into chat
@@ -699,8 +701,10 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                         className="w-full appearance-none px-4 py-3 pr-10 rounded-xl border-2 border-slate-200 bg-white text-slate-900 focus:border-emerald-400 focus:outline-none transition-colors"
                       >
                         {(() => {
-                          const opts = [{ val: 'Flexible', label: 'Flexible — open to discuss' }];
                           const today = new Date(); today.setHours(0,0,0,0);
+                          const windowEnd = new Date(today); windowEnd.setDate(today.getDate() + 14);
+                          const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                          const opts = [{ val: 'Flexible', label: `2-Week Window (${fmt(today)} – ${fmt(windowEnd)})` }];
                           for (let i = 0; i <= 30; i++) {
                             const d = new Date(today); d.setDate(today.getDate() + i);
                             const val = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
