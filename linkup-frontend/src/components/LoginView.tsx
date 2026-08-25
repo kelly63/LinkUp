@@ -237,6 +237,10 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
           <h2 className="text-slate-900 text-xl mb-6 text-center font-[Magra]">Welcome Back</h2>
 
           <div className="space-y-4">
+            <form
+              onSubmit={(e) => { e.preventDefault(); if (!loading) handleLogin(); }}
+              className="space-y-4"
+            >
             {/* Email */}
             <div>
               <label className="text-sm text-slate-700 mb-2 block flex items-center gap-2 font-[Magra]">
@@ -248,7 +252,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your.email@example.com"
-                autoComplete="username"
+                autoComplete="email"
                 className="w-full px-4 py-3 rounded-xl border-2 border-slate-300 bg-white text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none transition-colors font-[Magra]"
               />
             </div>
@@ -298,7 +302,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
 
             {/* Login Button */}
             <button
-              onClick={handleLogin}
+              type="submit"
               disabled={loading}
               className="w-full bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-60 text-white py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:shadow-xl active:scale-[0.98] font-[Magra] flex items-center justify-center gap-2"
             >
@@ -306,6 +310,7 @@ export function LoginView({ onLogin, onSignUp }: LoginViewProps) {
                 <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : 'Sign In'}
             </button>
+            </form>
 
             {/* Divider */}
             <div className="relative my-6">

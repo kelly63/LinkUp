@@ -4,6 +4,7 @@ import { getSocket, disconnectSocket } from './socket';
 import { getBiometricEnabled, setBiometricEnabled, isBiometricAvailable, verifyBiometric } from './biometric';
 import { App as CapApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { toast } from 'sonner';
 
 // Re-lock after this many ms in background (0 = every foreground, 60000 = 1 min)
 const RELOCK_AFTER_MS = 60_000;
@@ -27,11 +28,22 @@ interface AuthContextValue extends AuthState {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 const STORAGE_KEY = 'linkup_auth';
+// Proactively logout if the app hasn't been opened in this many ms (matches JWT expiry)
+const MAX_IDLE_MS = 90 * 24 * 60 * 60 * 1000;
 
 function readStorage(): { token: string; user: User } | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // If we have an idle timestamp and it's too old, clear the session now
+      // so the user sees the login screen immediately instead of getting 401 errors
+      if (parsed.lastActiveAt && Date.now() - parsed.lastActiveAt > MAX_IDLE_MS) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+      return parsed;
+    }
   } catch {}
   return null;
 }
@@ -85,6 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(STORAGE_KEY);
       disconnectSocket();
       setState({ token: null, user: null, isAuthenticated: false, isLocked: false });
+      // Clear any pending error toasts — the login screen is coming, not a server error
+      toast.dismiss();
     };
     window.addEventListener(UNAUTHORIZED_EVENT, handle);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, handle);
@@ -96,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getSocket(state.token);
       authApi.getMe(state.token)
         .then(({ user }) => {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: state.token, user }));
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: state.token, user, lastActiveAt: Date.now() }));
           setState((prev) => ({ ...prev, user }));
         })
         .catch(() => {});
@@ -104,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [state.isLocked]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const login = useCallback((token: string, user: User) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, user }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ token, user, lastActiveAt: Date.now() }));
     getSocket(token);
     // Password login already proves identity — unlock immediately.
     // Face ID is used on subsequent cold launches and background re-locks.
@@ -123,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUser = useCallback((user: User) => {
     setState((prev) => {
-      if (prev.token) localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: prev.token, user }));
+      if (prev.token) localStorage.setItem(STORAGE_KEY, JSON.stringify({ token: prev.token, user, lastActiveAt: Date.now() }));
       return { ...prev, user };
     });
   }, []);
