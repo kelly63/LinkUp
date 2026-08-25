@@ -223,6 +223,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat, r
   const [isPostTraveling, setIsPostTraveling] = useState(false);
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   // Find sessions API data
   const [availableSessions, setAvailableSessions] = useState<Session[]>([]);
@@ -310,7 +311,8 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat, r
   const handlePostSession = async () => {
     if (!token) return;
     if (!locationValue.trim()) { toast.error('Please enter a location for your session'); return; }
-    if (submitting) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     const resolvedPosterRole = posterRole || user?.position || '';
     const notes = notesRef.current?.value || '';
@@ -360,6 +362,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat, r
     } catch (err: any) {
       toast.error(err.message || 'Failed to post session.');
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -866,7 +869,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat, r
               disabled={submitting}
               onClick={handlePostSession}
               onTouchEnd={(e) => { e.preventDefault(); handlePostSession(); }}
-              className="w-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:opacity-60 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-red-500/20 hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:opacity-60 text-white py-4 rounded-xl transition-all mt-8 shadow-lg shadow-red-500/20 hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 touch-manipulation"
             >
               {submitting ? (
                 <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

@@ -462,7 +462,8 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
         </div>
         <button
           onClick={() => { setShowWorkoutRequest(true); setWorkoutStep(1); }}
-          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-semibold transition-colors"
+          onTouchEnd={(e) => { e.preventDefault(); setShowWorkoutRequest(true); setWorkoutStep(1); }}
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 text-sm font-semibold transition-colors touch-manipulation"
         >
           <Dumbbell className="w-4 h-4" />
           Request Workout
@@ -671,7 +672,8 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                   </div>
                   <button
                     onClick={() => setWorkoutStep(2)}
-                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-xl font-semibold transition-all"
+                    onTouchEnd={(e) => { e.preventDefault(); setWorkoutStep(2); }}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-xl font-semibold transition-all touch-manipulation"
                   >
                     Next: Add Details
                   </button>
