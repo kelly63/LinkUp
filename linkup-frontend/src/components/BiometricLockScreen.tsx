@@ -16,7 +16,7 @@ export function BiometricLockScreen() {
       await unlock();
     } catch (err: any) {
       const msg = err?.message || '';
-      const cancelled = msg.toLowerCase().includes('cancel') || msg.toLowerCase().includes('user');
+      const cancelled = msg.toLowerCase().includes('cancel') || msg.toLowerCase().includes('fallback');
       if (!cancelled) {
         setError('Biometric verification failed. Try again or sign in with a different account.');
       }

@@ -223,7 +223,7 @@ export function PostView({ onNavigateToDashboard, userSports = [], onOpenChat, r
   const [isPostTraveling, setIsPostTraveling] = useState(false);
   const notesRef = useRef<HTMLTextAreaElement>(null);
   const [submitting, setSubmitting] = useState(false);
-  const submittingRef = useRef(false);
+  const submittingRef = useRef<boolean>(false);
 
   // Find sessions API data
   const [availableSessions, setAvailableSessions] = useState<Session[]>([]);

@@ -64,6 +64,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
   const [workoutDuration, setWorkoutDuration] = useState('1 hr');
   const [workoutNotes, setWorkoutNotes] = useState('');
   const [workoutSubmitting, setWorkoutSubmitting] = useState(false);
+  const workoutSubmittingRef = useRef<boolean>(false);
 
   const [showOptions, setShowOptions] = useState(false);
   const [blocking, setBlocking] = useState(false);
@@ -109,6 +110,8 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
   };
 
   const handleWorkoutRequestSubmit = async () => {
+    if (workoutSubmittingRef.current) return;
+    workoutSubmittingRef.current = true;
     setWorkoutSubmitting(true);
     try {
       // Send the casual message first
@@ -150,6 +153,7 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
     } catch (err: any) {
       toast.error(err?.message || 'Could not send request');
     } finally {
+      workoutSubmittingRef.current = false;
       setWorkoutSubmitting(false);
     }
   };
@@ -165,6 +169,18 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
     };
   }, []);
+
+  const closeWorkoutModal = () => {
+    setShowWorkoutRequest(false);
+    setWorkoutStep(1);
+    setWorkoutType('Sport Practice / Drills');
+    setWorkoutMessage('');
+    setWorkoutDate('');
+    setWorkoutTime('Flexible');
+    setWorkoutLocation('');
+    setWorkoutDuration('1 hr');
+    setWorkoutNotes('');
+  };
 
   const handleSend = async () => {
     const text = inputText.trim();
@@ -625,7 +641,11 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                   <p className="text-xs text-slate-500">with {chat.name}</p>
                 </div>
               </div>
-              <button onClick={() => { setShowWorkoutRequest(false); setWorkoutStep(1); setWorkoutType('Sport Practice / Drills'); setWorkoutMessage(''); setWorkoutDate(''); setWorkoutTime('Flexible'); setWorkoutLocation(''); setWorkoutDuration('1 hr'); setWorkoutNotes(''); }} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+              <button
+                onClick={closeWorkoutModal}
+                onTouchEnd={(e) => { e.preventDefault(); closeWorkoutModal(); }}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors touch-manipulation"
+              >
                 <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
@@ -679,7 +699,11 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
                   >
                     Next: Add Details
                   </button>
-                  <button onClick={() => { setShowWorkoutRequest(false); setWorkoutStep(1); setWorkoutType('Sport Practice / Drills'); setWorkoutMessage(''); setWorkoutDate(''); setWorkoutTime('Flexible'); setWorkoutLocation(''); setWorkoutDuration('1 hr'); setWorkoutNotes(''); }} className="w-full py-3 text-sm text-slate-500">
+                  <button
+                    onClick={closeWorkoutModal}
+                    onTouchEnd={(e) => { e.preventDefault(); closeWorkoutModal(); }}
+                    className="w-full py-3 text-sm text-slate-500 touch-manipulation"
+                  >
                     Cancel
                   </button>
                 </>
@@ -791,15 +815,19 @@ export function ChatScreen({ chat, currentUserId, token, onBack, onTabChange, on
 
                   <button
                     onClick={handleWorkoutRequestSubmit}
-                    onTouchEnd={(e) => { e.preventDefault(); if (!workoutSubmitting) handleWorkoutRequestSubmit(); }}
+                    onTouchEnd={(e) => { e.preventDefault(); if (!workoutSubmittingRef.current) handleWorkoutRequestSubmit(); }}
                     disabled={workoutSubmitting}
-                    className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white py-4 rounded-xl font-semibold transition-all flex items-center justify-center gap-2 touch-manipulation"
                   >
                     {workoutSubmitting
                       ? <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       : <><Dumbbell className="w-5 h-5" /> Send Request</>}
                   </button>
-                  <button onClick={() => setWorkoutStep(1)} className="w-full py-3 text-sm text-slate-500">
+                  <button
+                    onClick={() => setWorkoutStep(1)}
+                    onTouchEnd={(e) => { e.preventDefault(); setWorkoutStep(1); }}
+                    className="w-full py-3 text-sm text-slate-500 touch-manipulation"
+                  >
                     ← Back
                   </button>
                 </>
