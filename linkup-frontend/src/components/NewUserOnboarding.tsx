@@ -21,6 +21,7 @@ const SPORT_POSITIONS: Record<string, string[]> = {
   'Baseball': ['Pitcher (LHP)', 'Pitcher (RHP)', 'Catcher', 'First Base', 'Second Base', 'Third Base', 'Shortstop', 'Left Field', 'Center Field', 'Right Field', 'Utility', 'DH'],
   'Softball': ['Pitcher (LHP)', 'Pitcher (RHP)', 'Catcher', 'First Base', 'Second Base', 'Third Base', 'Shortstop', 'Left Field', 'Center Field', 'Right Field', 'Utility', 'DP/FLEX'],
   'Basketball': ['Point Guard', 'Shooting Guard', 'Small Forward', 'Power Forward', 'Center'],
+  'Cheer & Dance': ['Flyer', 'Base', 'Back Spot', 'Spotter', 'Tumbler', 'Dancer', 'Captain', 'Co-Captain', 'All-Around'],
   'Soccer': ['Goalkeeper', 'Center Back', 'Outside Back / Fullback', 'Defensive Mid', 'Central Mid', 'Attacking Mid', 'Winger', 'Striker / Forward'],
   'Football': ['QB', 'RB', 'WR', 'TE', 'OL', 'DL', 'LB', 'CB', 'Safety', 'K/P', 'Athlete'],
   'Volleyball': ['Outside Hitter', 'Opposite / Right Side', 'Middle Blocker', 'Setter', 'Libero', 'Defensive Specialist'],

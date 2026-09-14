@@ -1,6 +1,7 @@
 export const SPORTS = [
   'Baseball',
   'Basketball',
+  'Cheer & Dance',
   'Cross Country',
   'Field Hockey',
   'Flag Football',
