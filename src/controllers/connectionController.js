@@ -166,14 +166,15 @@ const getConnections = async (req, res) => {
   }
 };
 
-// GET /api/connections/pending — incoming roster requests
+// GET /api/connections/pending — incoming AND outgoing pending roster requests
 const getPendingRequests = async (req, res) => {
   try {
     const pending = await Connection.find({
-      recipient: req.user._id,
+      $or: [{ requester: req.user._id }, { recipient: req.user._id }],
       status: 'pending',
     })
       .populate('requester', USER_PUBLIC_FIELDS)
+      .populate('recipient', USER_PUBLIC_FIELDS)
       .sort({ createdAt: -1 });
 
     res.json({ requests: pending });

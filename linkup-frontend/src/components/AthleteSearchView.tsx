@@ -68,10 +68,13 @@ export function AthleteSearchView({ onBack, onOpenChat, onViewProfile }: Athlete
       const map: Record<string, 'accepted' | 'pending'> = {};
       // accepted connections: shape is { user: { _id, ... } }
       accepted.forEach((c) => { if (c.user?._id) map[c.user._id.toString()] = 'accepted'; });
-      // pending requests: shape is { requester: { _id, ... } } (incoming) or { user: { _id } }
+      // pending requests: other party is recipient (outgoing) or requester (incoming)
+      const myId = me?._id?.toString();
       pending.forEach((c) => {
-        const uid = (c as any).requester?._id || c.user?._id;
-        if (uid) map[uid.toString()] = 'pending';
+        const requesterId = (c as any).requester?._id?.toString();
+        const recipientId = (c as any).recipient?._id?.toString();
+        const otherId = requesterId === myId ? recipientId : requesterId;
+        if (otherId) map[otherId] = 'pending';
       });
       setRosterStatus(map);
     }).catch(() => { toast.error('Could not load roster status'); });
